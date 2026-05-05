@@ -1,0 +1,63 @@
+import { api } from "./client";
+import type { FeeStructure } from "@/types/api";
+
+interface ApiResponse<T> {
+  data: T;
+  message: string;
+  success: boolean;
+  errorCode: string | null;
+}
+
+export async function createFeeStructure(payload: {
+  className: string;
+  academicYearId: string;
+  feeType: string;
+  frequency: string;
+  amount: number;
+  description?: string;
+}) {
+  const response = await api.post<ApiResponse<FeeStructure>>(
+    "/api/master/fee-structures",
+    {
+      ...payload,
+      academicYearId: Number(payload.academicYearId),
+      amount: Number(payload.amount),
+    }
+  );
+  return response.data.data;
+}
+
+export async function getAllFeeStructures() {
+  const response = await api.get<ApiResponse<FeeStructure[]>>(
+    "/api/master/fee-structures"
+  );
+  return response.data.data;
+}
+
+export async function getFilteredFeeStructures(params: {
+  className?: string;
+  academicYearId?: string;
+}) {
+  const response = await api.get<ApiResponse<FeeStructure[]>>(
+    "/api/master/fee-structures",
+    { params }
+  );
+  return response.data.data;
+}
+
+export async function updateFeeStructure(
+  id: string,
+  payload: {
+    amount?: number;
+    description?: string;
+  }
+) {
+  const response = await api.patch<ApiResponse<FeeStructure>>(
+    `/api/master/fee-structures/${id}`,
+    {
+      ...payload,
+      amount: payload.amount ? Number(payload.amount) : undefined,
+    }
+  );
+  return response.data.data;
+}
