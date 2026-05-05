@@ -10,7 +10,7 @@ interface ApiResponse<T> {
 
 export async function createFeeStructure(payload: {
   className: string;
-  academicYearId: string;
+  academicYearId: number;
   feeType: string;
   frequency: string;
   amount: number;
@@ -18,11 +18,7 @@ export async function createFeeStructure(payload: {
 }) {
   const response = await api.post<ApiResponse<FeeStructure>>(
     "/api/master/fee-structures",
-    {
-      ...payload,
-      academicYearId: Number(payload.academicYearId),
-      amount: Number(payload.amount),
-    }
+    payload
   );
   return response.data.data;
 }
@@ -36,7 +32,7 @@ export async function getAllFeeStructures() {
 
 export async function getFilteredFeeStructures(params: {
   className?: string;
-  academicYearId?: string;
+  academicYearId?: number;
 }) {
   const response = await api.get<ApiResponse<FeeStructure[]>>(
     "/api/master/fee-structures",
@@ -46,7 +42,7 @@ export async function getFilteredFeeStructures(params: {
 }
 
 export async function updateFeeStructure(
-  id: string,
+  id: number,
   payload: {
     amount?: number;
     description?: string;
@@ -54,10 +50,7 @@ export async function updateFeeStructure(
 ) {
   const response = await api.patch<ApiResponse<FeeStructure>>(
     `/api/master/fee-structures/${id}`,
-    {
-      ...payload,
-      amount: payload.amount ? Number(payload.amount) : undefined,
-    }
+    payload
   );
   return response.data.data;
 }

@@ -26,13 +26,16 @@ export async function getAllClassSubjects() {
   return response.data.data;
 }
 
-export async function getClassSubjectById(id: string) {
+export async function getClassSubjectById(id: number | string) {
   const response = await api.get<ApiResponse<ClassSubjectMapping>>(
     `/api/master/class-subjects/${id}`
   );
   return response.data.data;
 }
 
-export async function deleteClassSubject(id: string) {
-  await api.delete(`/api/master/class-subjects/${id}`);
+export async function deleteClassSubject(id: string | number) {
+  const response = await api.delete<ApiResponse<null>>(
+    `/api/master/class-subjects/${id}`
+  );
+  return response.data;
 }
