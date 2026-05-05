@@ -3,14 +3,14 @@ import axios, { AxiosError } from "axios";
 export const TOKEN_KEY = "SCHOOL_TOKEN";
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "https://api.hatsynk.xyz",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "",
   headers: { "Content-Type": "application/json" },
 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) {
-    config.headers.set("Authorization", `Bearer ${token}`);
+    config.headers["Authorization"] = `Bearer ${token}`;
   }
   return config;
 });
