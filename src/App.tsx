@@ -11,7 +11,6 @@ import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import Teachers from "./pages/Teachers";
 import Subjects from "./pages/Subjects";
-import Fee from "./pages/Fee";
 import ClassSubjectMappings from "./pages/ClassSubjectMappings";
 import FeeStructures from "./pages/FeeStructures";
 import NotFound from "./pages/NotFound";
@@ -46,7 +45,6 @@ const App = () => (
             <Route path="/students" element={<Students />} />
             <Route path="/teachers" element={<Teachers />} />
             <Route path="/subjects" element={<Subjects />} />
-            <Route path="/fee" element={<Fee />} />
             <Route path="/class-subject-mappings" element={<ClassSubjectMappings />} />
             <Route path="/fee-structures" element={<FeeStructures />} />
           </Route>

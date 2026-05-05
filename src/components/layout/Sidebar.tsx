@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, GraduationCap, Users, BookOpen, Wallet, LogOut, GraduationCap as Logo, Link2, CreditCard } from "lucide-react";
+import { Home, GraduationCap, Users, BookOpen, LogOut, GraduationCap as Logo, Link2, CreditCard, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { logout, getCurrentUser } from "@/lib/api/auth";
@@ -10,9 +11,20 @@ export const navItems = [
   { to: "/students", label: "Students", icon: GraduationCap },
   { to: "/teachers", label: "Teachers", icon: Users },
   { to: "/subjects", label: "Subjects", icon: BookOpen },
-  { to: "/fee", label: "Fee", icon: Wallet },
-  { to: "/class-subject-mappings", label: "Class-Subjects", icon: Link2 },
-  { to: "/fee-structures", label: "Fee Structures", icon: CreditCard },
+];
+
+export const classSubjectSubItems = [
+  { to: "/class-subject-mappings?tab=create", label: "Create Mapping", icon: "plus" },
+  { to: "/class-subject-mappings?tab=list", label: "List All Mappings", icon: "list" },
+  { to: "/class-subject-mappings?tab=get", label: "Get by ID", icon: "search" },
+  { to: "/class-subject-mappings?tab=delete", label: "Delete Mapping", icon: "trash" },
+];
+
+export const feeStructureSubItems = [
+  { to: "/fee-structures?tab=create", label: "Create Fee Structure", icon: "plus" },
+  { to: "/fee-structures?tab=list", label: "List Fee Structures", icon: "list" },
+  { to: "/fee-structures?tab=update", label: "Update Fee Structure", icon: "edit" },
+  { to: "/fee-structures?tab=filtered", label: "Filtered Fee Structures", icon: "filter" },
 ];
 
 export function getActiveNav(pathname: string) {
@@ -27,6 +39,13 @@ export default function SidebarContent({ onNavigate }: SidebarContentProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const user = getCurrentUser();
+  const [expandedSection, setExpandedSection] = useState<string | null>(
+    location.pathname.includes("class-subject")
+      ? "class-subject"
+      : location.pathname.includes("fee-structures")
+      ? "fee-structures"
+      : null
+  );
 
   const initials =
     (user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "") ||
@@ -37,6 +56,9 @@ export default function SidebarContent({ onNavigate }: SidebarContentProps) {
     logout();
     navigate("/login", { replace: true });
   };
+
+  const isClassSubjectActive = location.pathname.includes("class-subject");
+  const isFeeStructuresActive = location.pathname.includes("fee-structures");
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -73,6 +95,118 @@ export default function SidebarContent({ onNavigate }: SidebarContentProps) {
             </NavLink>
           );
         })}
+
+        {/* Class-Subject Collapsible Section */}
+        <div className="space-y-1 pt-2">
+          <button
+            onClick={() =>
+              setExpandedSection(
+                expandedSection === "class-subject" ? null : "class-subject"
+              )
+            }
+            className={cn(
+              "w-full flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              isClassSubjectActive
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <Link2 className={cn("h-4 w-4", isClassSubjectActive && "text-primary")} />
+              <span>Class-Subjects</span>
+            </div>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 transition-transform",
+                expandedSection === "class-subject" && "rotate-180"
+              )}
+            />
+          </button>
+
+          {/* Sub-items */}
+          {expandedSection === "class-subject" && (
+            <div className="space-y-0.5 pl-6">
+              {classSubjectSubItems.map((item) => {
+                const active = location.pathname === "/class-subject-mappings" && 
+                  location.search.includes(`tab=${item.to.split("tab=")[1]}`);
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={onNavigate}
+                    className={cn(
+                      "flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                      "hover:bg-sidebar-accent/50",
+                      active
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground/70"
+                    )}
+                  >
+                    <span className="w-1 h-1 rounded-full" />
+                    <span>{item.label}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Fee Structures Collapsible Section */}
+        <div className="space-y-1 pt-2">
+          <button
+            onClick={() =>
+              setExpandedSection(
+                expandedSection === "fee-structures" ? null : "fee-structures"
+              )
+            }
+            className={cn(
+              "w-full flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              isFeeStructuresActive
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <CreditCard className={cn("h-4 w-4", isFeeStructuresActive && "text-primary")} />
+              <span>Fee Structures</span>
+            </div>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 transition-transform",
+                expandedSection === "fee-structures" && "rotate-180"
+              )}
+            />
+          </button>
+
+          {/* Sub-items */}
+          {expandedSection === "fee-structures" && (
+            <div className="space-y-0.5 pl-6">
+              {feeStructureSubItems.map((item) => {
+                const active = location.pathname === "/fee-structures" && 
+                  location.search.includes(`tab=${item.to.split("tab=")[1]}`);
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={onNavigate}
+                    className={cn(
+                      "flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                      "hover:bg-sidebar-accent/50",
+                      active
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground/70"
+                    )}
+                  >
+                    <span className="w-1 h-1 rounded-full" />
+                    <span>{item.label}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </nav>
 
       <div className="border-t border-sidebar-border p-3">
