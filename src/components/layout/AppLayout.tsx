@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import SidebarContent, { getActiveNav } from "./Sidebar";
 
 export default function AppLayout() {
+  console.log("AppLayout rendered");
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const active = getActiveNav(location.pathname);

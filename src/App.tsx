@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import StudentsPage from "./pages/Students";
+import AdmissionWizardPage from "./pages/AdmissionWizard";
 
 import Teachers from "./pages/Teachers";
 import Subjects from "./pages/Subjects";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/students" element={<StudentsPage />} />
+            <Route path="/students/admit" element={<AdmissionWizardPage />} />
             <Route path="/teachers" element={<Teachers />} />
             <Route path="/subjects" element={<Subjects />} />
             <Route path="/class-subject-mappings" element={<ClassSubjectMappings />} />

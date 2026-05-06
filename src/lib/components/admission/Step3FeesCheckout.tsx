@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { WizardState, PaymentRow } from '@/pages/AdmissionWizard';
-import { listFeeStructures } from '@/lib/api/feeStructures';
+import { getAllFeeStructures } from '@/lib/api/feeStructures';
+
 
 interface Step3FeesCheckoutProps {
   state: WizardState;
@@ -31,9 +32,10 @@ export default function Step3FeesCheckout({ state, setState }: Step3FeesCheckout
   // Try to load fee structures for the class section
   const feeQ = useQuery({
     queryKey: ['fee-structures', state.setupData.classSectionId],
-    queryFn: () => listFeeStructures({ classSectionId: String(state.setupData.classSectionId) }),
+    queryFn: () => getAllFeeStructures(),
     enabled: !!state.setupData.classSectionId,
   });
+
 
   // Seed payments from fee structures once loaded
   useEffect(() => {
