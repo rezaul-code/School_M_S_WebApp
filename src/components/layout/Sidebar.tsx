@@ -8,10 +8,10 @@ import { cn } from "@/lib/utils";
 
 export const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: Home },
-  { to: "/students", label: "Students", icon: GraduationCap },
   { to: "/teachers", label: "Teachers", icon: Users },
   { to: "/subjects", label: "Subjects", icon: BookOpen },
 ];
+
 
 export const classSubjectSubItems = [
   { to: "/class-subject-mappings?tab=create", label: "Create Mapping", icon: "plus" },
@@ -38,14 +38,24 @@ interface SidebarContentProps {
 export default function SidebarContent({ onNavigate }: SidebarContentProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const user = getCurrentUser();
+  let user = null;
+
+  try {
+    user = getCurrentUser();
+  } catch (e) {
+    console.error("Sidebar getCurrentUser failed:", e);
+    user = null;
+  }
   const [expandedSection, setExpandedSection] = useState<string | null>(
-    location.pathname.includes("class-subject")
+    location.pathname.includes("students")
+      ? "students"
+      : location.pathname.includes("class-subject")
       ? "class-subject"
       : location.pathname.includes("fee-structures")
       ? "fee-structures"
       : null
   );
+
 
   const initials =
     (user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "") ||
@@ -96,6 +106,66 @@ export default function SidebarContent({ onNavigate }: SidebarContentProps) {
           );
         })}
 
+        {/* Students Collapsible Section */}
+        <div className="space-y-1 pt-2">
+          <button
+            onClick={() =>
+              setExpandedSection(
+                expandedSection === "students" ? null : "students"
+              )
+            }
+            className={cn(
+              "w-full flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              expandedSection === "students"
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <GraduationCap className={cn("h-4 w-4", expandedSection === "students" && "text-primary")} />
+              <span>Students</span>
+            </div>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 transition-transform",
+                expandedSection === "students" && "rotate-180"
+              )}
+            />
+          </button>
+
+          {/* Sub-items */}
+          {expandedSection === "students" && (
+            <div className="space-y-0.5 pl-6">
+              <NavLink
+                to="/students"
+                onClick={onNavigate}
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                  "hover:bg-sidebar-accent/50",
+                  location.pathname === "/students" && "bg-sidebar-accent text-sidebar-accent-foreground"
+                )}
+              >
+                <span className="w-1 h-1 rounded-full" />
+                <span>Student List</span>
+              </NavLink>
+
+              <NavLink
+                to="/students/admit"
+                onClick={onNavigate}
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                  "hover:bg-sidebar-accent/50",
+                  location.pathname === "/students/admit" && "bg-sidebar-accent text-sidebar-accent-foreground"
+                )}
+              >
+                <span className="w-1 h-1 rounded-full" />
+                <span>Admit Student</span>
+              </NavLink>
+            </div>
+          )}
+        </div>
+
         {/* Class-Subject Collapsible Section */}
         <div className="space-y-1 pt-2">
           <button
@@ -104,6 +174,7 @@ export default function SidebarContent({ onNavigate }: SidebarContentProps) {
                 expandedSection === "class-subject" ? null : "class-subject"
               )
             }
+
             className={cn(
               "w-full flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
