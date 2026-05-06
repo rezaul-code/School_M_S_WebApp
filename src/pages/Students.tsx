@@ -37,8 +37,17 @@ import Pagination from "@/components/common/Pagination";
 
 import AdmitStudentDrawer from "@/components/students/AdmitStudentDrawer";
 import StudentDetailDrawer from "@/components/students/StudentDetailDrawer";
+import FeeSummaryDrawer from "@/components/students/FeeSummaryDrawer";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Students() {
+
   const [page, setPage] = useState(0);
 
   const [search, setSearch] = useState("");
@@ -48,6 +57,13 @@ export default function Students() {
 
   const [selectedStudent, setSelectedStudent] =
     useState<Student | null>(null);
+
+  const [feeSummaryStudentId, setFeeSummaryStudentId] =
+    useState<string | null>(null);
+
+  const [openFeeSummary, setOpenFeeSummary] =
+    useState(false);
+
 
   const studentsQuery = useQuery({
     queryKey: ["students", page, search],
@@ -204,18 +220,38 @@ export default function Students() {
                       </TableCell>
 
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            setSelectedStudent(
-                              student
-                            )
-                          }
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Student actions"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onSelect={() =>
+                                setSelectedStudent(student)
+                              }
+                            >
+                              View Details
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+onSelect={() => {
+                                setFeeSummaryStudentId(student.id);
+                                setOpenFeeSummary(true);
+                              }}
+                            >
+                              Fee Summary
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
+
                     </TableRow>
                   ))
                 )}
@@ -252,6 +288,17 @@ export default function Students() {
           setSelectedStudent(null)
         }
       />
+
+      <FeeSummaryDrawer
+        studentId={feeSummaryStudentId}
+        open={openFeeSummary}
+        onOpenChange={(v) => {
+          setOpenFeeSummary(v);
+          if (!v) setFeeSummaryStudentId(null);
+        }}
+        academicYearId={1}
+      />
     </div>
   );
 }
+

@@ -1,15 +1,16 @@
-# TypeScript Error Fixes - Approved Plan Execution
+# TODO: Fix Student Fee Summary API 404
 
-## Steps (0/6 completed)
+## Plan
+1. Identify where fee summary drawer is opened and how `studentId` is set.
+2. Fix the broken open flow that can temporarily render `FeeSummaryDrawer` with `studentId` missing.
+3. Add temporary console logs in `FeeSummaryDrawer` to verify `studentId` and constructed API URL.
+4. Ensure React Query `enabled` condition is `enabled: open && !!studentId`.
+5. Verify the network request now includes `/api/students/{studentId}/fees/summary`.
 
-### 1. [x] Create this TODO.md tracking file
-### 2. [x] Edit AdmissionWizard.tsx: Fix queryFn double cast
-### 3. [x] Edit AdmissionWizard.tsx: Fix first section.name fallback (onValueChange)
-### 4. [x] Edit AdmissionWizard.tsx: Fix second section.name fallback (map displayName)
-### 5. [x] Edit Students.tsx: Remove duplicate AdmissionWizard temp block
-### 6. [x] Verify fixes & attempt completion (typecheck + demo command if needed)
-
-**Status:** Ready to execute edits in parallel where possible. Updates marked [x] after each step.
-
-**Original Plan Reference:** Double cast queryFn, remove section.name logic, delete Students.tsx duplicate.
+## Status
+- [x] Step 1: Locate and confirm broken open flow (timeout toggle removed)
+- [x] Step 2: Implement code change in `src/pages/Students.tsx`
+- [x] Step 3: Implement temporary logs in `src/components/students/FeeSummaryDrawer.tsx`
+- [x] Step 4: Confirm query enabled condition is safe (`enabled: open && !!studentId`)
+- [x] Step 5: Run/verify in dev server / check network tab
 
