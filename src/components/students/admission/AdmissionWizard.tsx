@@ -11,6 +11,8 @@ import FeesCheckoutStep from "./steps/FeesCheckoutStep";
 import ReviewStep from "./steps/ReviewStep";
 
 import { getApiErrorMessage } from "@/lib/api/client";
+import { admitStudent } from "@/lib/api/students";
+
 
 export interface InitialPaymentRow {
   feeType: string;
@@ -100,18 +102,44 @@ export default function AdmissionWizard({
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      // Phase 2: stop here (shell + navigation). Final API + persistence comes in later phase.
-      return;
+      // Single-phase admission: create student, fee ledger rows, and initial payment.
+      const payload = {
+        email: state.studentInfo.email,
+        password: state.studentInfo.password,
+        firstName: state.studentInfo.firstName,
+        lastName: state.studentInfo.lastName,
+        rollNumber: state.studentInfo.rollNumber,
+        phone: state.studentInfo.phone || undefined,
+        dateOfBirth: state.studentInfo.dateOfBirth || undefined,
+        address: state.studentInfo.address || undefined,
+        guardianName: state.studentInfo.guardianName || undefined,
+        guardianPhone: state.studentInfo.guardianPhone || undefined,
+        transactionReference: state.studentInfo.transactionReference || undefined,
+        classSectionId: String(state.setupData.classSectionId),
+        initialPayments: state.initialPayments.map((p) => ({
+          feeType: p.feeType,
+          amountPaid: p.amountPaid,
+          ...(p.monthsToPay !== undefined
+            ? { monthsToPay: p.monthsToPay }
+            : {}),
+        })),
+      };
+
+      return admitStudent(payload as any);
     },
 
-    onSuccess: () => {
-      toast.success("Admission & payment ready for confirmation (Phase 2 stub).");
-      // Preserve user flow without persisting data yet.
+    onSuccess: (data: any) => {
+      // Backend should return roll number + fee ledger generation counts.
       setSuccessData({
-        rollNumber: state.studentInfo.rollNumber,
-        feeLedgerRowsGenerated: 0,
+        rollNumber:
+          data?.rollNumber ?? data?.data?.rollNumber ?? state.studentInfo.rollNumber,
+        feeLedgerRowsGenerated:
+          data?.feeLedgerRowsGenerated ??
+          data?.data?.feeLedgerRowsGenerated ??
+          0,
       });
     },
+
 
     onError: (err) => {
       toast.error(getApiErrorMessage(err));
@@ -162,9 +190,9 @@ export default function AdmissionWizard({
   };
 
   const handleSubmit = () => {
-    // Phase 2: do not call any API yet (shell + state flow only).
     submitMutation.mutate(undefined);
   };
+
 
 
   if (successData) {
