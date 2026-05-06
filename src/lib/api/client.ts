@@ -1,3 +1,5 @@
+// src/lib/api/client.ts
+
 import axios, { AxiosError } from "axios";
 
 export const TOKEN_KEY = "SCHOOL_TOKEN";

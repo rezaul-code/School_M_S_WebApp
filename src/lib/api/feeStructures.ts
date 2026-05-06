@@ -1,5 +1,9 @@
-import { api, TOKEN_KEY } from "./client";
-import type { FeeStructure } from "@/types/api";
+import { api } from "./client";
+
+import type {
+  FeePreview,
+  FeeStructure,
+} from "@/types/api";
 
 interface ApiResponse<T> {
   data: T;
@@ -16,17 +20,18 @@ export async function createFeeStructure(payload: {
   amount: number;
   description?: string;
 }) {
-  const response = await api.post<ApiResponse<FeeStructure>>(
-    "/api/master/fee-structures",
-    payload
-  );
+  const response = await api.post<
+    ApiResponse<FeeStructure>
+  >("/api/master/fee-structures", payload);
+
   return response.data.data;
 }
 
 export async function getAllFeeStructures() {
-  const response = await api.get<ApiResponse<FeeStructure[]>>(
-    "/api/master/fee-structures"
-  );
+  const response = await api.get<
+    ApiResponse<FeeStructure[]>
+  >("/api/master/fee-structures");
+
   return response.data.data;
 }
 
@@ -34,10 +39,12 @@ export async function getFilteredFeeStructures(params: {
   className?: string;
   academicYearId?: number;
 }) {
-  const response = await api.get<ApiResponse<FeeStructure[]>>(
-    "/api/master/fee-structures",
-    { params }
-  );
+  const response = await api.get<
+    ApiResponse<FeeStructure[]>
+  >("/api/master/fee-structures", {
+    params,
+  });
+
   return response.data.data;
 }
 
@@ -48,20 +55,22 @@ export async function updateFeeStructure(
     description?: string;
   }
 ) {
-  // Guard: Validate ID
-  if (!id || isNaN(id) || id <= 0) {
-    throw new Error("Please provide a valid Fee Structure ID");
-  }
+  const response = await api.patch<
+    ApiResponse<FeeStructure>
+  >(`/api/master/fee-structures/${id}`, payload);
 
-  // Guard: Validate token exists
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (!token) {
-    throw new Error("Authentication token missing. Please log in again.");
-  }
+  return response.data.data;
+}
 
-  const response = await api.patch<ApiResponse<FeeStructure>>(
-    `/api/master/fee-structures/${id}`,
-    payload
-  );
+export async function getFeePreview(params: {
+  classSectionId: string;
+  academicYearId: string;
+}) {
+  const response = await api.get<
+    ApiResponse<FeePreview>
+  >("/api/master/fee-structures/preview", {
+    params,
+  });
+
   return response.data.data;
 }

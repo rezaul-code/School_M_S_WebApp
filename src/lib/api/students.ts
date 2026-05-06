@@ -1,5 +1,11 @@
 import { api } from "./client";
-import type { Page, Student } from "@/types/api";
+
+import type {
+  InitialPayment,
+  Page,
+  Student,
+  StudentFeeSummary,
+} from "@/types/api";
 
 interface ApiResponse<T> {
   data: T;
@@ -16,37 +22,78 @@ export interface ListStudentsParams {
   academicYearId?: string;
 }
 
-export async function listStudents(params: ListStudentsParams) {
-  const response = await api.get<ApiResponse<Page<Student>>>("/api/students", { params });
+export async function listStudents(
+  params: ListStudentsParams
+) {
+  const response = await api.get<
+    ApiResponse<Page<Student>>
+  >("/api/students", {
+    params,
+  });
+
   return response.data.data;
 }
 
 export async function getStudent(id: string) {
-  const response = await api.get<ApiResponse<Student>>(`/api/students/${id}`);
+  const response = await api.get<
+    ApiResponse<Student>
+  >(`/api/students/${id}`);
+
   return response.data.data;
 }
 
 export interface AdmitStudentPayload {
   email: string;
   password: string;
+
   firstName: string;
   lastName: string;
+
   rollNumber: string;
+
   phone?: string;
   dateOfBirth?: string;
   address?: string;
+
   guardianName?: string;
   guardianPhone?: string;
-  admissionDate?: string;
+
+  transactionReference?: string;
+
   classSectionId: string;
+
+  initialPayments: InitialPayment[];
 }
 
-export async function admitStudent(payload: AdmitStudentPayload) {
-  const response = await api.post<ApiResponse<Student>>("/api/students/admit", payload);
+export async function admitStudent(
+  payload: AdmitStudentPayload
+) {
+  const response = await api.post<
+    ApiResponse<any>
+  >("/api/students/admit", payload);
+
   return response.data.data;
 }
 
 export async function getFormOptions() {
-  const response = await api.get<ApiResponse<Record<string, unknown>>>("/api/students/form-options");
+  const response = await api.get<
+    ApiResponse<Record<string, unknown>>
+  >("/api/students/form-options");
+
+  return response.data.data;
+}
+
+export async function getStudentFeeSummary(
+  studentId: string,
+  academicYearId: number
+) {
+  const response = await api.get<
+    ApiResponse<StudentFeeSummary>
+  >(`/api/students/${studentId}/fees/summary`, {
+    params: {
+      academicYearId,
+    },
+  });
+
   return response.data.data;
 }
