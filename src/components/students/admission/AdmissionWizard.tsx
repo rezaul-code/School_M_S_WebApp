@@ -10,7 +10,6 @@ import StudentInfoStep from "./steps/StudentInfoStep";
 import FeesCheckoutStep from "./steps/FeesCheckoutStep";
 import ReviewStep from "./steps/ReviewStep";
 
-import { admitStudent } from "@/lib/api/students";
 import { getApiErrorMessage } from "@/lib/api/client";
 
 export interface InitialPaymentRow {
@@ -18,6 +17,7 @@ export interface InitialPaymentRow {
   amountPaid: number;
   monthsToPay?: number;
 }
+
 
 export interface WizardState {
   activeStep: 1 | 2 | 3 | 4;
@@ -99,17 +99,17 @@ export default function AdmissionWizard({
   } | null>(null);
 
   const submitMutation = useMutation({
-    mutationFn: admitStudent,
+    mutationFn: async () => {
+      // Phase 2: stop here (shell + navigation). Final API + persistence comes in later phase.
+      return;
+    },
 
-    onSuccess: (data: any) => {
-      toast.success("Student admitted successfully");
-
-      qc.invalidateQueries({ queryKey: ["students"] });
-      qc.invalidateQueries({ queryKey: ["dashboard"] });
-
+    onSuccess: () => {
+      toast.success("Admission & payment ready for confirmation (Phase 2 stub).");
+      // Preserve user flow without persisting data yet.
       setSuccessData({
-        rollNumber: data?.rollNumber ?? state.studentInfo.rollNumber,
-        feeLedgerRowsGenerated: data?.feeLedgerRowsGenerated ?? 0,
+        rollNumber: state.studentInfo.rollNumber,
+        feeLedgerRowsGenerated: 0,
       });
     },
 
@@ -117,6 +117,7 @@ export default function AdmissionWizard({
       toast.error(getApiErrorMessage(err));
     },
   });
+
 
   const isStepValid = () => {
     switch (state.activeStep) {
@@ -161,23 +162,10 @@ export default function AdmissionWizard({
   };
 
   const handleSubmit = () => {
-    submitMutation.mutate({
-      email: state.studentInfo.email,
-      password: state.studentInfo.password,
-      firstName: state.studentInfo.firstName,
-      lastName: state.studentInfo.lastName,
-      rollNumber: state.studentInfo.rollNumber,
-      phone: state.studentInfo.phone || undefined,
-      dateOfBirth: state.studentInfo.dateOfBirth || undefined,
-      address: state.studentInfo.address || undefined,
-      guardianName: state.studentInfo.guardianName || undefined,
-      guardianPhone: state.studentInfo.guardianPhone || undefined,
-      transactionReference:
-        state.studentInfo.transactionReference || undefined,
-      classSectionId: String(state.setupData.classSectionId),
-      initialPayments: state.initialPayments,
-    });
+    // Phase 2: do not call any API yet (shell + state flow only).
+    submitMutation.mutate(undefined);
   };
+
 
   if (successData) {
     return (
