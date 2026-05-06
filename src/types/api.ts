@@ -1,4 +1,4 @@
-// Shared API types
+// src/types/api.ts
 
 export interface AuthLoginResponse {
   token?: string;
@@ -104,4 +104,69 @@ export interface FeeStructure {
   description?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+// ─────────────────────────────────────────────────
+// NEW: Fee Preview & Summary Types
+// ─────────────────────────────────────────────────
+export interface FeePreviewLineItem {
+  feeStructureId: number;
+  feeType: string;
+  label: string;
+  occurrences: number;
+  totalAmount: number;
+  unitAmount: number;
+}
+
+export interface FeePreview {
+  academicYearId: number;
+  academicYearName: string;
+
+  classSectionId: number;
+  classSectionName: string;
+
+  grandTotal: number;
+
+  lineItems: FeePreviewLineItem[];
+}
+
+export interface InitialPayment {
+  feeType: string;
+  amountPaid: number;
+  monthsToPay?: number;
+}
+
+export interface MonthlyFeeDetail {
+  period: string;
+  grossAmount: number;
+  paidAmount: number;
+  status: string;
+}
+
+export interface StudentFeeBreakdown {
+  feeType: string;
+
+  grossAmount: number;
+  paidAmount: number;
+  balanceAmount: number;
+
+  discount: number;
+  netAmount: number;
+
+  monthlyDetails: MonthlyFeeDetail[];
+}
+
+export interface StudentFeeSummary {
+  studentId: string;
+
+  academicYearId: number;
+
+  totalGross: number;
+  totalPaid: number;
+  totalBalance: number;
+  totalDiscount: number;
+  totalNet: number;
+  totalOverdue: number;
+
+  breakdown: StudentFeeBreakdown[];
 }

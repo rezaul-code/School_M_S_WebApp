@@ -1,8 +1,29 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+
+import {
+  GraduationCap,
+  MoreHorizontal,
+  Search,
+} from "lucide-react";
+
+import { listStudents } from "@/lib/api/students";
+
+import type { Student } from "@/types/api";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 import {
   Table,
   TableBody,
@@ -11,43 +32,49 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import Pagination from "@/components/common/Pagination";
-import { Search, MoreHorizontal } from "lucide-react";
-import { listStudents } from "@/lib/api/students";
+
 import AdmitStudentDrawer from "@/components/students/AdmitStudentDrawer";
 import StudentDetailDrawer from "@/components/students/StudentDetailDrawer";
-import { format } from "date-fns";
-import { GraduationCap } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface Student {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  rollNumber: string;
-  phone?: string;
-  admissionDate?: string;
-  classSectionName?: string;
-  academicYearName?: string;
-}
 
 export default function Students() {
   const [page, setPage] = useState(0);
+
   const [search, setSearch] = useState("");
-  const [openAdmit, setOpenAdmit] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
+  const [openAdmit, setOpenAdmit] =
+    useState(false);
+
+  const [selectedStudent, setSelectedStudent] =
+    useState<Student | null>(null);
 
   const studentsQuery = useQuery({
-    queryKey: ["students", { page, search }],
-    queryFn: () => listStudents({ page, size: 10, search: search || undefined }),
-    keepPreviousData: true,
+    queryKey: ["students", page, search],
+
+    queryFn: () =>
+      listStudents({
+        page,
+        size: 10,
+        search: search || undefined,
+      }),
+
+    placeholderData: (previousData) =>
+      previousData,
   });
 
-  const totalPages = Math.ceil((studentsQuery.data?.totalElements ?? 0) / 10);
+  const totalElements =
+    studentsQuery.data?.totalElements ?? 0;
+
+  const students =
+    studentsQuery.data?.content ?? [];
+
+  const totalPages = Math.ceil(
+    totalElements / 10
+  );
 
   return (
-    <div className="space-y-6 p-1">
+    <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="space-y-1">
@@ -55,18 +82,25 @@ export default function Students() {
               <GraduationCap className="h-6 w-6" />
               Students
             </CardTitle>
+
             <CardDescription>
-              Manage student admissions, details, and records.
+              Manage student admissions,
+              details and records.
             </CardDescription>
           </div>
-          <Button onClick={() => setOpenAdmit(true)}>
+
+          <Button
+            onClick={() => setOpenAdmit(true)}
+          >
             Admit New Student
           </Button>
         </CardHeader>
+
         <CardContent>
           <div className="flex items-center py-4">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+
               <Input
                 placeholder="Search students..."
                 className="pl-10"
@@ -78,58 +112,106 @@ export default function Students() {
               />
             </div>
           </div>
+
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Roll #</TableHead>
-                  <TableHead>Section</TableHead>
-                  <TableHead>Admitted</TableHead>
-                  <TableHead className="w-16">Actions</TableHead>
+                  <TableHead>
+                    Student
+                  </TableHead>
+
+                  <TableHead>
+                    Email
+                  </TableHead>
+
+                  <TableHead>
+                    Roll #
+                  </TableHead>
+
+                  <TableHead>
+                    Section
+                  </TableHead>
+
+                  <TableHead>
+                    Admitted
+                  </TableHead>
+
+                  <TableHead className="w-[60px]">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
                 {studentsQuery.isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
-                      Loading...
+                    <TableCell
+                      colSpan={6}
+                      className="h-24 text-center"
+                    >
+                      Loading students...
                     </TableCell>
                   </TableRow>
-                ) : studentsQuery.data?.content?.length === 0 ? (
+                ) : students.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
-                      No students found. <Button variant="link" onClick={() => setOpenAdmit(true)} className="h-4 p-0">Admit first student</Button>
+                    <TableCell
+                      colSpan={6}
+                      className="h-24 text-center"
+                    >
+                      No students found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  studentsQuery.data?.content?.map((student: Student) => (
-                    <TableRow key={student.id}>
+                  students.map((student) => (
+                    <TableRow
+                      key={student.id}
+                    >
                       <TableCell className="font-medium">
-                        {student.firstName} {student.lastName}
+                        {student.fullName}
+
                         {student.phone && (
-                          <p className="text-xs text-muted-foreground">{student.phone}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {student.phone}
+                          </p>
                         )}
                       </TableCell>
-                      <TableCell>{student.email}</TableCell>
-                      <TableCell>{student.rollNumber}</TableCell>
+
+                      <TableCell>
+                        {student.email}
+                      </TableCell>
+
+                      <TableCell>
+                        {student.rollNumber}
+                      </TableCell>
+
                       <TableCell>
                         <Badge variant="outline">
-                          {student.classSectionName ?? "Unassigned"}
+                          {student.classSectionName ??
+                            "Unassigned"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm">
-                        {student.admissionDate 
-                          ? format(new Date(student.admissionDate), "MMM dd, yyyy") 
-                          : "—"
-                        }
+
+                      <TableCell>
+                        {student.admissionDate
+                          ? format(
+                              new Date(
+                                student.admissionDate
+                              ),
+                              "MMM dd, yyyy"
+                            )
+                          : "—"}
                       </TableCell>
+
                       <TableCell>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => setSelectedStudent(student)}
+                          onClick={() =>
+                            setSelectedStudent(
+                              student
+                            )
+                          }
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
@@ -140,22 +222,35 @@ export default function Students() {
               </TableBody>
             </Table>
           </div>
+
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-0 py-4">
-              <div className="flex-1 text-sm text-muted-foreground">
-                {studentsQuery.data?.totalElements ?? 0} students
+            <div className="flex items-center justify-between py-4">
+              <div className="text-sm text-muted-foreground">
+                Total Students:{" "}
+                {totalElements}
               </div>
-              <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onChange={setPage}
+              />
             </div>
           )}
         </CardContent>
       </Card>
 
-      <AdmitStudentDrawer open={openAdmit} onOpenChange={setOpenAdmit} />
-      <StudentDetailDrawer 
-        studentId={selectedStudent?.id ?? ""} 
+      <AdmitStudentDrawer
+        open={openAdmit}
+        onOpenChange={setOpenAdmit}
+      />
+
+      <StudentDetailDrawer
+        studentId={selectedStudent?.id ?? ""}
         open={!!selectedStudent}
-        onOpenChange={() => setSelectedStudent(null)} 
+        onOpenChange={() =>
+          setSelectedStudent(null)
+        }
       />
     </div>
   );
