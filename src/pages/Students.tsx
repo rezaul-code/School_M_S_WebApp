@@ -1,175 +1,161 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, UserPlus, Eye } from "lucide-react";
-
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-
-import { listStudents } from "@/lib/api/students";
-import { listClassSections, listAcademicYears } from "@/lib/api/master";
-import { useDebounce } from "@/hooks/useDebounce";
-import LoadingTable from "@/components/common/LoadingTable";
-import EmptyState from "@/components/common/EmptyState";
 import Pagination from "@/components/common/Pagination";
+import { Search, MoreHorizontal } from "lucide-react";
+import { listStudents } from "@/lib/api/students";
 import AdmitStudentDrawer from "@/components/students/AdmitStudentDrawer";
 import StudentDetailDrawer from "@/components/students/StudentDetailDrawer";
+import { format } from "date-fns";
+import { GraduationCap } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-const ALL = "__all__";
+interface Student {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  rollNumber: string;
+  phone?: string;
+  admissionDate?: string;
+  classSectionName?: string;
+  academicYearName?: string;
+}
 
 export default function Students() {
-  const [search, setSearch] = useState("");
-  const [classSectionId, setClassSectionId] = useState<string>(ALL);
-  const [academicYearId, setAcademicYearId] = useState<string>(ALL);
   const [page, setPage] = useState(0);
-  const [viewId, setViewId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [openAdmit, setOpenAdmit] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
-  const debouncedSearch = useDebounce(search, 400);
-
-  const sectionsQ = useQuery({ queryKey: ["class-sections"], queryFn: listClassSections });
-  const yearsQ = useQuery({ queryKey: ["academic-years"], queryFn: listAcademicYears });
-
-  const params = useMemo(
-    () => ({
-      page,
-      size: 20,
-      search: debouncedSearch || undefined,
-      classSectionId: classSectionId === ALL ? undefined : classSectionId,
-      academicYearId: academicYearId === ALL ? undefined : academicYearId,
-    }),
-    [page, debouncedSearch, classSectionId, academicYearId]
-  );
-
-  const studentsQ = useQuery({
-    queryKey: ["students", params],
-    queryFn: () => listStudents(params),
-    placeholderData: (prev) => prev,
+  const studentsQuery = useQuery({
+    queryKey: ["students", { page, search }],
+    queryFn: () => listStudents({ page, size: 10, search: search || undefined }),
+    keepPreviousData: true,
   });
 
-  const clearFilters = () => {
-    setSearch("");
-    setClassSectionId(ALL);
-    setAcademicYearId(ALL);
-    setPage(0);
-  };
-
-  const data = studentsQ.data?.content ?? [];
+  const totalPages = Math.ceil((studentsQuery.data?.totalElements ?? 0) / 10);
 
   return (
-    <div className="space-y-4">
-      <Card className="p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-              placeholder="Search by name, email, roll..."
-              className="pl-9"
-            />
+    <div className="space-y-6 p-1">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-6 w-6" />
+              Students
+            </CardTitle>
+            <CardDescription>
+              Manage student admissions, details, and records.
+            </CardDescription>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Select value={classSectionId} onValueChange={(v) => { setClassSectionId(v); setPage(0); }}>
-              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Class Section" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>All Sections</SelectItem>
-                {(sectionsQ.data ?? []).map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.className?.replace("_", " ")} - {s.sectionName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={academicYearId} onValueChange={(v) => { setAcademicYearId(v); setPage(0); }}>
-              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Academic Year" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>All Years</SelectItem>
-                {(yearsQ.data ?? []).map((y) => (
-                  <SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
-              <X className="h-4 w-4" /> Clear
-            </Button>
-            <AdmitStudentDrawer
-              trigger={
-                <Button className="gap-2"><UserPlus className="h-4 w-4" /> Admit Student</Button>
-              }
-            />
-          </div>
-        </div>
-      </Card>
-
-      <Card className="p-4">
-        {studentsQ.isLoading ? (
-          <LoadingTable cols={8} />
-        ) : data.length === 0 ? (
-          <EmptyState
-            title="No students found"
-            description="Try changing filters or admit a new student to get started."
-            action={
-              <AdmitStudentDrawer
-                trigger={<Button className="gap-2"><UserPlus className="h-4 w-4" /> Admit Student</Button>}
+          <Button onClick={() => setOpenAdmit(true)}>
+            Admit New Student
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center py-4">
+            <div className="relative w-full max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search students..."
+                className="pl-10"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(0);
+                }}
               />
-            }
-          />
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
+            </div>
+          </div>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Roll #</TableHead>
+                  <TableHead>Section</TableHead>
+                  <TableHead>Admitted</TableHead>
+                  <TableHead className="w-16">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {studentsQuery.isLoading ? (
                   <TableRow>
-                    <TableHead>Roll #</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Class Section</TableHead>
-                    <TableHead>Academic Year</TableHead>
-                    <TableHead>Admission</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      Loading...
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((s) => (
-                    <TableRow key={s.id}>
-                      <TableCell className="font-mono text-xs">{s.rollNumber}</TableCell>
-<TableCell className="font-medium">{s.fullName || `${s.firstName} ${s.lastName}`}</TableCell>
-                      <TableCell className="text-muted-foreground">{s.email}</TableCell>
-                      <TableCell>{s.phone || "—"}</TableCell>
-                      <TableCell>
-                        {s.classSectionName ||
-                          (s.classSectionId ? <span className="text-muted-foreground">…</span> : "—")}
+                ) : studentsQuery.data?.content?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      No students found. <Button variant="link" onClick={() => setOpenAdmit(true)} className="h-4 p-0">Admit first student</Button>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  studentsQuery.data?.content?.map((student: Student) => (
+                    <TableRow key={student.id}>
+                      <TableCell className="font-medium">
+                        {student.firstName} {student.lastName}
+                        {student.phone && (
+                          <p className="text-xs text-muted-foreground">{student.phone}</p>
+                        )}
                       </TableCell>
-<TableCell>{s.academicYear || s.academicYearName || "—"}</TableCell>
-                      <TableCell>{s.admissionDate || "—"}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="gap-1" onClick={() => setViewId(s.id)}>
-                          <Eye className="h-4 w-4" /> View
+                      <TableCell>{student.email}</TableCell>
+                      <TableCell>{student.rollNumber}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {student.classSectionName ?? "Unassigned"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {student.admissionDate 
+                          ? format(new Date(student.admissionDate), "MMM dd, yyyy") 
+                          : "—"
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setSelectedStudent(student)}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-0 py-4">
+              <div className="flex-1 text-sm text-muted-foreground">
+                {studentsQuery.data?.totalElements ?? 0} students
+              </div>
+              <Pagination page={page} totalPages={totalPages} onChange={setPage} />
             </div>
-            <Pagination
-              page={studentsQ.data?.number ?? page}
-              totalPages={studentsQ.data?.totalPages ?? 1}
-              onChange={setPage}
-            />
-          </>
-        )}
+          )}
+        </CardContent>
       </Card>
 
-      <StudentDetailDrawer
-        studentId={viewId}
-        open={!!viewId}
-        onOpenChange={(o) => !o && setViewId(null)}
+      <AdmitStudentDrawer open={openAdmit} onOpenChange={setOpenAdmit} />
+      <StudentDetailDrawer 
+        studentId={selectedStudent?.id ?? ""} 
+        open={!!selectedStudent}
+        onOpenChange={() => setSelectedStudent(null)} 
       />
     </div>
   );

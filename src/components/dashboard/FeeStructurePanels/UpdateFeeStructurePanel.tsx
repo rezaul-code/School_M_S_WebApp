@@ -4,17 +4,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Edit2 } from "lucide-react";
+import { Edit2, AlertCircle } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import SubmitButton from "@/components/common/SubmitButton";
 
 import { updateFeeStructure } from "@/lib/api/feeStructures";
-import { getApiErrorMessage } from "@/lib/api/client";
+import { getApiErrorMessage, TOKEN_KEY } from "@/lib/api/client";
 
 const schema = z.object({
   id: z.string().min(1, "ID is required").refine((val) => !isNaN(Number(val)), "ID must be a number"),
@@ -28,6 +29,7 @@ type Values = z.infer<typeof schema>;
 
 export function UpdateFeeStructurePanel() {
   const [response, setResponse] = useState<any>(null);
+  const isAuthenticated = !!localStorage.getItem(TOKEN_KEY);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -58,6 +60,14 @@ export function UpdateFeeStructurePanel() {
 
   return (
     <div className="space-y-4">
+      {!isAuthenticated && (
+        <Alert className="border-destructive bg-destructive/10">
+          <AlertCircle className="h-4 w-4 text-destructive" />
+          <AlertDescription className="text-destructive">
+            Authentication token missing. Please log in again to update fee structures.
+          </AlertDescription>
+        </Alert>
+      )}
       <Card className="p-6">
         <div className="space-y-4">
           <div>

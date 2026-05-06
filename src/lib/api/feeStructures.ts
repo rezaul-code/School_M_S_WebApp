@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api, TOKEN_KEY } from "./client";
 import type { FeeStructure } from "@/types/api";
 
 interface ApiResponse<T> {
@@ -48,6 +48,17 @@ export async function updateFeeStructure(
     description?: string;
   }
 ) {
+  // Guard: Validate ID
+  if (!id || isNaN(id) || id <= 0) {
+    throw new Error("Please provide a valid Fee Structure ID");
+  }
+
+  // Guard: Validate token exists
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    throw new Error("Authentication token missing. Please log in again.");
+  }
+
   const response = await api.patch<ApiResponse<FeeStructure>>(
     `/api/master/fee-structures/${id}`,
     payload
