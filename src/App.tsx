@@ -21,11 +21,9 @@ import NotFound from "./pages/NotFound";
 
 // New Master Data Setup Pages
 import AcademicYears from "./pages/AcademicYears";
+import ClassLevels from "./pages/ClassLevels";
+import Sections from "./pages/Sections";
 import ClassSections from "./pages/ClassSections";
-
-// Temporary Placeholders
-const Classes = () => <div className="p-6"><h2>Classes</h2><p>Placeholder for Classes Setup</p></div>;
-const Sections = () => <div className="p-6"><h2>Sections</h2><p>Placeholder for Sections Setup</p></div>;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,7 +58,7 @@ const App = () => (
             
             {/* Master Data Routes */}
             <Route path="/academic-years" element={<AcademicYears />} />
-            <Route path="/classes" element={<Classes />} />
+            <Route path="/class-levels" element={<ClassLevels />} />
             <Route path="/sections" element={<Sections />} />
             <Route path="/class-sections" element={<ClassSections />} />
             <Route path="/subjects" element={<Subjects />} />
