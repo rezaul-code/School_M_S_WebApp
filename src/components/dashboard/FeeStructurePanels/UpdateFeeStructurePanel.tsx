@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { Edit2, AlertCircle } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +24,7 @@ const schema = z.object({
   ),
   description: z.string().optional(),
 });
+
 type Values = z.infer<typeof schema>;
 
 export function UpdateFeeStructurePanel() {
@@ -68,6 +68,7 @@ export function UpdateFeeStructurePanel() {
           </AlertDescription>
         </Alert>
       )}
+
       <Card className="p-6">
         <div className="space-y-4">
           <div>
@@ -79,6 +80,7 @@ export function UpdateFeeStructurePanel() {
             className="space-y-4"
             onSubmit={form.handleSubmit((v) => updateMutation.mutate(v))}
           >
+            {/* Fee Structure ID Input */}
             <div className="space-y-1.5">
               <Label htmlFor="id">Fee Structure ID</Label>
               <Input
@@ -94,6 +96,7 @@ export function UpdateFeeStructurePanel() {
               )}
             </div>
 
+            {/* Amount Input */}
             <div className="space-y-1.5">
               <Label htmlFor="amount">Amount (Optional)</Label>
               <Input
@@ -108,8 +111,10 @@ export function UpdateFeeStructurePanel() {
                   {form.formState.errors.amount.message}
                 </p>
               )}
+              <p className="text-xs text-muted-foreground">Leave empty to keep existing amount</p>
             </div>
 
+            {/* Description Textarea */}
             <div className="space-y-1.5">
               <Label htmlFor="description">Description (Optional)</Label>
               <Textarea
@@ -118,8 +123,10 @@ export function UpdateFeeStructurePanel() {
                 {...form.register("description")}
                 rows={3}
               />
+              <p className="text-xs text-muted-foreground">Leave empty to keep existing description</p>
             </div>
 
+            {/* Submit Button */}
             <div className="flex gap-2 pt-4">
               <SubmitButton
                 loading={updateMutation.isPending}
@@ -132,9 +139,12 @@ export function UpdateFeeStructurePanel() {
         </div>
       </Card>
 
+      {/* Response Display */}
       {response && (
-        <Card className="p-4 bg-muted">
-          <h4 className="font-semibold mb-2">Response:</h4>
+        <Card className={`p-4 ${response.error ? "border-destructive bg-destructive/5" : "bg-muted"}`}>
+          <h4 className={`font-semibold mb-2 ${response.error ? "text-destructive" : ""}`}>
+            {response.error ? "Error:" : "Response:"}
+          </h4>
           <pre className="text-xs overflow-auto max-h-64 p-3 bg-background rounded border">
             {JSON.stringify(response, null, 2)}
           </pre>
