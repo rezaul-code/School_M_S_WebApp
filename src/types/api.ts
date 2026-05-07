@@ -1,4 +1,10 @@
-// src/types/api.ts
+// Standard API Response Wrapper
+export interface ApiResponse<T> {
+  data: T;
+  message: string;
+  success: boolean;
+  errorCode: string | null;
+}
 
 export interface AuthLoginResponse {
   token?: string;
@@ -17,29 +23,75 @@ export interface Page<T> {
   last?: boolean;
 }
 
-export interface ClassSection {
-  id: string;
-  className: string;
-  sectionName: string;
-  academicYearId?: string;
-  academicYearName?: string;
-  studentCount?: number;
+// ─────────────────────────────────────────────────
+// NEW: Master Data Types
+// ─────────────────────────────────────────────────
+
+export interface ClassLevel {
+  id: number;
+  name: string;
+  displayName: string;
+}
+
+export interface Section {
+  id: number;
+  name: string;
+  displayName: string;
 }
 
 export interface AcademicYear {
-  id: string;
+  id: number | string;
   name: string;
   startDate: string;
   endDate: string;
   active: boolean;
   studentCount?: number;
+  createdAt?: string;
 }
 
 export interface Subject {
-  id: string;
+  id: number | string;
   name: string;
   code: string;
+  createdAt?: string;
 }
+
+export interface ClassSection {
+  id: number | string;
+  academicYearId: number | string;
+  academicYearName: string;
+  className: string;
+  sectionName: string;
+  displayName?: string; // e.g. "CLASS_THREE - SUN"
+  studentCount?: number;
+}
+
+export interface ClassSubjectMapping {
+  id: number | string;
+  classLevelId: number;
+  className: string;
+  subjectId: number;
+  subjectCode: string;
+  subjectName: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FeeStructure {
+  id: string;
+  className: string;
+  academicYearId: string;
+  feeType: string;
+  frequency: string;
+  amount: number;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ─────────────────────────────────────────────────
+// User Types
+// ─────────────────────────────────────────────────
 
 export interface Student {
   id: string;
@@ -85,29 +137,8 @@ export interface DashboardStats {
   yearEnrollment?: { year: string; students: number }[];
 }
 
-export interface ClassSubjectMapping {
-  id: string;
-  className: string;
-  subjectId: string;
-  subject?: Subject;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface FeeStructure {
-  id: string;
-  className: string;
-  academicYearId: string;
-  feeType: string;
-  frequency: string;
-  amount: number;
-  description?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 // ─────────────────────────────────────────────────
-// NEW: Fee Preview & Summary Types
+// Fee Preview & Summary Types
 // ─────────────────────────────────────────────────
 export interface FeePreviewLineItem {
   feeStructureId: number;
@@ -121,12 +152,9 @@ export interface FeePreviewLineItem {
 export interface FeePreview {
   academicYearId: number;
   academicYearName: string;
-
   classSectionId: number;
   classSectionName: string;
-
   grandTotal: number;
-
   lineItems: FeePreviewLineItem[];
 }
 
@@ -145,28 +173,22 @@ export interface MonthlyFeeDetail {
 
 export interface StudentFeeBreakdown {
   feeType: string;
-
   grossAmount: number;
   paidAmount: number;
   balanceAmount: number;
-
   discount: number;
   netAmount: number;
-
   monthlyDetails: MonthlyFeeDetail[];
 }
 
 export interface StudentFeeSummary {
   studentId: string;
-
   academicYearId: number;
-
   totalGross: number;
   totalPaid: number;
   totalBalance: number;
   totalDiscount: number;
   totalNet: number;
   totalOverdue: number;
-
   breakdown: StudentFeeBreakdown[];
 }

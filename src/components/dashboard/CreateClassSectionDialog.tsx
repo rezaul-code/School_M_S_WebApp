@@ -6,45 +6,69 @@ import { toast } from "sonner";
 
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import SubmitButton from "@/components/common/SubmitButton";
-import { CLASS_OPTIONS, createClassSection, listAcademicYears } from "@/lib/api/master";
-import { getApiErrorMessage } from "@/lib/api/client";
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import SubmitButton from "../common/SubmitButton";
+import { 
+  createClassSection, 
+  listAcademicYears, 
+  getClassLevelOptions, 
+  getSectionOptions 
+} from "../../lib/api/master";
+import { getApiErrorMessage } from "../../lib/api/client";
 
 const schema = z.object({
-  className: z.string().min(1, "Class is required"),
-  sectionName: z.string().min(1, "Section is required"),
+  classLevelId: z.string().min(1, "Class is required"),
+  sectionId: z.string().min(1, "Section is required"),
   academicYearId: z.string().min(1, "Academic year is required"),
 });
+
 type Values = z.infer<typeof schema>;
+
+export interface CreateClassSectionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
 export default function CreateClassSectionDialog({
   open,
   onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
+}: CreateClassSectionDialogProps) {
   const qc = useQueryClient();
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { className: "", sectionName: "", academicYearId: "" },
+    defaultValues: { classLevelId: "", sectionId: "", academicYearId: "" },
   });
 
+  // Fetch Options from Master Data Helper APIs
   const yearsQ = useQuery({
     queryKey: ["academic-years"],
     queryFn: listAcademicYears,
     enabled: open,
   });
 
+  const classLevelsQ = useQuery({
+    queryKey: ["class-levels-options"],
+    queryFn: getClassLevelOptions,
+    enabled: open,
+  });
+
+  const sectionsQ = useQuery({
+    queryKey: ["sections-options"],
+    queryFn: getSectionOptions,
+    enabled: open,
+  });
+
   const mutation = useMutation({
-    mutationFn: createClassSection,
+    mutationFn: (v: Values) => createClassSection({
+      classLevelId: Number(v.classLevelId),
+      sectionId: Number(v.sectionId),
+      academicYearId: Number(v.academicYearId),
+    }),
     onSuccess: () => {
-      toast.success("Class section created");
+      toast.success("Class section created successfully");
       qc.invalidateQueries({ queryKey: ["class-sections"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       form.reset();
@@ -57,53 +81,68 @@ export default function CreateClassSectionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Class Section</DialogTitle>
-          <DialogDescription>Add a section to a class for an academic year.</DialogDescription>
+          <DialogTitle>Create Class Section Mapping</DialogTitle>
+          <DialogDescription>Map a class level to a specific section for an academic year.</DialogDescription>
         </DialogHeader>
         <form
           className="space-y-4"
           onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
         >
+          {/* Class Level Selection */}
           <div className="space-y-1.5">
-            <Label>Class</Label>
+            <Label>Class Level</Label>
             <Select
-              value={form.watch("className")}
-              onValueChange={(v) => form.setValue("className", v, { shouldValidate: true })}
+              value={form.watch("classLevelId")}
+              onValueChange={(v) => form.setValue("classLevelId", v, { shouldValidate: true })}
             >
-              <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder={classLevelsQ.isLoading ? "Loading classes..." : "Select class level"} />
+              </SelectTrigger>
               <SelectContent>
-                {CLASS_OPTIONS.map((c) => (
-                  <SelectItem key={c} value={c}>{c.replace("_", " ")}</SelectItem>
+                {(classLevelsQ.data ?? []).map((c) => (
+                  <SelectItem key={c.id} value={String(c.id)}>{c.displayName}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {form.formState.errors.className && (
-              <p className="text-xs text-destructive">{form.formState.errors.className.message}</p>
+            {form.formState.errors.classLevelId && (
+              <p className="text-xs text-destructive">{form.formState.errors.classLevelId.message}</p>
             )}
           </div>
 
+          {/* Section Selection */}
           <div className="space-y-1.5">
-            <Label htmlFor="sec">Section name</Label>
-            <Input id="sec" placeholder="A" {...form.register("sectionName")} />
-            {form.formState.errors.sectionName && (
-              <p className="text-xs text-destructive">{form.formState.errors.sectionName.message}</p>
+            <Label>Section</Label>
+            <Select
+              value={form.watch("sectionId")}
+              onValueChange={(v) => form.setValue("sectionId", v, { shouldValidate: true })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={sectionsQ.isLoading ? "Loading sections..." : "Select section"} />
+              </SelectTrigger>
+              <SelectContent>
+                {(sectionsQ.data ?? []).map((s) => (
+                  <SelectItem key={s.id} value={String(s.id)}>{s.displayName}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.formState.errors.sectionId && (
+              <p className="text-xs text-destructive">{form.formState.errors.sectionId.message}</p>
             )}
           </div>
 
+          {/* Academic Year Selection */}
           <div className="space-y-1.5">
-            <Label>Academic year</Label>
+            <Label>Academic Year</Label>
             <Select
               value={form.watch("academicYearId")}
               onValueChange={(v) => form.setValue("academicYearId", v, { shouldValidate: true })}
             >
               <SelectTrigger>
-                <SelectValue placeholder={yearsQ.isLoading ? "Loading..." : "Select year"} />
+                <SelectValue placeholder={yearsQ.isLoading ? "Loading years..." : "Select academic year"} />
               </SelectTrigger>
               <SelectContent>
                 {(yearsQ.data ?? []).map((y) => (
-                  <SelectItem key={y.id} value={String(y.id)}> {/* ← fix: ensure string value */}
-                    {y.name}
-                  </SelectItem>
+                  <SelectItem key={y.id} value={String(y.id)}>{y.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -112,9 +151,9 @@ export default function CreateClassSectionDialog({
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <SubmitButton loading={mutation.isPending}>Create</SubmitButton>
+            <SubmitButton loading={mutation.isPending}>Create Mapping</SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>
