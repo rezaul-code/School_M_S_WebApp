@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   GraduationCap, Users, BookOpen, Layers,
-  CalendarPlus, FolderPlus, ListTree, UserPlus,
+  ListTree, UserPlus,
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, AreaChart, Area,
@@ -10,18 +10,16 @@ import {
 } from "recharts";
 import { format } from "date-fns";
 
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import StatCard from "@/components/dashboard/StatCard";
-import CreateAcademicYearDialog from "@/components/dashboard/CreateAcademicYearDialog";
-import CreateClassSectionDialog from "@/components/dashboard/CreateClassSectionDialog";
-import FormOptionsDialog from "@/components/dashboard/FormOptionsDialog";
-import AdmitStudentDrawer from "@/components/students/AdmitStudentDrawer";
+import { Card } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import StatCard from "../components/dashboard/StatCard";
+import FormOptionsDialog from "../components/dashboard/FormOptionsDialog";
+import AdmitStudentDrawer from "../components/students/AdmitStudentDrawer";
 
-import { listStudents } from "@/lib/api/students";
-import { listTeachers } from "@/lib/api/teachers";
-import { listSubjects } from "@/lib/api/subjects";
-import { listClassSections, listAcademicYears } from "@/lib/api/master";
+import { listStudents } from "../lib/api/students";
+import { listTeachers } from "../lib/api/teachers";
+import { listSubjects } from "../lib/api/subjects";
+import { listClassSections, listAcademicYears } from "../lib/api/master";
 
 const PRIMARY = "hsl(244 75% 59%)";
 const PRIMARY_LIGHT = "hsl(244 90% 75%)";
@@ -31,11 +29,9 @@ const GRID = "hsl(220 13% 91%)";
 const AXIS = "hsl(220 9% 46%)";
 
 export default function Dashboard() {
-  // Quick Actions dialog states
-  const [openAcademicYear, setOpenAcademicYear] = useState(false);
-  const [openClassSection, setOpenClassSection] = useState(false);
   const [openFormOptions, setOpenFormOptions] = useState(false);
   const [openAdmitStudent, setOpenAdmitStudent] = useState(false);
+  
   const studentsQ = useQuery({
     queryKey: ["dashboard", "students"],
     queryFn: () => listStudents({ page: 0, size: 200 }),
@@ -175,31 +171,15 @@ export default function Dashboard() {
         </ChartCard>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions (Academic and Class section buttons removed from here and moved to their dedicated pages) */}
       <Card className="p-5">
         <div className="mb-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Quick Actions</h2>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex flex-wrap gap-3">
           <Button
             variant="outline"
-            className="h-auto justify-start gap-3 py-4 text-left"
-            onClick={() => setOpenAcademicYear(true)}
-          >
-            <CalendarPlus className="h-4 w-4 shrink-0" />
-            <span className="text-sm font-medium">Create Academic Year</span>
-          </Button>
-          <Button
-            variant="outline"
-            className="h-auto justify-start gap-3 py-4 text-left"
-            onClick={() => setOpenClassSection(true)}
-          >
-            <FolderPlus className="h-4 w-4 shrink-0" />
-            <span className="text-sm font-medium">Create Class Section</span>
-          </Button>
-          <Button
-            variant="outline"
-            className="h-auto justify-start gap-3 py-4 text-left"
+            className="h-auto justify-start gap-3 py-4 text-left min-w-[200px]"
             onClick={() => setOpenFormOptions(true)}
           >
             <ListTree className="h-4 w-4 shrink-0" />
@@ -207,7 +187,7 @@ export default function Dashboard() {
           </Button>
           <Button
             variant="default"
-            className="h-auto justify-start gap-3 py-4 text-left"
+            className="h-auto justify-start gap-3 py-4 text-left min-w-[200px]"
             onClick={() => setOpenAdmitStudent(true)}
           >
             <UserPlus className="h-4 w-4 shrink-0" />
@@ -215,8 +195,6 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        <CreateAcademicYearDialog open={openAcademicYear} onOpenChange={setOpenAcademicYear} />
-        <CreateClassSectionDialog open={openClassSection} onOpenChange={setOpenClassSection} />
         <FormOptionsDialog open={openFormOptions} onOpenChange={setOpenFormOptions} />
         <AdmitStudentDrawer open={openAdmitStudent} onOpenChange={setOpenAdmitStudent} />
       </Card>

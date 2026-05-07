@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster as Sonner } from "../src/components/ui/sonner";
+import { Toaster } from "../src/components/ui/toaster";
+import { TooltipProvider } from "../src/components/ui/tooltip";
 
-import AppLayout from "@/components/layout/AppLayout";
-import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import AppLayout from "./components/layout/AppLayout";
+import ProtectedRoute from "./components/layout/ProtectedRoute";
+
+// Safely using relative paths to ensure flawless compilation
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import StudentsPage from "./pages/Students";
@@ -16,6 +18,14 @@ import Subjects from "./pages/Subjects";
 import ClassSubjectMappings from "./pages/ClassSubjectMappings";
 import FeeStructures from "./pages/FeeStructures";
 import NotFound from "./pages/NotFound";
+
+// New Master Data Setup Pages
+import AcademicYears from "./pages/AcademicYears";
+import ClassSections from "./pages/ClassSections";
+
+// Temporary Placeholders
+const Classes = () => <div className="p-6"><h2>Classes</h2><p>Placeholder for Classes Setup</p></div>;
+const Sections = () => <div className="p-6"><h2>Sections</h2><p>Placeholder for Sections Setup</p></div>;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,8 +57,15 @@ const App = () => (
             <Route path="/students" element={<StudentsPage />} />
             <Route path="/students/admit" element={<AdmissionWizardPage />} />
             <Route path="/teachers" element={<Teachers />} />
+            
+            {/* Master Data Routes */}
+            <Route path="/academic-years" element={<AcademicYears />} />
+            <Route path="/classes" element={<Classes />} />
+            <Route path="/sections" element={<Sections />} />
+            <Route path="/class-sections" element={<ClassSections />} />
             <Route path="/subjects" element={<Subjects />} />
             <Route path="/class-subject-mappings" element={<ClassSubjectMappings />} />
+            
             <Route path="/fee-structures" element={<FeeStructures />} />
           </Route>
           <Route path="*" element={<NotFound />} />
