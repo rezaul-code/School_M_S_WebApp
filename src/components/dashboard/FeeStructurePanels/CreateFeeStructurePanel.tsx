@@ -2,12 +2,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,29 +20,52 @@ import {
 import SubmitButton from "@/components/common/SubmitButton";
 
 import { createFeeStructure } from "@/lib/api/feeStructures";
-import { CLASS_OPTIONS } from "@/lib/api/master";
+import { 
+  getClassLevelOptions, 
+  listAcademicYears 
+} from "@/lib/api/master";
 import { getApiErrorMessage } from "@/lib/api/client";
-
-const FEE_TYPES = ["TUITION", "TRANSPORT", "LIBRARY", "SPORTS", "OTHER"];
-const FREQUENCIES = ["MONTHLY", "QUARTERLY", "ANNUALLY", "ONE_TIME"];
+import { getDropdownOptions } from "@/lib/api/options";
 
 const schema = z.object({
-  className: z.string().min(1, "Class name is required"),
-  academicYearId: z.string().min(1, "Academic year ID is required").refine((v) => !isNaN(Number(v)), "Must be a number"),
+  classLevelId: z.string().min(1, "Class is required").refine((v) => !isNaN(Number(v)), "Must be a number"),
+  academicYearId: z.string().min(1, "Academic year is required").refine((v) => !isNaN(Number(v)), "Must be a number"),
   feeType: z.string().min(1, "Fee type is required"),
   frequency: z.string().min(1, "Frequency is required"),
   amount: z.string().min(1, "Amount is required").refine((v) => !isNaN(Number(v)) && Number(v) > 0, "Amount must be a positive number"),
   description: z.string().optional(),
 });
+
 type Values = z.infer<typeof schema>;
 
 export function CreateFeeStructurePanel() {
   const [response, setResponse] = useState<any>(null);
 
+  // Fetch dropdown options
+  const classesQuery = useQuery({
+    queryKey: ["class-levels"],
+    queryFn: getClassLevelOptions,
+  });
+
+  const academicYearsQuery = useQuery({
+    queryKey: ["academic-years"],
+    queryFn: listAcademicYears,
+  });
+
+  const feeTypesQuery = useQuery({
+    queryKey: ["fee-types"],
+    queryFn: () => getDropdownOptions("fee-types"),
+  });
+
+  const frequenciesQuery = useQuery({
+    queryKey: ["fee-frequencies"],
+    queryFn: () => getDropdownOptions("fee-frequencies"),
+  });
+
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
-      className: "",
+      classLevelId: "",
       academicYearId: "",
       feeType: "",
       frequency: "",
@@ -55,7 +77,7 @@ export function CreateFeeStructurePanel() {
   const createMutation = useMutation({
     mutationFn: (v: Values) =>
       createFeeStructure({
-        className: v.className,
+        classLevelId: Number(v.classLevelId),
         academicYearId: Number(v.academicYearId),
         feeType: v.feeType,
         frequency: v.frequency,
@@ -74,13 +96,24 @@ export function CreateFeeStructurePanel() {
     },
   });
 
+  const isLoading = 
+    classesQuery.isLoading || 
+    academicYearsQuery.isLoading || 
+    feeTypesQuery.isLoading || 
+    frequenciesQuery.isLoading;
+
+  const classes = classesQuery.data ?? [];
+  const academicYears = academicYearsQuery.data ?? [];
+  const feeTypes = feeTypesQuery.data ?? [];
+  const frequencies = frequenciesQuery.data ?? [];
+
   return (
     <div className="space-y-4">
       <Card className="p-6">
         <div className="space-y-4">
           <div>
             <h3 className="text-lg font-semibold">Create Fee Structure</h3>
-            <p className="text-sm text-muted-foreground">Add a new fee structure for a class</p>
+            <p className="text-sm text-muted-foreground">Add a new fee structure for a class and academic year</p>
           </div>
 
           <form
@@ -88,38 +121,51 @@ export function CreateFeeStructurePanel() {
             onSubmit={form.handleSubmit((v) => createMutation.mutate(v))}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Class Level Dropdown */}
               <div className="space-y-1.5">
-                <Label htmlFor="className">Class Name</Label>
+                <Label htmlFor="classLevelId">Class</Label>
                 <Select
-                  value={form.watch("className")}
-                  onValueChange={(val) => form.setValue("className", val)}
+                  value={form.watch("classLevelId")}
+                  onValueChange={(val) => form.setValue("classLevelId", val)}
+                  disabled={isLoading}
                 >
-                  <SelectTrigger id="className">
-                    <SelectValue placeholder="Select class" />
+                  <SelectTrigger id="classLevelId">
+                    <SelectValue placeholder={isLoading ? "Loading..." : "Select class"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {CLASS_OPTIONS.map((cls) => (
-                      <SelectItem key={cls} value={cls}>
-                        {cls}
+                    {classes.map((cls) => (
+                      <SelectItem key={cls.id} value={String(cls.id)}>
+                        {cls.displayName || cls.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {form.formState.errors.className && (
+                {form.formState.errors.classLevelId && (
                   <p className="text-xs text-destructive">
-                    {form.formState.errors.className.message}
+                    {form.formState.errors.classLevelId.message}
                   </p>
                 )}
               </div>
 
+              {/* Academic Year Dropdown */}
               <div className="space-y-1.5">
-                <Label htmlFor="academicYearId">Academic Year ID</Label>
-                <Input
-                  id="academicYearId"
-                  type="number"
-                  placeholder="Enter academic year ID"
-                  {...form.register("academicYearId")}
-                />
+                <Label htmlFor="academicYearId">Academic Year</Label>
+                <Select
+                  value={form.watch("academicYearId")}
+                  onValueChange={(val) => form.setValue("academicYearId", val)}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger id="academicYearId">
+                    <SelectValue placeholder={isLoading ? "Loading..." : "Select academic year"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {academicYears.map((year) => (
+                      <SelectItem key={year.id} value={String(year.id)}>
+                        {year.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {form.formState.errors.academicYearId && (
                   <p className="text-xs text-destructive">
                     {form.formState.errors.academicYearId.message}
@@ -127,19 +173,21 @@ export function CreateFeeStructurePanel() {
                 )}
               </div>
 
+              {/* Fee Type Dropdown */}
               <div className="space-y-1.5">
                 <Label htmlFor="feeType">Fee Type</Label>
                 <Select
                   value={form.watch("feeType")}
                   onValueChange={(val) => form.setValue("feeType", val)}
+                  disabled={isLoading}
                 >
                   <SelectTrigger id="feeType">
-                    <SelectValue placeholder="Select fee type" />
+                    <SelectValue placeholder={isLoading ? "Loading..." : "Select fee type"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {FEE_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
+                    {feeTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.value}>
+                        {type.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -151,19 +199,21 @@ export function CreateFeeStructurePanel() {
                 )}
               </div>
 
+              {/* Frequency Dropdown */}
               <div className="space-y-1.5">
                 <Label htmlFor="frequency">Frequency</Label>
                 <Select
                   value={form.watch("frequency")}
                   onValueChange={(val) => form.setValue("frequency", val)}
+                  disabled={isLoading}
                 >
                   <SelectTrigger id="frequency">
-                    <SelectValue placeholder="Select frequency" />
+                    <SelectValue placeholder={isLoading ? "Loading..." : "Select frequency"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {FREQUENCIES.map((freq) => (
-                      <SelectItem key={freq} value={freq}>
-                        {freq}
+                    {frequencies.map((freq) => (
+                      <SelectItem key={freq.id} value={freq.value}>
+                        {freq.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -175,6 +225,7 @@ export function CreateFeeStructurePanel() {
                 )}
               </div>
 
+              {/* Amount Input */}
               <div className="space-y-1.5">
                 <Label htmlFor="amount">Amount</Label>
                 <Input
@@ -192,6 +243,7 @@ export function CreateFeeStructurePanel() {
               </div>
             </div>
 
+            {/* Description Textarea */}
             <div className="space-y-1.5">
               <Label htmlFor="description">Description (Optional)</Label>
               <Textarea
@@ -202,9 +254,10 @@ export function CreateFeeStructurePanel() {
               />
             </div>
 
+            {/* Submit Button */}
             <div className="flex gap-2 pt-4">
               <SubmitButton
-                loading={createMutation.isPending}
+                loading={createMutation.isPending || isLoading}
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" /> Create Fee Structure
@@ -214,9 +267,12 @@ export function CreateFeeStructurePanel() {
         </div>
       </Card>
 
+      {/* Response Display */}
       {response && (
-        <Card className="p-4 bg-muted">
-          <h4 className="font-semibold mb-2">Response:</h4>
+        <Card className={`p-4 ${response.error ? "border-destructive bg-destructive/5" : "bg-muted"}`}>
+          <h4 className={`font-semibold mb-2 ${response.error ? "text-destructive" : ""}`}>
+            {response.error ? "Error:" : "Response:"}
+          </h4>
           <pre className="text-xs overflow-auto max-h-64 p-3 bg-background rounded border">
             {JSON.stringify(response, null, 2)}
           </pre>
