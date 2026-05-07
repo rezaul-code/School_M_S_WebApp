@@ -32,7 +32,7 @@ export const navItems = [
 // EXACTLY matching your notebook: Master Data Setup
 export const masterDataItems = [
   { to: "/academic-years", label: "Academic Year", icon: CalendarDays },
-  { to: "/classes", label: "Class", icon: School },
+  { to: "/class-levels", label: "Class", icon: School },
   { to: "/sections", label: "Sections", icon: Layers },
   { to: "/class-sections", label: "Class-Section", icon: Network },
   { to: "/subjects", label: "Subjects", icon: BookOpen },
