@@ -1,12 +1,5 @@
 import { api } from "./client";
-import type { Subject } from "@/types/api";
-
-interface ApiResponse<T> {
-  data: T;
-  message: string;
-  success: boolean;
-  errorCode: string | null;
-}
+import type { Subject, ApiResponse } from "@/types/api";
 
 export async function listSubjects() {
   const response = await api.get<ApiResponse<Subject[]>>("/api/master/subjects");
@@ -28,6 +21,6 @@ export async function deleteSubject(id: string) {
 }
 
 export async function listSubjectOptions() {
-  const response = await api.get<ApiResponse<{ id: string; name: string }[]>>("/api/master/options/subjects");
+  const response = await api.get<ApiResponse<Subject[]>>("/api/master/options/subjects");
   return response.data.data;
 }
