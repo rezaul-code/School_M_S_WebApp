@@ -1,29 +1,39 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { Toaster as Sonner } from "../src/components/ui/sonner";
-import { Toaster } from "../src/components/ui/toaster";
-import { TooltipProvider } from "../src/components/ui/tooltip";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
 
-import AppLayout from "./components/layout/AppLayout";
-import ProtectedRoute from "./components/layout/ProtectedRoute";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-// Safely using relative paths to ensure flawless compilation
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import StudentsPage from "./pages/Students";
-import AdmissionWizardPage from "./pages/AdmissionWizard";
+import AppLayout from "@/components/layout/AppLayout";
+import ProtectedRoute from "@/components/layout/ProtectedRoute";
 
-import Teachers from "./pages/Teachers";
-import Subjects from "./pages/Subjects";
-import ClassSubjectMappings from "./pages/ClassSubjectMappings";
-import FeeStructures from "./pages/FeeStructures";
-import NotFound from "./pages/NotFound";
+import Login from "@/pages/Login";
+import Dashboard from "@/pages/Dashboard";
+import StudentsPage from "@/pages/Students";
+import AdmissionWizardPage from "@/pages/AdmissionWizard";
 
-// New Master Data Setup Pages
-import AcademicYears from "./pages/AcademicYears";
-import ClassLevels from "./pages/ClassLevels";
-import Sections from "./pages/Sections";
-import ClassSections from "./pages/ClassSections";
+// Teachers
+import RegisterTeacherPage from "@/pages/RegisterTeacher";
+import TeachersPage from "@/pages/Teachers";
+import TeacherAssignmentsPage from "@/pages/TeacherAssignments";
+import SubjectAssignmentsPage from "@/pages/SubjectAssignments";
+
+// Master data
+import Subjects from "@/pages/Subjects";
+import ClassSubjectMappings from "@/pages/ClassSubjectMappings";
+import FeeStructures from "@/pages/FeeStructures";
+import AcademicYears from "@/pages/AcademicYears";
+import ClassLevels from "@/pages/ClassLevels";
+import Sections from "@/pages/Sections";
+import ClassSections from "@/pages/ClassSections";
+
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,42 +45,76 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner position="top-right" richColors />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            element={
-              <ProtectedRoute>
-                <AppLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/students" element={<StudentsPage />} />
-            <Route path="/students/admit" element={<AdmissionWizardPage />} />
-            <Route path="/teachers" element={<Teachers />} />
-            
-            {/* Master Data Routes */}
-            <Route path="/academic-years" element={<AcademicYears />} />
-            <Route path="/class-levels" element={<ClassLevels />} />
-            <Route path="/sections" element={<Sections />} />
-            <Route path="/class-sections" element={<ClassSections />} />
-            <Route path="/subjects" element={<Subjects />} />
-            <Route path="/class-subject-mappings" element={<ClassSubjectMappings />} />
-            
-            <Route path="/fee-structures" element={<FeeStructures />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner position="top-right" richColors />
 
-export default App;
+        <BrowserRouter>
+          <Routes>
+            {/* PUBLIC */}
+            <Route path="/login" element={<Login />} />
+
+            {/* PROTECTED */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route
+                path="/"
+                element={<Navigate to="/dashboard" replace />}
+              />
+
+              {/* DASHBOARD */}
+              <Route path="/dashboard" element={<Dashboard />} />
+
+              {/* STUDENTS */}
+              <Route path="/students" element={<StudentsPage />} />
+              <Route
+                path="/students/admit"
+                element={<AdmissionWizardPage />}
+              />
+
+              {/* TEACHERS — all four submenu routes */}
+              <Route
+                path="/teachers/register"
+                element={<RegisterTeacherPage />}
+              />
+              <Route path="/teachers" element={<TeachersPage />} />
+              <Route
+                path="/teachers/assignments"
+                element={<TeacherAssignmentsPage />}
+              />
+              <Route
+                path="/teachers/subject-assignments"
+                element={<SubjectAssignmentsPage />}
+              />
+
+              {/* MASTER DATA */}
+              <Route path="/academic-years" element={<AcademicYears />} />
+              <Route path="/class-levels" element={<ClassLevels />} />
+              <Route path="/sections" element={<Sections />} />
+              <Route path="/class-sections" element={<ClassSections />} />
+              <Route path="/subjects" element={<Subjects />} />
+              <Route
+                path="/class-subject-mappings"
+                element={<ClassSubjectMappings />}
+              />
+
+              {/* FEES */}
+              <Route path="/fee-structures" element={<FeeStructures />} />
+            </Route>
+
+            {/* FALLBACK */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}

@@ -1,92 +1,144 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Search, UserPlus, Eye, Pencil } from "lucide-react";
+
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+
+import { Eye, Pencil, Search, UserPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 
-import { listTeachers } from "@/lib/api/teachers";
-import { useDebounce } from "@/hooks/useDebounce";
-import LoadingTable from "@/components/common/LoadingTable";
-import EmptyState from "@/components/common/EmptyState";
 import Pagination from "@/components/common/Pagination";
-import RegisterTeacherDialog from "@/components/teachers/RegisterTeacherDialog";
+import EmptyState from "@/components/common/EmptyState";
+import LoadingTable from "@/components/common/LoadingTable";
+
 import TeacherDetailDrawer from "@/components/teachers/TeacherDetailDrawer";
 import EditTeacherDialog from "@/components/teachers/EditTeacherDialog";
+
+import {
+  deactivateTeacher,
+  listTeachers,
+  reactivateTeacher,
+} from "@/lib/api/teachers";
+
+import { getApiErrorMessage } from "@/lib/api/client";
+import { useDebounce } from "@/hooks/useDebounce";
+
 import type { Teacher } from "@/types/api";
 
-export default function Teachers() {
+export default function TeachersPage() {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+
   const [search, setSearch] = useState("");
-  const [activeOnly, setActiveOnly] = useState(false);
   const [page, setPage] = useState(0);
   const [viewId, setViewId] = useState<string | null>(null);
-  const [editTarget, setEditTarget] = useState<Teacher | null>(null);
+  const [editTeacher, setEditTeacher] = useState<Teacher | null>(null);
 
   const debouncedSearch = useDebounce(search, 400);
 
-  const params = useMemo(() => ({
-    page,
-    size: 20,
-    search: debouncedSearch || undefined,
-    active: activeOnly ? true : undefined,
-  }), [page, debouncedSearch, activeOnly]);
+  const params = useMemo(
+    () => ({
+      page,
+      size: 20,
+      search: debouncedSearch || undefined,
+    }),
+    [page, debouncedSearch]
+  );
 
-  const q = useQuery({
+  const teachersQuery = useQuery({
     queryKey: ["teachers", params],
     queryFn: () => listTeachers(params),
     placeholderData: (prev) => prev,
   });
 
-  const data = q.data?.content ?? [];
+  const toggleMutation = useMutation({
+    mutationFn: async (teacher: Teacher) => {
+      if (teacher.active) {
+        return deactivateTeacher(teacher.id);
+      }
+      return reactivateTeacher(teacher.id);
+    },
+
+    onSuccess: () => {
+      toast.success("Teacher status updated");
+      qc.invalidateQueries({ queryKey: ["teachers"] });
+    },
+
+    onError: (err) => {
+      toast.error(
+        getApiErrorMessage(err, "Failed to update teacher status")
+      );
+    },
+  });
+
+  const teachers = teachersQuery.data?.content || [];
+
+  const getDisplayName = (teacher: Teacher) =>
+    teacher.fullName ||
+    `${teacher.firstName || ""} ${teacher.lastName || ""}`.trim();
 
   return (
     <div className="space-y-4">
+      {/* HEADER */}
+      <div>
+        <h1 className="text-2xl font-bold">Teacher List</h1>
+        <p className="text-sm text-muted-foreground">
+          Manage all registered teachers
+        </p>
+      </div>
+
+      {/* FILTERS */}
       <Card className="p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-              placeholder="Search teachers..."
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
+              placeholder="Search by name or email..."
               className="pl-9"
             />
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5">
-              <Switch
-                id="active-only"
-                checked={activeOnly}
-                onCheckedChange={(v) => { setActiveOnly(v); setPage(0); }}
-              />
-              <Label htmlFor="active-only" className="text-sm">Active only</Label>
-            </div>
-            <RegisterTeacherDialog
-              trigger={<Button className="gap-2"><UserPlus className="h-4 w-4" /> Register Teacher</Button>}
-            />
-          </div>
+
+          <Button
+            className="gap-2"
+            onClick={() => navigate("/teachers/register")}
+          >
+            <UserPlus className="h-4 w-4" />
+            Register Teacher
+          </Button>
         </div>
       </Card>
 
+      {/* TABLE */}
       <Card className="p-4">
-        {q.isLoading ? (
+        {teachersQuery.isLoading ? (
           <LoadingTable cols={6} />
-        ) : data.length === 0 ? (
+        ) : teachers.length === 0 ? (
           <EmptyState
             title="No teachers found"
-            description="Register your first teacher to get started."
-            action={
-              <RegisterTeacherDialog
-                trigger={<Button className="gap-2"><UserPlus className="h-4 w-4" /> Register Teacher</Button>}
-              />
-            }
+            description="Register your first teacher."
           />
         ) : (
           <>
@@ -102,44 +154,87 @@ export default function Teachers() {
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                  {data.map((t) => (
-                    <TableRow key={t.id}>
-<TableCell className="font-medium">{t.fullName || `${t.firstName} ${t.lastName}`}</TableCell>
-                      <TableCell className="text-muted-foreground">{t.email}</TableCell>
-                      <TableCell>{t.phone || "—"}</TableCell>
-                      <TableCell>{t.joiningDate || "—"}</TableCell>
-                      <TableCell>
-                        {t.active ? (
-                          <Badge className="bg-success-soft text-success hover:bg-success-soft">Active</Badge>
-                        ) : (
-                          <Badge variant="destructive">Inactive</Badge>
-                        )}
+                  {teachers.map((teacher) => (
+                    <TableRow key={teacher.id}>
+                      <TableCell className="font-medium">
+                        {getDisplayName(teacher)}
                       </TableCell>
+
+                      <TableCell>{teacher.email}</TableCell>
+
+                      <TableCell>{teacher.phone || "—"}</TableCell>
+
+                      <TableCell>{teacher.joiningDate || "—"}</TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            checked={teacher.active}
+                            disabled={toggleMutation.isPending}
+                            onCheckedChange={() =>
+                              toggleMutation.mutate(teacher)
+                            }
+                          />
+                          {teacher.active ? (
+                            <Badge>Active</Badge>
+                          ) : (
+                            <Badge variant="destructive">Inactive</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="gap-1" onClick={() => setViewId(t.id)}>
-                          <Eye className="h-4 w-4" /> View
-                        </Button>
-                        <Button variant="ghost" size="sm" className="gap-1" onClick={() => setEditTarget(t)}>
-                          <Pencil className="h-4 w-4" /> Edit
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setViewId(teacher.id)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditTeacher(teacher)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
+
             <Pagination
-              page={q.data?.number ?? page}
-              totalPages={q.data?.totalPages ?? 1}
+              page={teachersQuery.data?.number ?? page}
+              totalPages={teachersQuery.data?.totalPages ?? 1}
               onChange={setPage}
             />
           </>
         )}
       </Card>
 
-      <TeacherDetailDrawer teacherId={viewId} open={!!viewId} onOpenChange={(o) => !o && setViewId(null)} />
-      <EditTeacherDialog teacher={editTarget} open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)} />
+      {/* DRAWERS / DIALOGS */}
+      <TeacherDetailDrawer
+        teacherId={viewId}
+        open={!!viewId}
+        onOpenChange={(o) => {
+          if (!o) setViewId(null);
+        }}
+      />
+
+      <EditTeacherDialog
+        teacher={editTeacher}
+        open={!!editTeacher}
+        onOpenChange={(o) => {
+          if (!o) setEditTeacher(null);
+        }}
+      />
     </div>
   );
 }
