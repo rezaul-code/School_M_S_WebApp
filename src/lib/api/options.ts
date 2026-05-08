@@ -7,7 +7,7 @@ interface ApiResponse<T> {
   errorCode: string | null;
 }
 
-interface DropdownOption {
+export interface DropdownOption {
   id: string | number;
   value: string;
   label: string;
@@ -15,13 +15,33 @@ interface DropdownOption {
 
 /**
  * Fetch dropdown options from API
- * Supports: fee-types, fee-frequencies, etc.
+ * Returns empty array on error instead of throwing
+ * Handles various response formats
  */
 export async function getDropdownOptions(
   optionType: "fee-types" | "fee-frequencies" | string
 ): Promise<DropdownOption[]> {
-  const response = await api.get<ApiResponse<DropdownOption[]>>(
-    `/api/master/options/${optionType}`
-  );
-  return response.data.data;
+  try {
+    const response = await api.get<ApiResponse<DropdownOption[]>>(
+      `/api/master/options/${optionType}`
+    );
+    
+    // Handle various response formats
+    const data = response?.data?.data;
+    
+    if (!data) {
+      console.warn(`No data returned for ${optionType}`);
+      return [];
+    }
+    
+    if (!Array.isArray(data)) {
+      console.warn(`Expected array for ${optionType}, got:`, typeof data);
+      return [];
+    }
+    
+    return data;
+  } catch (error) {
+    console.error(`Failed to fetch ${optionType}:`, error);
+    return [];
+  }
 }

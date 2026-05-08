@@ -109,18 +109,19 @@ export interface ClassSubjectMapping {
 // ======================================================
 
 export interface FeeStructure {
-  id: string;
+  id: number;
 
-  className: string;
+  className?: string;
 
-  academicYearId: string;
+  academicYearId: number;
+  academicYearName?: string;
 
   feeType: string;
   frequency: string;
 
   amount: number;
 
-  description?: string;
+  description?: string | null;
 
   createdAt?: string;
   updatedAt?: string;

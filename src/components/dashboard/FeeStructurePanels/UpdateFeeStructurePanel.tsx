@@ -5,29 +5,34 @@ import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Edit2, AlertCircle } from "lucide-react";
-
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import SubmitButton from "@/components/common/SubmitButton";
-
 import { updateFeeStructure } from "@/lib/api/feeStructures";
 import { getApiErrorMessage, TOKEN_KEY } from "@/lib/api/client";
 
 const schema = z.object({
-  id: z.string().min(1, "ID is required").refine((val) => !isNaN(Number(val)), "ID must be a number"),
-  amount: z.string().optional().refine(
-    (val) => !val || (!isNaN(Number(val)) && Number(val) > 0),
-    "Amount must be a positive number"
-  ),
+  id: z
+    .string()
+    .min(1, "ID is required")
+    .refine((val) => !isNaN(Number(val)), "ID must be a number"),
+  amount: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || (!isNaN(Number(val)) && Number(val) > 0),
+      "Amount must be a positive number"
+    ),
   description: z.string().optional(),
 });
 
 type Values = z.infer<typeof schema>;
 
 export function UpdateFeeStructurePanel() {
+  // LOCAL STATE ONLY
   const [response, setResponse] = useState<any>(null);
   const isAuthenticated = !!localStorage.getItem(TOKEN_KEY);
 
@@ -59,7 +64,7 @@ export function UpdateFeeStructurePanel() {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       {!isAuthenticated && (
         <Alert className="border-destructive bg-destructive/10">
           <AlertCircle className="h-4 w-4 text-destructive" />
@@ -73,7 +78,9 @@ export function UpdateFeeStructurePanel() {
         <div className="space-y-4">
           <div>
             <h3 className="text-lg font-semibold">Update Fee Structure</h3>
-            <p className="text-sm text-muted-foreground">Update amount and description of an existing fee structure</p>
+            <p className="text-sm text-muted-foreground">
+              Update amount and description of an existing fee structure
+            </p>
           </div>
 
           <form
@@ -90,26 +97,23 @@ export function UpdateFeeStructurePanel() {
                 {...form.register("id")}
               />
               {form.formState.errors.id && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.id.message}
-                </p>
+                <p className="text-xs text-destructive">{form.formState.errors.id.message}</p>
               )}
             </div>
 
             {/* Amount Input */}
             <div className="space-y-1.5">
-              <Label htmlFor="amount">Amount (Optional)</Label>
+              <Label htmlFor="amount">Amount (₹) (Optional)</Label>
               <Input
                 id="amount"
                 type="number"
                 step="0.01"
+                min="0"
                 placeholder="Enter new amount"
                 {...form.register("amount")}
               />
               {form.formState.errors.amount && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.amount.message}
-                </p>
+                <p className="text-xs text-destructive">{form.formState.errors.amount.message}</p>
               )}
               <p className="text-xs text-muted-foreground">Leave empty to keep existing amount</p>
             </div>
@@ -123,15 +127,14 @@ export function UpdateFeeStructurePanel() {
                 {...form.register("description")}
                 rows={3}
               />
-              <p className="text-xs text-muted-foreground">Leave empty to keep existing description</p>
+              <p className="text-xs text-muted-foreground">
+                Leave empty to keep existing description
+              </p>
             </div>
 
             {/* Submit Button */}
             <div className="flex gap-2 pt-4">
-              <SubmitButton
-                loading={updateMutation.isPending}
-                className="gap-2"
-              >
+              <SubmitButton loading={updateMutation.isPending} className="gap-2">
                 <Edit2 className="h-4 w-4" /> Update Fee Structure
               </SubmitButton>
             </div>
@@ -142,7 +145,9 @@ export function UpdateFeeStructurePanel() {
       {/* Response Display */}
       {response && (
         <Card className={`p-4 ${response.error ? "border-destructive bg-destructive/5" : "bg-muted"}`}>
-          <h4 className={`font-semibold mb-2 ${response.error ? "text-destructive" : ""}`}>
+          <h4
+            className={`font-semibold mb-2 ${response.error ? "text-destructive" : ""}`}
+          >
             {response.error ? "Error:" : "Response:"}
           </h4>
           <pre className="text-xs overflow-auto max-h-64 p-3 bg-background rounded border">
