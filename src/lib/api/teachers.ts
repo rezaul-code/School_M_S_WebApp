@@ -191,9 +191,12 @@ export async function getClassLevels() {
   return response.data.data;
 }
 
-export async function getSubjects() {
+// When classLevelId is provided, returns only subjects mapped to that class
+// via ClassSubject — matches what the backend validates on assignment
+export async function getSubjects(classLevelId?: number) {
   const response = await api.get<ApiResponse<SubjectOption[]>>(
-    "/api/master/options/subjects"
+    "/api/master/options/subjects",
+    { params: classLevelId ? { classLevelId } : {} }
   );
 
   return response.data.data;
@@ -202,6 +205,17 @@ export async function getSubjects() {
 export async function getSections() {
   const response = await api.get<ApiResponse<SectionOption[]>>(
     "/api/master/options/sections"
+  );
+
+  return response.data.data;
+}
+
+// Returns class sections for a specific class level, scoped to the active
+// academic year — used by AssignSubjectDialog section dropdown
+export async function getSectionsByClassLevel(classLevelId: number) {
+  const response = await api.get<ApiResponse<SectionOption[]>>(
+    "/api/master/options/class-sections",
+    { params: { classLevelId } }
   );
 
   return response.data.data;

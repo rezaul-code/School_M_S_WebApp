@@ -37,7 +37,7 @@ import SubmitButton from "@/components/common/SubmitButton";
 import {
   assignSubjectToTeacher,
   getClassLevels,
-  getSections,
+  getSectionsByClassLevel,
   getSubjects,
 } from "@/lib/api/teachers";
 
@@ -75,6 +75,14 @@ export default function AssignSubjectDialog({
     },
   });
 
+  const selectedClassLevelId = form.watch("classLevelId");
+
+  // Clear dependent fields when class level changes
+  useEffect(() => {
+    form.setValue("subjectId", "");
+    form.setValue("classSectionId", "");
+  }, [selectedClassLevelId, form]);
+
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
@@ -87,14 +95,18 @@ export default function AssignSubjectDialog({
     queryFn: getClassLevels,
   });
 
+  // Only fires once a class level is selected; re-fires when it changes
   const subjectsQuery = useQuery({
-    queryKey: ["subjects"],
-    queryFn: getSubjects,
+    queryKey: ["subjects", selectedClassLevelId],
+    queryFn: () => getSubjects(Number(selectedClassLevelId)),
+    enabled: !!selectedClassLevelId,
   });
 
+  // Only fires once a class level is selected; re-fires when it changes
   const sectionsQuery = useQuery({
-    queryKey: ["sections"],
-    queryFn: getSections,
+    queryKey: ["sections", selectedClassLevelId],
+    queryFn: () => getSectionsByClassLevel(Number(selectedClassLevelId)),
+    enabled: !!selectedClassLevelId,
   });
 
   const mutation = useMutation({
@@ -173,9 +185,20 @@ export default function AssignSubjectDialog({
             <Select
               value={form.watch("subjectId")}
               onValueChange={(value) => form.setValue("subjectId", value)}
+              disabled={!selectedClassLevelId || subjectsQuery.isLoading}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select subject" />
+                <SelectValue
+                  placeholder={
+                    !selectedClassLevelId
+                      ? "Select a class level first"
+                      : subjectsQuery.isLoading
+                      ? "Loading subjects…"
+                      : subjectsQuery.data?.length === 0
+                      ? "No subjects mapped to this class"
+                      : "Select subject"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {subjectsQuery.data?.map((subject) => (
@@ -200,9 +223,20 @@ export default function AssignSubjectDialog({
               onValueChange={(value) =>
                 form.setValue("classSectionId", value)
               }
+              disabled={!selectedClassLevelId || sectionsQuery.isLoading}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select section" />
+                <SelectValue
+                  placeholder={
+                    !selectedClassLevelId
+                      ? "Select a class level first"
+                      : sectionsQuery.isLoading
+                      ? "Loading sections…"
+                      : sectionsQuery.data?.length === 0
+                      ? "No sections for this class"
+                      : "Select section"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {sectionsQuery.data?.map((section) => (
