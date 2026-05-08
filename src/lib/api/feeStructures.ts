@@ -115,6 +115,16 @@ export async function updateFeeStructure(
   }
 }
 
+export async function getFeeStructuresByClass(
+  classLevelId: number,
+  academicYearId: number
+): Promise<FeeStructure[]> {
+  return getFilteredFeeStructures({
+    classLevelId,
+    academicYearId,
+  });
+}
+
 export async function getFeePreview(params: {
   classSectionId: string;
   academicYearId: string;

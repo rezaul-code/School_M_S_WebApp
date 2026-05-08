@@ -85,6 +85,9 @@ export interface ClassSection {
   className: string;
   sectionName: string;
 
+ classLevelId: number;          // ← ADD THIS
+  classLevelName: string;        // ← ADD THIS
+
   displayName?: string;
 
   studentCount?: number;
@@ -110,6 +113,9 @@ export interface ClassSubjectMapping {
 
 export interface FeeStructure {
   id: number;
+
+  classLevelId?: number;
+  classLevelName?: string;
 
   className?: string;
 

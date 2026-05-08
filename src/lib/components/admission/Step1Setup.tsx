@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle } from 'lucide-react';
 import type { WizardState } from '@/pages/AdmissionWizard';
-import type { AcademicYear, ClassSection } from '@/types/api';
+import type { AcademicYear, ClassLevel, ClassSection } from '@/types/api';
 import { getFormOptions } from '@/lib/api/students';
 
 interface FormOptions {
   academicYears: AcademicYear[];
+  classLevels: ClassLevel[];           // ← NEW: From updated form-options
   classSections: ClassSection[];
 }
 
@@ -21,13 +22,22 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
   });
 
   const academicYears = formOptionsQuery.data?.academicYears ?? [];
+  const classLevels = formOptionsQuery.data?.classLevels ?? [];       // ← NEW
   const classSections = formOptionsQuery.data?.classSections ?? [];
 
-  const filteredSections = classSections.filter(
-    (s) => !state.setupData.academicYearId || s.academicYearId === state.setupData.academicYearId
-  );
+  // ── CASCADING FILTERS ────────────────────────────────────────────────────────
+  
+  // Filter class sections by BOTH academic year AND class level
+  const filteredSections = classSections.filter((s) => {
+    const matchesYear = !state.setupData.academicYearId || 
+                        s.academicYearId === state.setupData.academicYearId;
+    const matchesClass = !state.setupData.classLevelId || 
+                         s.classLevelId === state.setupData.classLevelId;    // ← NEW
+    return matchesYear && matchesClass;
+  });
 
   const selectedYear = academicYears.find((y) => y.id === state.setupData.academicYearId);
+  const selectedClass = classLevels.find((c) => c.id === state.setupData.classLevelId);  // ← NEW
   const selectedSection = filteredSections.find((s) => s.id === state.setupData.classSectionId);
 
   return (
@@ -50,7 +60,7 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {/* Academic Year */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-200">
@@ -60,10 +70,12 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
               value={state.setupData.academicYearId ?? ''}
               onChange={(e) => {
                 const id = e.target.value ? Number(e.target.value) : null;
+                // When academic year changes, reset class level and section
                 setState((prev) => ({
                   ...prev,
                   setupData: {
                     academicYearId: id,
+                    classLevelId: null,
                     classSectionId: null,
                   },
                 }));
@@ -81,14 +93,49 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
             </select>
           </div>
 
+          {/* Class Level - NEW */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-200">
+              Class <span className="text-red-400">*</span>
+            </label>
+            <select
+              value={state.setupData.classLevelId ?? ''}
+              disabled={!state.setupData.academicYearId}
+              onChange={(e) => {
+                const id = e.target.value ? Number(e.target.value) : null;
+                // When class level changes, reset section
+                setState((prev) => ({
+                  ...prev,
+                  setupData: { 
+                    ...prev.setupData, 
+                    classLevelId: id,
+                    classSectionId: null,  // Reset section
+                  },
+                }));
+              }}
+              className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded-lg px-3 py-2.5
+                text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent
+                appearance-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <option value="">
+                {!state.setupData.academicYearId ? 'First select a year' : 'Select class'}
+              </option>
+              {classLevels.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.displayName || c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Class Section */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-200">
-              Class section <span className="text-red-400">*</span>
+              Section <span className="text-red-400">*</span>
             </label>
             <select
               value={state.setupData.classSectionId ?? ''}
-              disabled={!state.setupData.academicYearId || filteredSections.length === 0}
+              disabled={!state.setupData.classLevelId || filteredSections.length === 0}
               onChange={(e) => {
                 const id = e.target.value ? Number(e.target.value) : null;
                 setState((prev) => ({
@@ -101,13 +148,18 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
                 appearance-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <option value="">
-                {!state.setupData.academicYearId ? 'First select a year' : 'Select class section'}
+                {!state.setupData.classLevelId 
+                  ? 'First select a class' 
+                  : filteredSections.length === 0
+                  ? 'No sections available'
+                  : 'Select section'
+                }
               </option>
               {filteredSections.map((s) => {
-                const name = `${s.className?.replace(/_/g, ' ') ?? ''} - ${s.sectionName}`;
+                const sectionName = s.sectionName || 'Unknown';
                 return (
                   <option key={s.id} value={s.id}>
-                    {name}
+                    {sectionName}
                   </option>
                 );
               })}
@@ -116,7 +168,7 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
         </div>
 
         <p className="mt-3 text-xs text-gray-500">
-          Class section list filters to the selected academic year.
+          Select academic year, then class, then section. Class section list filters to your selections.
         </p>
       </div>
     </div>

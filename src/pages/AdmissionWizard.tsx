@@ -18,11 +18,20 @@ export type PaymentRow = {
 export type WizardState = {
   activeStep: 1 | 2 | 3 | 4;
   setupData: {
-    academicYearId: number | null;
-    classSectionId: number | null;
-    academicYearName?: string;
-    classSectionName?: string;
-  };
+  academicYearId: number | null;
+
+  // NEW
+  classLevelId: number | null;
+
+  classSectionId: number | null;
+
+  academicYearName?: string;
+
+  // NEW
+  classLevelName?: string;
+
+  classSectionName?: string;
+};
   studentInfo: {
     firstName: string;
     lastName: string;
@@ -45,7 +54,11 @@ export type SuccessState = {
 
 const INITIAL_STATE: WizardState = {
   activeStep: 1,
-  setupData: { academicYearId: null, classSectionId: null },
+  setupData: {
+  academicYearId: null,
+  classLevelId: null,
+  classSectionId: null,
+},
   studentInfo: {
     firstName: '', lastName: '', email: '', password: '',
     rollNumber: '', phone: '', dateOfBirth: '',
@@ -62,7 +75,9 @@ export default function AdmissionWizard() {
 
   // ── Validation ──────────────────────────────────────────────────────────────
   const isStep1Valid = () =>
-    state.setupData.academicYearId !== null && state.setupData.classSectionId !== null;
+  state.setupData.academicYearId !== null &&
+  state.setupData.classLevelId !== null &&
+  state.setupData.classSectionId !== null;
 
   const isStep2Valid = () =>
     state.studentInfo.firstName.trim() !== '' &&
@@ -122,6 +137,8 @@ export default function AdmissionWizard() {
         classSectionId: String(state.setupData.classSectionId!),
         // @ts-expect-error - extended payload fields
         academicYearId: state.setupData.academicYearId,
+        // NEW
+        classLevelId: state.setupData.classLevelId,
         initialPayments: paymentsPayload,
       });
 
