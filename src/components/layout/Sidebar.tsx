@@ -194,8 +194,7 @@ export default function SidebarContent({
   };
 
   return (
-    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      {/* Header */}
+  <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground backdrop-blur-xl">      {/* Header */}
       <div className="flex items-center gap-2 px-6 py-5 border-b border-sidebar-border">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <Logo className="h-5 w-5" />
