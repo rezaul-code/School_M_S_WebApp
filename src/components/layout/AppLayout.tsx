@@ -48,8 +48,8 @@ export default function AppLayout() {
     <div className="flex min-h-screen w-full bg-background">
       {/* Desktop fixed sidebar */}
       <aside
-        className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-sidebar-border lg:block"
-        style={{ boxShadow: "var(--shadow-sidebar)" }}
+      className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-sidebar-border bg-sidebar lg:block"       
+      style={{ boxShadow: "var(--shadow-sidebar)" }}
       >
         <SidebarContent />
       </aside>

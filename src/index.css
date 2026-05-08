@@ -15,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 25% 12%;
 
-    /* Indigo #4F46E5 */
+    /* Indigo */
     --primary: 244 75% 59%;
     --primary-foreground: 0 0% 100%;
     --primary-soft: 244 90% 96%;
@@ -43,54 +43,84 @@
     --input: 220 13% 91%;
     --ring: 244 75% 59%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 20% 25%;
-    --sidebar-primary: 244 75% 59%;
+    /* =========================================================
+       PROFESSIONAL DARK SIDEBAR
+    ========================================================= */
+
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 20% 92%;
+
+    --sidebar-primary: 250 95% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 244 90% 96%;
-    --sidebar-accent-foreground: 244 75% 40%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 244 75% 59%;
 
-    --shadow-sidebar: 0 4px 24px -8px hsl(244 60% 30% / 0.08);
-    --shadow-card: 0 1px 3px 0 hsl(220 25% 20% / 0.06), 0 1px 2px -1px hsl(220 25% 20% / 0.06);
-    --shadow-elegant: 0 10px 30px -12px hsl(244 75% 59% / 0.25);
+    --sidebar-accent: 222 35% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+
+    --sidebar-border: 222 28% 20%;
+    --sidebar-ring: 250 95% 67%;
+
+    /* Shadows */
+    --shadow-sidebar:
+      0 10px 30px -12px hsl(240 70% 5% / 0.55);
+
+    --shadow-card:
+      0 1px 3px 0 hsl(220 25% 20% / 0.06),
+      0 1px 2px -1px hsl(220 25% 20% / 0.06);
+
+    --shadow-elegant:
+      0 10px 30px -12px hsl(244 75% 59% / 0.25);
   }
 
   .dark {
     --background: 222 25% 8%;
     --foreground: 210 40% 98%;
+
     --card: 222 25% 11%;
     --card-foreground: 210 40% 98%;
+
     --popover: 222 25% 11%;
     --popover-foreground: 210 40% 98%;
+
     --primary: 244 75% 65%;
     --primary-foreground: 222 25% 8%;
+
     --primary-soft: 244 40% 20%;
+
     --secondary: 222 20% 16%;
     --secondary-foreground: 210 40% 98%;
+
     --muted: 222 20% 16%;
     --muted-foreground: 220 9% 65%;
+
     --accent: 244 40% 22%;
     --accent-foreground: 244 90% 90%;
+
     --destructive: 0 62% 45%;
     --destructive-foreground: 210 40% 98%;
+
     --success: 145 55% 50%;
     --success-foreground: 0 0% 100%;
+
     --success-soft: 145 40% 18%;
+
     --border: 222 20% 18%;
     --input: 222 20% 18%;
     --ring: 244 75% 65%;
-    --sidebar-background: 222 25% 11%;
-    --sidebar-foreground: 210 30% 90%;
-    --sidebar-primary: 244 75% 65%;
-    --sidebar-primary-foreground: 222 25% 8%;
-    --sidebar-accent: 222 20% 16%;
+
+    /* Dark mode sidebar */
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 20% 92%;
+
+    --sidebar-primary: 250 95% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+
+    --sidebar-accent: 222 35% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 20% 18%;
-    --sidebar-ring: 244 75% 65%;
+
+    --sidebar-border: 222 28% 20%;
+    --sidebar-ring: 250 95% 67%;
   }
 }
 
@@ -99,13 +129,19 @@
     @apply border-border;
   }
 
-  html, body, #root {
+  html,
+  body,
+  #root {
     @apply h-full;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-feature-settings:
+      "cv02",
+      "cv03",
+      "cv04",
+      "cv11";
   }
 }
 
@@ -117,11 +153,18 @@
       hsl(var(--accent)) 50%,
       hsl(var(--muted)) 100%
     );
+
     background-size: 200% 100%;
     animation: shimmer 2.4s ease-in-out infinite;
   }
+
   @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+      background-position: 200% 0;
+    }
+
+    100% {
+      background-position: -200% 0;
+    }
   }
 }
