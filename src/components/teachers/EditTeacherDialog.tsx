@@ -1,80 +1,132 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
 import SubmitButton from "@/components/common/SubmitButton";
+
 import { updateTeacher } from "@/lib/api/teachers";
 import { getApiErrorMessage } from "@/lib/api/client";
+
 import type { Teacher } from "@/types/api";
 
 const schema = z.object({
-  phone: z.string().optional().or(z.literal("")),
-  address: z.string().optional().or(z.literal("")),
+  phone: z.string().optional(),
+  address: z.string().optional(),
 });
-type Values = z.infer<typeof schema>;
+
+type FormValues = z.infer<typeof schema>;
 
 interface Props {
   teacher: Teacher | null;
   open: boolean;
-  onOpenChange: (v: boolean) => void;
+  onOpenChange: (open: boolean) => void;
 }
 
-export default function EditTeacherDialog({ teacher, open, onOpenChange }: Props) {
+export default function EditTeacherDialog({
+  teacher,
+  open,
+  onOpenChange,
+}: Props) {
   const qc = useQueryClient();
-  const form = useForm<Values>({
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { phone: "", address: "" },
+    defaultValues: {
+      phone: "",
+      address: "",
+    },
   });
 
+  // Populate form when teacher changes
   useEffect(() => {
-    if (teacher && open) {
-      form.reset({ phone: teacher.phone ?? "", address: teacher.address ?? "" });
+    if (teacher) {
+      form.reset({
+        phone: teacher.phone || "",
+        address: teacher.address || "",
+      });
+    } else {
+      form.reset({ phone: "", address: "" });
     }
-  }, [teacher, open, form]);
+  }, [teacher, form]);
 
   const mutation = useMutation({
-    mutationFn: (v: Values) => updateTeacher(teacher!.id, v),
+    mutationFn: (values: FormValues) => {
+      if (!teacher) throw new Error("No teacher selected");
+
+      return updateTeacher(teacher.id, {
+        phone: values.phone || undefined,
+        address: values.address || undefined,
+      });
+    },
+
     onSuccess: () => {
-      toast.success("Teacher updated");
+      toast.success("Teacher updated successfully");
       qc.invalidateQueries({ queryKey: ["teachers"] });
-      qc.invalidateQueries({ queryKey: ["teacher", teacher?.id] });
       onOpenChange(false);
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, "Update failed")),
+
+    onError: (err) => {
+      toast.error(getApiErrorMessage(err, "Failed to update teacher"));
+    },
   });
+
+  const displayName =
+    teacher?.fullName ||
+    `${teacher?.firstName || ""} ${teacher?.lastName || ""}`.trim();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit Teacher</DialogTitle>
-          <DialogDescription>
-            {teacher ? `${teacher.firstName} ${teacher.lastName}` : ""}
-          </DialogDescription>
+          <DialogDescription>{displayName}</DialogDescription>
         </DialogHeader>
-        <form className="space-y-4" onSubmit={form.handleSubmit((v) => mutation.mutate(v as Values))}>
+
+        <form
+          onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+          className="space-y-4"
+        >
           <div className="space-y-1.5">
             <Label>Phone</Label>
             <Input {...form.register("phone")} />
           </div>
+
           <div className="space-y-1.5">
             <Label>Address</Label>
             <Textarea rows={3} {...form.register("address")} />
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <SubmitButton loading={mutation.isPending}>Save changes</SubmitButton>
-          </DialogFooter>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+
+            <SubmitButton loading={mutation.isPending}>
+              Save Changes
+            </SubmitButton>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

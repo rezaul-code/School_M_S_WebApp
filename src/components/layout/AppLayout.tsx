@@ -1,12 +1,45 @@
 import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Menu } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import SidebarContent, { getActiveNav } from "./Sidebar";
+import SidebarContent, {
+  navItems,
+  teacherItems,
+  masterDataItems,
+  studentItems,
+} from "@/components/layout/Sidebar";
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon?: any;
+}
+
+// Helper function to get active nav
+function getActiveNav(pathname: string): NavItem {
+  const allItems: NavItem[] = [
+    ...navItems,
+    ...teacherItems,
+    ...masterDataItems,
+    ...studentItems,
+    {
+      to: "/fee-structures",
+      label: "Fee Structures",
+    },
+  ];
+
+  return (
+    allItems.find(
+      (n) =>
+        pathname === n.to ||
+        pathname.startsWith(n.to + "/")
+    ) ?? navItems[0]
+  );
+}
 
 export default function AppLayout() {
-  console.log("AppLayout rendered");
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const active = getActiveNav(location.pathname);
@@ -26,7 +59,12 @@ export default function AppLayout() {
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-card/80 px-4 backdrop-blur lg:px-6">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden"
+                aria-label="Open menu"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>

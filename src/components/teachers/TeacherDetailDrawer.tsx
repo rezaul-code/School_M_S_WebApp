@@ -1,66 +1,182 @@
 import { useQuery } from "@tanstack/react-query";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { Badge } from "@/components/ui/badge";
-import { getTeacher } from "@/lib/api/teachers";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+
+import { getTeacher, getTeacherAssignments } from "@/lib/api/teachers";
 
 interface Props {
   teacherId: string | null;
   open: boolean;
-  onOpenChange: (v: boolean) => void;
+  onOpenChange: (open: boolean) => void;
 }
 
-export default function TeacherDetailDrawer({ teacherId, open, onOpenChange }: Props) {
-  const q = useQuery({
-    queryKey: ["teacher", teacherId],
-    queryFn: () => getTeacher(teacherId as string),
-    enabled: !!teacherId && open,
-  });
-
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | null;
+}) {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Teacher Details</SheetTitle>
-          <SheetDescription>Read-only profile</SheetDescription>
-        </SheetHeader>
-        <div className="mt-6">
-          {q.isLoading && (
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
-            </div>
-          )}
-          {q.data && (
-            <dl className="divide-y divide-border rounded-md border border-border">
-              <div className="grid grid-cols-3 gap-2 px-3 py-2.5 text-sm">
-                <dt className="text-muted-foreground">Status</dt>
-                <dd className="col-span-2">
-                  {q.data.active ? (
-                    <Badge className="bg-success-soft text-success hover:bg-success-soft">Active</Badge>
-                  ) : (
-                    <Badge variant="destructive">Inactive</Badge>
-                  )}
-                </dd>
-              </div>
-<Row label="Name" value={q.data.fullName || `${q.data.firstName ?? ''} ${q.data.lastName ?? ''}`.trim()} />
-              <Row label="Email" value={q.data.email} />
-              <Row label="Phone" value={q.data.phone} />
-              <Row label="Date of Birth" value={q.data.dateOfBirth} />
-              <Row label="Address" value={q.data.address} />
-              <Row label="Joining Date" value={q.data.joiningDate} />
-            </dl>
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
+    <div className="space-y-0.5">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm font-medium">{value || "—"}</p>
+    </div>
   );
 }
 
-function Row({ label, value }: { label: string; value?: string }) {
+export default function TeacherDetailDrawer({
+  teacherId,
+  open,
+  onOpenChange,
+}: Props) {
+  const teacherQuery = useQuery({
+    queryKey: ["teacher", teacherId],
+    enabled: !!teacherId,
+    queryFn: () => getTeacher(teacherId as string),
+  });
+
+  const assignmentsQuery = useQuery({
+    queryKey: ["teacher-assignments-drawer", teacherId],
+    enabled: !!teacherId,
+    queryFn: () => getTeacherAssignments(teacherId as string),
+  });
+
+  const teacher = teacherQuery.data;
+  const assignments = assignmentsQuery.data || [];
+
+  const displayName =
+    teacher?.fullName ||
+    `${teacher?.firstName || ""} ${teacher?.lastName || ""}`.trim();
+
   return (
-    <div className="grid grid-cols-3 gap-2 px-3 py-2.5 text-sm">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="col-span-2 font-medium">{value || <span className="text-muted-foreground">—</span>}</dd>
-    </div>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>{displayName || "Teacher Details"}</SheetTitle>
+          <SheetDescription>{teacher?.email}</SheetDescription>
+        </SheetHeader>
+
+        {teacherQuery.isLoading ? (
+          <div className="mt-6 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-10 rounded-md bg-muted animate-pulse"
+              />
+            ))}
+          </div>
+        ) : teacher ? (
+          <div className="mt-6 space-y-6">
+            {/* STATUS */}
+            <div className="flex items-center gap-2">
+              {teacher.active ? (
+                <Badge>Active</Badge>
+              ) : (
+                <Badge variant="destructive">Inactive</Badge>
+              )}
+            </div>
+
+            {/* PERSONAL */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Personal
+              </h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <DetailRow
+                  label="First Name"
+                  value={teacher.firstName}
+                />
+                <DetailRow
+                  label="Last Name"
+                  value={teacher.lastName}
+                />
+                <DetailRow
+                  label="Date of Birth"
+                  value={teacher.dateOfBirth}
+                />
+                <DetailRow
+                  label="Joining Date"
+                  value={teacher.joiningDate}
+                />
+              </div>
+            </div>
+
+            {/* CONTACT */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Contact
+              </h3>
+
+              <div className="space-y-3">
+                <DetailRow label="Email" value={teacher.email} />
+                <DetailRow label="Phone" value={teacher.phone} />
+                <DetailRow label="Address" value={teacher.address} />
+              </div>
+            </div>
+
+            {/* ASSIGNMENTS */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Subject Assignments ({assignments.length})
+              </h3>
+
+              {assignmentsQuery.isLoading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-10 rounded-md bg-muted animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : assignments.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No subjects assigned
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {assignments.map((assignment) => (
+                    <div
+                      key={assignment.id}
+                      className="flex items-start justify-between rounded-md border p-3"
+                    >
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {assignment.subjectCode}
+                          </Badge>
+                          <span className="text-sm font-medium">
+                            {assignment.subjectName}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {assignment.className}
+                          {assignment.classSectionName
+                            ? ` • ${assignment.classSectionName}`
+                            : ""}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="mt-6 text-sm text-muted-foreground">
+            Teacher not found
+          </p>
+        )}
+      </SheetContent>
+    </Sheet>
   );
 }
