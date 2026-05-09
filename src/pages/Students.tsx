@@ -1,13 +1,14 @@
+// src/pages/Students.tsx
+
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { useActiveAcademicYear } from "@/hooks/useActiveAcademicYear";
 
 import {
   GraduationCap,
   MoreHorizontal,
   Search,
-  RotateCcw,
 } from "lucide-react";
 
 import { listStudents } from "@/lib/api/students";
@@ -15,11 +16,8 @@ import { listStudents } from "@/lib/api/students";
 import type { Student } from "@/types/api";
 
 import { Button } from "@/components/ui/button";
-
 import { Input } from "@/components/ui/input";
-
 import { Badge } from "@/components/ui/badge";
-
 import {
   Card,
   CardContent,
@@ -27,7 +25,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
 import {
   Table,
   TableBody,
@@ -36,12 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import Pagination from "@/components/common/Pagination";
-
-import StudentDetailDrawer from "@/components/students/StudentDetailDrawer";
-import FeeSummaryDrawer from "@/components/students/FeeSummaryDrawer";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,39 +41,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-
 export default function Students() {
+  const navigate = useNavigate();
 
   const [page, setPage] = useState(0);
-
   const [search, setSearch] = useState("");
 
-  const { data: activeYear, isLoading: academicYearLoading } = useActiveAcademicYear();
-  const activeAcademicYearId = activeYear?.id as number | undefined;
-
-  // Filters (restored)
+  // Filters (preserved)
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
-
-  const [selectedStudent, setSelectedStudent] =
-    useState<Student | null>(null);
-
-
-  const [feeSummaryStudentId, setFeeSummaryStudentId] =
-    useState<string | null>(null);
-
-  const [openFeeSummary, setOpenFeeSummary] =
-    useState(false);
-
 
   const studentsQuery = useQuery({
     queryKey: [
@@ -92,7 +61,6 @@ export default function Students() {
       selectedSection,
       selectedStatus,
     ],
-
     queryFn: () =>
       listStudents({
         page,
@@ -100,37 +68,28 @@ export default function Students() {
         search: search || undefined,
         classSectionId: selectedSection || undefined,
       }),
-
     placeholderData: (previousData) => previousData,
   });
 
-
-  const students =
-    studentsQuery.data?.content ?? [];
-
+  const students = studentsQuery.data?.content ?? [];
   const totalElements = studentsQuery.data?.totalElements ?? 0;
 
   const filteredStudents = useMemo(() => {
-    // API only supports classSectionId + search. Keep previous UI filter behavior by applying the remaining filters client-side.
+    // API only supports classSectionId + search. Keep previous UI filter behavior
+    // by applying the remaining filters client-side.
     return students.filter((s) => {
-      // Student list data does not include className, only classSectionId/classSectionName.
       const matchesClass = !selectedClass || selectedClass === "";
-      const matchesSection = !selectedSection ||
+      const matchesSection =
+        !selectedSection ||
         (s.classSectionId ?? "").toString() === selectedSection;
-      const matchesStatus = !selectedStatus ||
-        (s.admissionDate ? "admitted" : "pending") ===
-          selectedStatus;
+      const matchesStatus =
+        !selectedStatus ||
+        (s.admissionDate ? "admitted" : "pending") === selectedStatus;
       return matchesClass && matchesSection && matchesStatus;
     });
-
   }, [students, selectedClass, selectedSection, selectedStatus]);
 
-
-  const totalPages = Math.ceil(
-    totalElements / 10
-  );
-
-
+  const totalPages = Math.ceil(totalElements / 10);
 
   return (
     <div className="space-y-6">
@@ -141,22 +100,16 @@ export default function Students() {
               <GraduationCap className="h-6 w-6" />
               Students
             </CardTitle>
-
             <CardDescription>
-              Manage student admissions,
-              details and records.
+              Manage student admissions, details and records.
             </CardDescription>
           </div>
-
-
-
         </CardHeader>
 
         <CardContent>
           <div className="flex items-center py-4">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-
               <Input
                 placeholder="Search students..."
                 className="pl-10"
@@ -173,35 +126,17 @@ export default function Students() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>
-                    Student
-                  </TableHead>
-
-                  <TableHead>
-                    Email
-                  </TableHead>
-
-                  <TableHead>
-                    Roll #
-                  </TableHead>
-
-                  <TableHead>
-                    Section
-                  </TableHead>
-
-                  <TableHead>
-                    Admitted
-                  </TableHead>
-
-                  <TableHead className="w-[60px]">
-                    Actions
-                  </TableHead>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Roll #</TableHead>
+                  <TableHead>Section</TableHead>
+                  <TableHead>Admitted</TableHead>
+                  <TableHead className="w-[60px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
                 {studentsQuery.isLoading ? (
-
                   <TableRow>
                     <TableCell
                       colSpan={6}
@@ -221,12 +156,9 @@ export default function Students() {
                   </TableRow>
                 ) : (
                   students.map((student) => (
-                    <TableRow
-                      key={student.id}
-                    >
+                    <TableRow key={student.id}>
                       <TableCell className="font-medium">
                         {student.fullName}
-
                         {student.phone && (
                           <p className="text-xs text-muted-foreground">
                             {student.phone}
@@ -234,27 +166,20 @@ export default function Students() {
                         )}
                       </TableCell>
 
-                      <TableCell>
-                        {student.email}
-                      </TableCell>
+                      <TableCell>{student.email}</TableCell>
 
-                      <TableCell>
-                        {student.rollNumber}
-                      </TableCell>
+                      <TableCell>{student.rollNumber}</TableCell>
 
                       <TableCell>
                         <Badge variant="outline">
-                          {student.classSectionName ??
-                            "Unassigned"}
+                          {student.classSectionName ?? "Unassigned"}
                         </Badge>
                       </TableCell>
 
                       <TableCell>
                         {student.admissionDate
                           ? format(
-                              new Date(
-                                student.admissionDate
-                              ),
+                              new Date(student.admissionDate),
                               "MMM dd, yyyy"
                             )
                           : "—"}
@@ -275,24 +200,24 @@ export default function Students() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               onSelect={() =>
-                                setSelectedStudent(student)
+                                navigate(`/students/${student.id}`)
                               }
                             >
                               View Details
                             </DropdownMenuItem>
 
                             <DropdownMenuItem
-onSelect={() => {
-                                setFeeSummaryStudentId(student.id);
-                                setOpenFeeSummary(true);
-                              }}
+                              onSelect={() =>
+                                navigate(
+                                  `/students/${student.id}/fee-summary`
+                                )
+                              }
                             >
                               Fee Summary
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
-
                     </TableRow>
                   ))
                 )}
@@ -303,8 +228,7 @@ onSelect={() => {
           {totalPages > 1 && (
             <div className="flex items-center justify-between py-4">
               <div className="text-sm text-muted-foreground">
-                Total Students:{" "}
-                {totalElements}
+                Total Students: {totalElements}
               </div>
 
               <Pagination
@@ -316,27 +240,6 @@ onSelect={() => {
           )}
         </CardContent>
       </Card>
-
-
-
-      <StudentDetailDrawer
-        studentId={selectedStudent?.id ?? ""}
-        open={!!selectedStudent}
-        onOpenChange={() =>
-          setSelectedStudent(null)
-        }
-      />
-
-          <FeeSummaryDrawer
-          studentId={feeSummaryStudentId}
-          open={openFeeSummary}
-          onOpenChange={(v) => {
-            setOpenFeeSummary(v);
-            if (!v) setFeeSummaryStudentId(null);
-          }}
-          academicYearId={activeAcademicYearId}
-        />
     </div>
   );
 }
-
