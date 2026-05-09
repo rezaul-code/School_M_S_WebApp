@@ -13,8 +13,6 @@ import {
 
 import { listStudents } from "@/lib/api/students";
 
-import type { Student } from "@/types/api";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -48,9 +46,9 @@ export default function Students() {
   const [search, setSearch] = useState("");
 
   // Filters (preserved)
-  const [selectedClass, setSelectedClass] = useState("");
-  const [selectedSection, setSelectedSection] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedClass]   = useState("");
+  const [selectedSection] = useState("");
+  const [selectedStatus]  = useState("");
 
   const studentsQuery = useQuery({
     queryKey: [
@@ -71,19 +69,16 @@ export default function Students() {
     placeholderData: (previousData) => previousData,
   });
 
-  const students = studentsQuery.data?.content ?? [];
+  const students      = studentsQuery.data?.content      ?? [];
   const totalElements = studentsQuery.data?.totalElements ?? 0;
 
+  // API only supports classSectionId + search; remaining filters applied client-side.
   const filteredStudents = useMemo(() => {
-    // API only supports classSectionId + search. Keep previous UI filter behavior
-    // by applying the remaining filters client-side.
     return students.filter((s) => {
-      const matchesClass = !selectedClass || selectedClass === "";
-      const matchesSection =
-        !selectedSection ||
+      const matchesClass   = !selectedClass   || selectedClass   === "";
+      const matchesSection = !selectedSection ||
         (s.classSectionId ?? "").toString() === selectedSection;
-      const matchesStatus =
-        !selectedStatus ||
+      const matchesStatus  = !selectedStatus  ||
         (s.admissionDate ? "admitted" : "pending") === selectedStatus;
       return matchesClass && matchesSection && matchesStatus;
     });
@@ -138,19 +133,13 @@ export default function Students() {
               <TableBody>
                 {studentsQuery.isLoading ? (
                   <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="h-24 text-center"
-                    >
+                    <TableCell colSpan={6} className="h-24 text-center">
                       Loading students...
                     </TableCell>
                   </TableRow>
                 ) : students.length === 0 ? (
                   <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="h-24 text-center"
-                    >
+                    <TableCell colSpan={6} className="h-24 text-center">
                       No students found.
                     </TableCell>
                   </TableRow>
@@ -167,7 +156,6 @@ export default function Students() {
                       </TableCell>
 
                       <TableCell>{student.email}</TableCell>
-
                       <TableCell>{student.rollNumber}</TableCell>
 
                       <TableCell>
@@ -208,9 +196,7 @@ export default function Students() {
 
                             <DropdownMenuItem
                               onSelect={() =>
-                                navigate(
-                                  `/students/${student.id}/fee-summary`
-                                )
+                                navigate(`/students/${student.id}/fee-summary`)
                               }
                             >
                               Fee Summary
