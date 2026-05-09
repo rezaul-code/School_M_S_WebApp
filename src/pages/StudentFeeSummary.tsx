@@ -9,10 +9,11 @@ import {
   Receipt,
   AlertCircle,
   FileX,
-  TrendingDown,
   Wallet,
-  BadgeIndianRupee,
+  TrendingUp,
+  TrendingDown,
   CircleAlert,
+  IndianRupee,
 } from "lucide-react";
 
 import {
@@ -22,25 +23,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 import type { MonthlyFeeDetail, StudentFeeSummary } from "@/types/api";
 import { getStudentFeeSummary } from "@/lib/api/students";
 import { useActiveAcademicYear } from "@/hooks/useActiveAcademicYear";
-import { cn } from "@/lib/utils";
 
 import "@/styles/student-pages.css";
 
-// ── Currency formatting — INR ──────────────────────────────
+// ── Currency — INR ───────────────────────────────────────────────
 
 function formatINR(v?: number): string {
   if (typeof v !== "number") return "—";
@@ -51,38 +41,95 @@ function formatINR(v?: number): string {
   }).format(v);
 }
 
-// ── Status badge helpers (preserved from FeeSummaryDrawer) ─
-
-function getStatusVariant(status: string) {
-  const s = (status ?? "").toUpperCase();
-  if (s === "OVERDUE") return "destructive";
-  if (s === "PAID")    return "default";
-  return "outline";
-}
-
-function getStatusClassName(status: string) {
-  const s = (status ?? "").toUpperCase();
-  if (s === "OVERDUE")
-    return "bg-destructive text-destructive-foreground hover:bg-destructive/90";
-  if (s === "PAID")
-    return "bg-green-600 text-white border-green-600 hover:bg-green-600/90";
-  if (s === "PARTIAL")
-    return "bg-amber-500 text-black border-amber-500 hover:bg-amber-500/90";
-  return "";
-}
+// ── Status badge ─────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
+  const s = (status ?? "").toUpperCase();
+  const cls =
+    s === "PAID"    ? "sp-badge sp-badge--paid"    :
+    s === "OVERDUE" ? "sp-badge sp-badge--overdue"  :
+    s === "PARTIAL" ? "sp-badge sp-badge--partial"  :
+                      "sp-badge sp-badge--default";
+  return <span className={cls}>{status || "—"}</span>;
+}
+
+// ── Skeleton ─────────────────────────────────────────────────────
+
+function Skel({ style }: { style?: React.CSSProperties }) {
+  return <div className="sp-skel" style={style} />;
+}
+
+function LoadingSkeleton() {
   return (
-    <Badge
-      variant={getStatusVariant(status) as any}
-      className={cn("capitalize text-[0.7rem] font-semibold px-2 py-0.5", getStatusClassName(status))}
-    >
-      {status || "—"}
-    </Badge>
+    <div className="sp-page">
+      <Skel style={{ height: "2rem", width: "9rem", borderRadius: "0.5rem" }} />
+
+      {/* Hero */}
+      <div
+        style={{
+          borderRadius: "1rem",
+          padding: "1.75rem 2rem",
+          background: "hsl(var(--muted) / 0.5)",
+          border: "1px solid hsl(var(--border))",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.75rem",
+        }}
+      >
+        <Skel style={{ width: "2.75rem", height: "2.75rem", borderRadius: "0.625rem", flexShrink: 0 }} />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <Skel style={{ height: "1.125rem", width: "10rem" }} />
+          <Skel style={{ height: "0.8rem", width: "7rem" }} />
+        </div>
+      </div>
+
+      {/* Stat cards */}
+      <div className="sp-stat-grid">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            style={{
+              borderRadius: "0.875rem",
+              border: "1px solid hsl(var(--border))",
+              padding: "1.125rem 1.25rem",
+              background: "hsl(var(--card))",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.5rem",
+            }}
+          >
+            <Skel style={{ height: "0.7rem", width: "6rem" }} />
+            <Skel style={{ height: "1.375rem", width: "8rem" }} />
+          </div>
+        ))}
+      </div>
+
+      {/* Accordion skeletons */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            borderRadius: "0.75rem",
+            border: "1px solid hsl(var(--border))",
+            padding: "1rem 1.25rem",
+            background: "hsl(var(--card))",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            <Skel style={{ height: "0.875rem", width: "8rem" }} />
+            <Skel style={{ height: "0.7rem", width: "5rem" }} />
+          </div>
+          <Skel style={{ height: "0.9375rem", width: "6rem" }} />
+        </div>
+      ))}
+    </div>
   );
 }
 
-// ── Stat card ──────────────────────────────────────────────
+// ── Stat card ────────────────────────────────────────────────────
 
 interface StatCardProps {
   label: string;
@@ -93,46 +140,17 @@ interface StatCardProps {
 
 function StatCard({ label, value, colorClass, icon: Icon }: StatCardProps) {
   return (
-    <div className={`sp-stat-card ${colorClass}`}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "0.25rem",
-        }}
-      >
-        <span className="sp-stat-label">{label}</span>
-        <Icon
-          size={15}
-          style={{ color: "hsl(var(--muted-foreground))", opacity: 0.6 }}
-        />
+    <div className={`sp-stat ${colorClass}`}>
+      <div className="sp-stat-icon">
+        <Icon size={16} />
       </div>
+      <div className="sp-stat-label">{label}</div>
       <div className="sp-stat-value">{value}</div>
     </div>
   );
 }
 
-// ── Loading skeleton ───────────────────────────────────────
-
-function LoadingSkeleton() {
-  return (
-    <div className="sp-page">
-      <Skeleton className="h-8 w-36 rounded-md" />
-      <Skeleton className="h-24 w-full rounded-xl" />
-      <div className="sp-stat-grid">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 w-full rounded-xl" />
-        ))}
-      </div>
-      <Skeleton className="h-14 w-full rounded-xl" />
-      <Skeleton className="h-14 w-full rounded-xl" />
-      <Skeleton className="h-14 w-full rounded-xl" />
-    </div>
-  );
-}
-
-// ── Page ───────────────────────────────────────────────────
+// ── Page ─────────────────────────────────────────────────────────
 
 export default function StudentFeeSummaryPage() {
   const { studentId } = useParams<{ studentId: string }>();
@@ -168,15 +186,15 @@ export default function StudentFeeSummaryPage() {
 
   const hasAnyBreakdown = (summary?.breakdown?.length ?? 0) > 0;
 
-  // ── Loading state
+  // ── Loading
   if (q.isLoading || isWaitingForAcademicYear) return <LoadingSkeleton />;
 
-  // ── Error state
+  // ── Error
   if (q.isError) {
     return (
       <div className="sp-page">
-        <button className="sp-back-btn" onClick={() => navigate("/students")}>
-          <ArrowLeft size={14} /> Back to Students
+        <button className="sp-back" onClick={() => navigate("/students")}>
+          <ArrowLeft /> Back to Students
         </button>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -190,25 +208,25 @@ export default function StudentFeeSummaryPage() {
     );
   }
 
-  // ── No data state
+  // ── No data
   if (!summary) {
     return (
       <div className="sp-page">
-        <button className="sp-back-btn" onClick={() => navigate("/students")}>
-          <ArrowLeft size={14} /> Back to Students
+        <button className="sp-back" onClick={() => navigate("/students")}>
+          <ArrowLeft /> Back to Students
         </button>
 
-        {/* Hero */}
         <div className="sp-hero">
+          <div className="sp-hero-glow2" />
           <div className="sp-hero-inner">
-            <div className="sp-hero-icon-wrap">
-              <Receipt />
-            </div>
-            <div className="sp-hero-text">
-              <h1 className="sp-hero-title">Fee Summary</h1>
-              <p className="sp-hero-subtitle">
-                Gross, paid and outstanding amounts by fee type
-              </p>
+            <div className="sp-hero-left">
+              <div className="sp-hero-icon"><Receipt /></div>
+              <div className="sp-hero-text">
+                <h1 className="sp-hero-title">Fee Summary</h1>
+                <p className="sp-hero-sub">
+                  {activeYear?.name ?? "Current academic year"}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -226,66 +244,79 @@ export default function StudentFeeSummaryPage() {
 
   return (
     <div className="sp-page">
-      {/* Back nav */}
-      <button className="sp-back-btn" onClick={() => navigate("/students")}>
-        <ArrowLeft size={14} /> Back to Students
+      {/* Back */}
+      <button className="sp-back" onClick={() => navigate("/students")}>
+        <ArrowLeft /> Back to Students
       </button>
 
-      {/* Hero banner */}
+      {/* ── Hero banner ── */}
       <div className="sp-hero">
+        <div className="sp-hero-glow2" />
         <div className="sp-hero-inner">
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <div className="sp-hero-icon-wrap">
-              <Receipt />
-            </div>
+          <div className="sp-hero-left">
+            <div className="sp-hero-icon"><Receipt /></div>
             <div className="sp-hero-text">
               <h1 className="sp-hero-title">Fee Summary</h1>
-              <p className="sp-hero-subtitle">
+              <p className="sp-hero-sub">
                 {activeYear?.name
                   ? `Academic Year: ${activeYear.name}`
                   : "Gross, paid and outstanding amounts by fee type"}
               </p>
             </div>
           </div>
+
+          <div className="sp-hero-badge">
+            <IndianRupee size={11} />
+            {hasAnyBreakdown
+              ? `${summary.breakdown.length} fee type${summary.breakdown.length !== 1 ? "s" : ""}`
+              : "No records"}
+          </div>
         </div>
       </div>
 
-      {/* Stat cards */}
+      {/* ── Stat cards ── */}
       <div className="sp-stat-grid">
         <StatCard
           label="Total Gross"
           value={formatINR(totals?.totalGross)}
-          colorClass="sp-stat-card--blue"
-          icon={BadgeIndianRupee}
+          colorClass="sp-stat--blue"
+          icon={TrendingUp}
         />
         <StatCard
           label="Total Paid"
           value={formatINR(totals?.totalPaid)}
-          colorClass="sp-stat-card--green"
+          colorClass="sp-stat--green"
           icon={Wallet}
         />
         <StatCard
           label="Total Balance"
           value={formatINR(totals?.totalBalance)}
-          colorClass="sp-stat-card--amber"
+          colorClass="sp-stat--amber"
           icon={TrendingDown}
         />
         <StatCard
           label="Total Overdue"
           value={formatINR(totals?.totalOverdue)}
-          colorClass="sp-stat-card--red"
+          colorClass="sp-stat--red"
           icon={CircleAlert}
         />
       </div>
 
-      {/* Fee breakdown section */}
-      <div className="sp-section">
-        <div className="sp-section-header">
-          <Receipt size={15} />
-          <h2 className="sp-section-header-title">Fee Breakdown by Type</h2>
+      {/* ── Fee breakdown ── */}
+      <div className="sp-card sp-card--teal">
+        <div className="sp-card-header">
+          <div className="sp-card-header-icon">
+            <Receipt size={15} />
+          </div>
+          <div>
+            <h2 className="sp-card-title">Fee Breakdown by Type</h2>
+            <p className="sp-card-subtitle">
+              Expand each fee type to view monthly details
+            </p>
+          </div>
         </div>
 
-        <div className="sp-section-body">
+        <div className="sp-card-body">
           {!hasAnyBreakdown ? (
             <div className="sp-empty">
               <FileX className="sp-empty-icon" />
@@ -295,14 +326,16 @@ export default function StudentFeeSummaryPage() {
               </p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <div>
               {summary.breakdown.map((b, idx) => (
                 <Accordion
                   key={`${b.feeType}-${idx}`}
                   type="single"
                   collapsible
                   value={
-                    expandedFeeTypes.includes(b.feeType) ? b.feeType : undefined
+                    expandedFeeTypes.includes(b.feeType)
+                      ? b.feeType
+                      : undefined
                   }
                   onValueChange={(v) => {
                     setExpandedFeeTypes((prev) => {
@@ -314,24 +347,20 @@ export default function StudentFeeSummaryPage() {
                 >
                   <AccordionItem
                     value={b.feeType}
-                    className="sp-accordion-item border-0"
+                    className="sp-accord border-0"
                   >
                     <AccordionTrigger
-                      className="px-4 py-3 hover:no-underline"
+                      className="px-4 py-3.5 hover:no-underline [&>svg]:shrink-0"
                       style={{ textDecoration: "none" }}
                     >
-                      <div className="sp-accordion-trigger-inner">
-                        <div style={{ textAlign: "left" }}>
-                          <div className="sp-accordion-fee-type">{b.feeType}</div>
-                          <div className="sp-accordion-fee-sub">
-                            Monthly details
-                          </div>
+                      <div className="sp-accord-trigger">
+                        <div className="sp-accord-left">
+                          <div className="sp-accord-name">{b.feeType}</div>
+                          <div className="sp-accord-sub">Monthly details</div>
                         </div>
-                        <div className="sp-accordion-balance">
-                          <span className="sp-accordion-balance-label">
-                            Balance
-                          </span>
-                          <span className="sp-accordion-balance-value">
+                        <div className="sp-accord-right" style={{ marginRight: "0.5rem" }}>
+                          <span className="sp-accord-right-label">Balance</span>
+                          <span className="sp-accord-right-value">
                             {formatINR(b.balanceAmount)}
                           </span>
                         </div>
@@ -340,37 +369,29 @@ export default function StudentFeeSummaryPage() {
 
                     <AccordionContent className="px-4 pb-4">
                       {/* Mini metrics */}
-                      <div className="sp-mini-grid">
-                        <div className="sp-mini-chip">
-                          <div className="sp-mini-chip-label">Gross</div>
-                          <div className="sp-mini-chip-value">
-                            {formatINR(b.grossAmount)}
-                          </div>
+                      <div className="sp-chips">
+                        <div className="sp-chip">
+                          <div className="sp-chip-label">Gross</div>
+                          <div className="sp-chip-value">{formatINR(b.grossAmount)}</div>
                         </div>
-                        <div className="sp-mini-chip">
-                          <div className="sp-mini-chip-label">Paid</div>
-                          <div className="sp-mini-chip-value">
-                            {formatINR(b.paidAmount)}
-                          </div>
+                        <div className="sp-chip">
+                          <div className="sp-chip-label">Paid</div>
+                          <div className="sp-chip-value">{formatINR(b.paidAmount)}</div>
                         </div>
-                        <div className="sp-mini-chip">
-                          <div className="sp-mini-chip-label">Balance</div>
-                          <div className="sp-mini-chip-value">
-                            {formatINR(b.balanceAmount)}
-                          </div>
+                        <div className="sp-chip">
+                          <div className="sp-chip-label">Balance</div>
+                          <div className="sp-chip-value">{formatINR(b.balanceAmount)}</div>
                         </div>
-                        <div className="sp-mini-chip">
-                          <div className="sp-mini-chip-label">Discount</div>
-                          <div className="sp-mini-chip-value">
-                            {formatINR(b.discount)}
-                          </div>
+                        <div className="sp-chip">
+                          <div className="sp-chip-label">Discount</div>
+                          <div className="sp-chip-value">{formatINR(b.discount)}</div>
                         </div>
                       </div>
 
                       {/* Monthly details table */}
                       {b.monthlyDetails && b.monthlyDetails.length > 0 ? (
-                        <div className="sp-table-wrap">
-                          <table>
+                        <div className="sp-tbl-wrap">
+                          <table className="sp-tbl">
                             <thead>
                               <tr>
                                 <th>Period</th>
@@ -396,8 +417,14 @@ export default function StudentFeeSummaryPage() {
                           </table>
                         </div>
                       ) : (
-                        <div className="sp-empty" style={{ padding: "1.25rem" }}>
-                          <p className="sp-empty-title" style={{ fontSize: "0.8rem" }}>
+                        <div
+                          className="sp-empty"
+                          style={{ padding: "1.25rem 1rem" }}
+                        >
+                          <p
+                            className="sp-empty-title"
+                            style={{ fontSize: "0.8rem" }}
+                          >
                             No monthly details
                           </p>
                           <p className="sp-empty-desc">

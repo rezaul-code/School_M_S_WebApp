@@ -8,16 +8,25 @@ import {
   GraduationCap,
   ShieldCheck,
   AlertCircle,
+  Mail,
+  Phone,
+  CalendarDays,
+  MapPin,
+  Hash,
+  BookOpen,
+  CalendarRange,
+  ClipboardList,
+  Users,
+  PhoneCall,
+  CheckCircle2,
 } from "lucide-react";
 
 import { getStudent } from "@/lib/api/students";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 
 import "@/styles/student-pages.css";
 
-// ── Helpers ────────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────
 
 function getInitials(name?: string): string {
   if (!name) return "?";
@@ -29,71 +38,124 @@ function getInitials(name?: string): string {
     .join("");
 }
 
-// ── Sub-components ─────────────────────────────────────────
+// ── Profile row ──────────────────────────────────────────────────
 
-function ProfileRow({ label, value }: { label: string; value?: string }) {
+function Row({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value?: string;
+}) {
   return (
-    <div className="sp-profile-row">
-      <dt className="sp-profile-dt">{label}</dt>
-      <dd className={value ? "sp-profile-dd" : "sp-profile-dd sp-profile-dd--empty"}>
-        {value || "—"}
+    <div className="sp-row">
+      <dt className="sp-row-label">
+        <Icon size={13} />
+        {label}
+      </dt>
+      <dd className={value ? "sp-row-value" : "sp-row-value sp-row-value--empty"}>
+        {value || "Not provided"}
       </dd>
     </div>
   );
 }
 
-function Section({
+// ── Section card ─────────────────────────────────────────────────
+
+function SectionCard({
+  accentClass,
   icon: Icon,
   title,
+  subtitle,
   children,
 }: {
+  accentClass: string;
   icon: React.ElementType;
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="sp-section">
-      <div className="sp-section-header">
-        <Icon size={15} />
-        <h2 className="sp-section-header-title">{title}</h2>
+    <div className={`sp-card ${accentClass}`}>
+      <div className="sp-card-header">
+        <div className="sp-card-header-icon">
+          <Icon size={15} />
+        </div>
+        <div>
+          <h2 className="sp-card-title">{title}</h2>
+          {subtitle && <p className="sp-card-subtitle">{subtitle}</p>}
+        </div>
       </div>
-      <div className="sp-section-body">{children}</div>
+      <div className="sp-card-body">
+        <dl className="sp-profile">{children}</dl>
+      </div>
     </div>
   );
+}
+
+// ── Loading skeleton ─────────────────────────────────────────────
+
+function Skeleton({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return <div className={`sp-skel ${className ?? ""}`} style={style} />;
 }
 
 function LoadingSkeleton() {
   return (
     <div className="sp-page">
-      <Skeleton className="h-8 w-36 rounded-md" />
-      <Skeleton className="h-24 w-full rounded-xl" />
-      <div className="sp-section">
-        <div className="sp-section-header" style={{ gap: "0.5rem" }}>
-          <Skeleton className="h-4 w-4 rounded" />
-          <Skeleton className="h-4 w-36" />
-        </div>
-        <div className="sp-section-body" style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-9 w-full rounded" />
-          ))}
-        </div>
-      </div>
-      <div className="sp-section">
-        <div className="sp-section-header" style={{ gap: "0.5rem" }}>
-          <Skeleton className="h-4 w-4 rounded" />
-          <Skeleton className="h-4 w-40" />
-        </div>
-        <div className="sp-section-body" style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-9 w-full rounded" />
-          ))}
+      <Skeleton style={{ height: "2rem", width: "9rem", borderRadius: "0.5rem" }} />
+
+      {/* Hero skeleton */}
+      <div
+        style={{
+          borderRadius: "1rem",
+          padding: "1.75rem 2rem",
+          background: "hsl(var(--muted) / 0.5)",
+          border: "1px solid hsl(var(--border))",
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+        }}
+      >
+        <Skeleton style={{ width: "3.25rem", height: "3.25rem", borderRadius: "50%", flexShrink: 0 }} />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <Skeleton style={{ height: "1.125rem", width: "12rem" }} />
+          <Skeleton style={{ height: "0.8rem", width: "8rem" }} />
         </div>
       </div>
+
+      {/* Section skeletons */}
+      {[5, 4, 2].map((rows, si) => (
+        <div key={si} className="sp-card">
+          <div
+            className="sp-card-header"
+            style={{ gap: "0.5rem" }}
+          >
+            <Skeleton style={{ width: "1.875rem", height: "1.875rem", borderRadius: "0.4375rem" }} />
+            <Skeleton style={{ height: "0.875rem", width: "9rem" }} />
+          </div>
+          <div className="sp-card-body" style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+            <div className="sp-profile">
+              {Array.from({ length: rows }).map((_, i) => (
+                <div key={i} className="sp-row">
+                  <dt className="sp-row-label">
+                    <Skeleton style={{ height: "0.8rem", width: "6rem" }} />
+                  </dt>
+                  <dd className="sp-row-value">
+                    <Skeleton style={{ height: "0.8rem", width: "10rem" }} />
+                  </dd>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
-// ── Page ───────────────────────────────────────────────────
+// ── Page ─────────────────────────────────────────────────────────
 
 export default function StudentDetailsPage() {
   const { studentId } = useParams<{ studentId: string }>();
@@ -110,8 +172,8 @@ export default function StudentDetailsPage() {
   if (q.isError) {
     return (
       <div className="sp-page">
-        <button className="sp-back-btn" onClick={() => navigate("/students")}>
-          <ArrowLeft size={14} /> Back to Students
+        <button className="sp-back" onClick={() => navigate("/students")}>
+          <ArrowLeft /> Back to Students
         </button>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -131,73 +193,72 @@ export default function StudentDetailsPage() {
 
   return (
     <div className="sp-page">
-      {/* Back nav */}
-      <button className="sp-back-btn" onClick={() => navigate("/students")}>
-        <ArrowLeft size={14} /> Back to Students
+      {/* Back */}
+      <button className="sp-back" onClick={() => navigate("/students")}>
+        <ArrowLeft /> Back to Students
       </button>
 
-      {/* Hero banner */}
+      {/* ── Hero banner ── */}
       <div className="sp-hero">
+        <div className="sp-hero-glow2" />
         <div className="sp-hero-inner">
-          <div style={{ display: "flex", alignItems: "center", gap: "0.875rem" }}>
+          <div className="sp-hero-left">
             <div className="sp-avatar">{getInitials(fullName)}</div>
             <div className="sp-hero-text">
               <h1 className="sp-hero-title">{fullName}</h1>
-              <p className="sp-hero-subtitle">
-                {s.rollNumber ? `Roll No. ${s.rollNumber}` : "No roll number"}
+              <p className="sp-hero-sub">
+                {s.rollNumber ? `Roll No. ${s.rollNumber}` : "No roll number assigned"}
                 {s.classSectionName ? ` · ${s.classSectionName}` : ""}
               </p>
             </div>
           </div>
 
           {s.admissionDate && (
-            <Badge
-              variant="outline"
-              style={{
-                background: "hsl(0 0% 100% / 0.1)",
-                border: "1px solid hsl(0 0% 100% / 0.18)",
-                color: "hsl(0 0% 100% / 0.8)",
-                fontSize: "0.71rem",
-                fontWeight: 600,
-                letterSpacing: "0.04em",
-                whiteSpace: "nowrap",
-                alignSelf: "flex-start",
-              }}
-            >
-              ADMITTED
-            </Badge>
+            <div className="sp-hero-badge">
+              <CheckCircle2 />
+              Admitted
+            </div>
           )}
         </div>
       </div>
 
-      {/* Personal Information */}
-      <Section icon={User} title="Personal Information">
-        <dl className="sp-profile-grid" style={{ gridTemplateColumns: "1fr" }}>
-          <ProfileRow label="Full Name"     value={fullName} />
-          <ProfileRow label="Email Address" value={s.email} />
-          <ProfileRow label="Phone Number"  value={s.phone} />
-          <ProfileRow label="Date of Birth" value={s.dateOfBirth} />
-          <ProfileRow label="Address"       value={s.address} />
-        </dl>
-      </Section>
+      {/* ── Personal Information ── */}
+      <SectionCard
+        accentClass="sp-card--indigo"
+        icon={User}
+        title="Personal Information"
+        subtitle="Contact details and personal data"
+      >
+        <Row icon={User}         label="Full Name"     value={fullName} />
+        <Row icon={Mail}         label="Email Address" value={s.email} />
+        <Row icon={Phone}        label="Phone Number"  value={s.phone} />
+        <Row icon={CalendarDays} label="Date of Birth" value={s.dateOfBirth} />
+        <Row icon={MapPin}       label="Address"       value={s.address} />
+      </SectionCard>
 
-      {/* Academic Information */}
-      <Section icon={GraduationCap} title="Academic Information">
-        <dl className="sp-profile-grid" style={{ gridTemplateColumns: "1fr" }}>
-          <ProfileRow label="Roll Number"   value={s.rollNumber} />
-          <ProfileRow label="Class Section" value={s.classSectionName} />
-          <ProfileRow label="Academic Year" value={s.academicYear ?? s.academicYearName} />
-          <ProfileRow label="Admission Date" value={s.admissionDate} />
-        </dl>
-      </Section>
+      {/* ── Academic Information ── */}
+      <SectionCard
+        accentClass="sp-card--blue"
+        icon={GraduationCap}
+        title="Academic Information"
+        subtitle="Enrollment and class details"
+      >
+        <Row icon={Hash}          label="Roll Number"    value={s.rollNumber} />
+        <Row icon={BookOpen}      label="Class Section"  value={s.classSectionName} />
+        <Row icon={CalendarRange} label="Academic Year"  value={s.academicYear ?? s.academicYearName} />
+        <Row icon={ClipboardList} label="Admission Date" value={s.admissionDate} />
+      </SectionCard>
 
-      {/* Guardian Information */}
-      <Section icon={ShieldCheck} title="Guardian Information">
-        <dl className="sp-profile-grid" style={{ gridTemplateColumns: "1fr" }}>
-          <ProfileRow label="Guardian Name"  value={s.guardianName} />
-          <ProfileRow label="Guardian Phone" value={s.guardianPhone} />
-        </dl>
-      </Section>
+      {/* ── Guardian Information ── */}
+      <SectionCard
+        accentClass="sp-card--violet"
+        icon={ShieldCheck}
+        title="Guardian Information"
+        subtitle="Emergency contact and guardian details"
+      >
+        <Row icon={Users}    label="Guardian Name"  value={s.guardianName} />
+        <Row icon={PhoneCall} label="Guardian Phone" value={s.guardianPhone} />
+      </SectionCard>
     </div>
   );
 }
