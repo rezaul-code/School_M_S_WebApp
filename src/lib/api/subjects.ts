@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { Subject, ApiResponse } from "@/types/api";
+import type { Subject, ApiResponse, StudentFeeSummary } from "@/types/api";
 
 export async function listSubjects() {
   const response = await api.get<ApiResponse<Subject[]>>("/api/master/subjects");
@@ -22,5 +22,13 @@ export async function deleteSubject(id: string) {
 
 export async function listSubjectOptions() {
   const response = await api.get<ApiResponse<Subject[]>>("/api/master/options/subjects");
+  return response.data.data;
+}
+
+export async function getStudentFeeSummary(studentId: string, academicYearId: number) {
+  const response = await api.get<ApiResponse<StudentFeeSummary>>(
+    `/api/students/${studentId}/fees/summary`,
+    { params: { academicYearId } }
+  );
   return response.data.data;
 }
