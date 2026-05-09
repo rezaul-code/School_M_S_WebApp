@@ -1,3 +1,5 @@
+// src/pages/RegisterTeacher.tsx
+
 import { useNavigate } from "react-router-dom";
 
 import { useForm } from "react-hook-form";
@@ -7,7 +9,8 @@ import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { Card } from "@/components/ui/card";
+import { UserPlus } from "lucide-react";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -17,6 +20,8 @@ import SubmitButton from "@/components/common/SubmitButton";
 
 import { registerTeacher } from "@/lib/api/teachers";
 import { getApiErrorMessage } from "@/lib/api/client";
+
+import "@/styles/teacher.css";
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
@@ -33,7 +38,7 @@ type FormValues = z.infer<typeof schema>;
 
 function ErrorText({ text }: { text?: string }) {
   if (!text) return null;
-  return <p className="text-xs text-destructive">{text}</p>;
+  return <p className="tm-field-error">{text}</p>;
 }
 
 export default function RegisterTeacherPage() {
@@ -79,96 +84,105 @@ export default function RegisterTeacherPage() {
   });
 
   return (
-    <div className="space-y-4">
-      {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-bold">Register Teacher</h1>
-        <p className="text-sm text-muted-foreground">
-          Create and register a new teacher profile
-        </p>
+    <div className="tm-page">
+      {/* HERO */}
+      <div className="tm-hero">
+        <div className="tm-hero-glow" />
+        <div className="tm-hero-inner">
+          <div className="tm-hero-left">
+            <div className="tm-hero-icon-wrap">
+              <UserPlus />
+            </div>
+            <div className="tm-hero-text">
+              <h2 className="tm-hero-title">Register Teacher</h2>
+              <p className="tm-hero-sub">Create and register a new teacher profile</p>
+            </div>
+          </div>
+          <span className="tm-hero-badge">New Profile</span>
+        </div>
       </div>
 
-      <Card className="p-6 max-w-2xl">
-        <form
-          onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
-          className="space-y-6"
-        >
-          {/* PERSONAL */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Personal Information</h3>
+      {/* FORM CARD — wide, two-column on desktop */}
+      <div className="tm-form-card tm-form-card--wide">
+        <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>First Name</Label>
-                <Input {...form.register("firstName")} />
-                <ErrorText
-                  text={form.formState.errors.firstName?.message}
-                />
+          {/* Two columns on ≥900px: Personal+Contact | Credentials+Employment */}
+          <div className="tm-form-row-split">
+
+            {/* ── LEFT COLUMN ── */}
+            <div className="tm-form-col">
+
+              {/* PERSONAL */}
+              <div className="tm-form-section">
+                <div className="tm-section-label">Personal Information</div>
+                <div className="tm-grid-2">
+                  <div className="tm-field">
+                    <Label>First Name</Label>
+                    <Input {...form.register("firstName")} />
+                    <ErrorText text={form.formState.errors.firstName?.message} />
+                  </div>
+                  <div className="tm-field">
+                    <Label>Last Name</Label>
+                    <Input {...form.register("lastName")} />
+                    <ErrorText text={form.formState.errors.lastName?.message} />
+                  </div>
+                </div>
+                <div className="tm-field" style={{ marginTop: "1rem" }}>
+                  <Label>Date of Birth</Label>
+                  <Input type="date" {...form.register("dateOfBirth")} />
+                </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Last Name</Label>
-                <Input {...form.register("lastName")} />
-                <ErrorText
-                  text={form.formState.errors.lastName?.message}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Date of Birth</Label>
-              <Input type="date" {...form.register("dateOfBirth")} />
-            </div>
-          </div>
-
-          {/* CONTACT */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Contact Information</h3>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Email</Label>
-                <Input type="email" {...form.register("email")} />
-                <ErrorText text={form.formState.errors.email?.message} />
+              {/* CONTACT */}
+              <div className="tm-form-section">
+                <div className="tm-section-label">Contact Information</div>
+                <div className="tm-grid-2">
+                  <div className="tm-field">
+                    <Label>Email</Label>
+                    <Input type="email" {...form.register("email")} />
+                    <ErrorText text={form.formState.errors.email?.message} />
+                  </div>
+                  <div className="tm-field">
+                    <Label>Phone</Label>
+                    <Input {...form.register("phone")} />
+                  </div>
+                </div>
+                <div className="tm-field" style={{ marginTop: "1rem" }}>
+                  <Label>Address</Label>
+                  <Textarea rows={4} {...form.register("address")} />
+                </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Phone</Label>
-                <Input {...form.register("phone")} />
+            </div>
+
+            {/* ── RIGHT COLUMN ── */}
+            <div className="tm-form-col">
+
+              {/* CREDENTIALS */}
+              <div className="tm-form-section">
+                <div className="tm-section-label">Credentials</div>
+                <div className="tm-field">
+                  <Label>Password</Label>
+                  <Input type="password" {...form.register("password")} />
+                  <ErrorText text={form.formState.errors.password?.message} />
+                </div>
               </div>
+
+              {/* EMPLOYMENT */}
+              <div className="tm-form-section">
+                <div className="tm-section-label">Employment</div>
+                <div className="tm-field">
+                  <Label>Joining Date</Label>
+                  <Input type="date" {...form.register("joiningDate")} />
+                </div>
+              </div>
+
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Address</Label>
-              <Textarea rows={3} {...form.register("address")} />
-            </div>
-          </div>
-
-          {/* CREDENTIALS */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Credentials</h3>
-
-            <div className="space-y-1.5">
-              <Label>Password</Label>
-              <Input type="password" {...form.register("password")} />
-              <ErrorText
-                text={form.formState.errors.password?.message}
-              />
-            </div>
-          </div>
-
-          {/* EMPLOYMENT */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Employment</h3>
-
-            <div className="space-y-1.5">
-              <Label>Joining Date</Label>
-              <Input type="date" {...form.register("joiningDate")} />
-            </div>
           </div>
 
           {/* ACTIONS */}
-          <div className="flex justify-end gap-3 border-t pt-4">
+          <div className="tm-form-footer">
             <Button
               type="button"
               variant="outline"
@@ -176,13 +190,13 @@ export default function RegisterTeacherPage() {
             >
               Cancel
             </Button>
-
             <SubmitButton loading={mutation.isPending}>
               Register Teacher
             </SubmitButton>
           </div>
+
         </form>
-      </Card>
+      </div>
     </div>
   );
 }

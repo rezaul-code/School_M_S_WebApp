@@ -14,6 +14,8 @@ import SidebarContent, {
   studentItems,
 } from "@/components/layout/Sidebar";
 
+import "@/styles/teacher.css";
+
 interface NavItem {
   to: string;
   label: string;
@@ -62,8 +64,8 @@ export default function AppLayout() {
 
       {/* Main Layout */}
       <div className="flex min-h-screen w-full flex-col lg:pl-72">
-        {/* Header */}
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border/60 bg-background/80 px-4 backdrop-blur-xl lg:px-6">
+        {/* Header — styled via tm-header to match sidebar */}
+        <header className="tm-header sticky top-0 z-20 flex h-16 items-center gap-4 px-4 lg:px-6">
           {/* Mobile Sidebar */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -93,12 +95,8 @@ export default function AppLayout() {
 
             <nav className="text-xs text-muted-foreground">
               <span>Home</span>
-
               <span className="mx-1.5 opacity-50">/</span>
-
-              <span className="text-foreground">
-                {active.label}
-              </span>
+              <span className="text-foreground">{active.label}</span>
             </nav>
           </div>
         </header>
