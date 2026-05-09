@@ -1,8 +1,12 @@
-import { useMemo, useState } from "react";
+// src/pages/Dashboard.tsx
+
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   GraduationCap, Users, BookOpen, Layers,
-  ListTree, UserPlus,
+  LayoutDashboard, CalendarDays,
+  BarChart2, TrendingUp, PieChart as PieIcon, Activity,
+  Zap,
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, AreaChart, Area,
@@ -10,28 +14,30 @@ import {
 } from "recharts";
 import { format } from "date-fns";
 
-import { Card } from "../components/ui/card";
-import { Button } from "../components/ui/button";
 import StatCard from "../components/dashboard/StatCard";
-import FormOptionsDialog from "../components/dashboard/FormOptionsDialog";
-import AdmitStudentDrawer from "../components/students/AdmitStudentDrawer";
 
 import { listStudents } from "../lib/api/students";
 import { listTeachers } from "../lib/api/teachers";
 import { listSubjects } from "../lib/api/subjects";
 import { listClassSections, listAcademicYears } from "../lib/api/master";
 
-const PRIMARY = "hsl(244 75% 59%)";
-const PRIMARY_LIGHT = "hsl(244 90% 75%)";
-const SUCCESS = "hsl(145 63% 42%)";
+import "@/styles/dashboard.css";
+
+const PRIMARY     = "hsl(244 75% 59%)";
+const SUCCESS     = "hsl(145 63% 42%)";
 const DESTRUCTIVE = "hsl(0 75% 55%)";
-const GRID = "hsl(220 13% 91%)";
-const AXIS = "hsl(220 9% 46%)";
+const GRID        = "hsl(220 13% 91%)";
+const AXIS        = "hsl(220 9% 46%)";
+
+const tooltipStyle = {
+  background: "hsl(0 0% 100%)",
+  border: "1px solid hsl(220 13% 91%)",
+  borderRadius: 8,
+  fontSize: 12,
+  boxShadow: "0 4px 16px hsl(0 0% 0% / 0.08)",
+};
 
 export default function Dashboard() {
-  const [openFormOptions, setOpenFormOptions] = useState(false);
-  const [openAdmitStudent, setOpenAdmitStudent] = useState(false);
-  
   const studentsQ = useQuery({
     queryKey: ["dashboard", "students"],
     queryFn: () => listStudents({ page: 0, size: 200 }),
@@ -40,9 +46,18 @@ export default function Dashboard() {
     queryKey: ["dashboard", "teachers"],
     queryFn: () => listTeachers({ page: 0, size: 200 }),
   });
-  const subjectsQ = useQuery({ queryKey: ["dashboard", "subjects"], queryFn: listSubjects });
-  const sectionsQ = useQuery({ queryKey: ["dashboard", "class-sections"], queryFn: listClassSections });
-  const yearsQ = useQuery({ queryKey: ["dashboard", "academic-years"], queryFn: listAcademicYears });
+  const subjectsQ = useQuery({
+    queryKey: ["dashboard", "subjects"],
+    queryFn: listSubjects,
+  });
+  const sectionsQ = useQuery({
+    queryKey: ["dashboard", "class-sections"],
+    queryFn: listClassSections,
+  });
+  const yearsQ = useQuery({
+    queryKey: ["dashboard", "academic-years"],
+    queryFn: listAcademicYears,
+  });
 
   const students = studentsQ.data?.content ?? [];
   const teachers = teachersQ.data?.content ?? [];
@@ -102,118 +117,182 @@ export default function Dashboard() {
     return Array.from(map.entries()).map(([year, students]) => ({ year, students }));
   }, [yearsQ.data, students]);
 
+  const today = format(new Date(), "EEEE, d MMMM yyyy");
+
   return (
-    <div className="space-y-6">
-      {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Students" value={studentsQ.data?.totalElements ?? students.length} icon={GraduationCap} loading={studentsQ.isLoading} accent="primary" />
-        <StatCard label="Total Teachers" value={teachersQ.data?.totalElements ?? teachers.length} icon={Users} loading={teachersQ.isLoading} accent="success" />
-        <StatCard label="Total Subjects" value={subjectsQ.data?.length} icon={BookOpen} loading={subjectsQ.isLoading} accent="warning" />
-        <StatCard label="Class Sections" value={sectionsQ.data?.length} icon={Layers} loading={sectionsQ.isLoading} accent="primary" />
+    <div className="db-page">
+
+      {/* Hero */}
+      <div className="db-hero">
+        <div className="db-hero-glow" />
+        <div className="db-hero-inner">
+          <div className="db-hero-left">
+            <div className="db-hero-icon-wrap">
+              <LayoutDashboard />
+            </div>
+            <div className="db-hero-text">
+              <h1 className="db-hero-title">School Admin Dashboard</h1>
+              <p className="db-hero-sub">Overview of your institution's key metrics and activity</p>
+            </div>
+          </div>
+          <div className="db-hero-meta">
+            <span className="db-hero-badge">
+              <Zap />
+              Live Data
+            </span>
+            <span className="db-hero-date">
+              <CalendarDays />
+              {today}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="db-stats-grid">
+        <StatCard
+          label="Total Students"
+          value={studentsQ.data?.totalElements ?? students.length}
+          icon={GraduationCap}
+          loading={studentsQ.isLoading}
+          accent="primary"
+          sub="Enrolled this year"
+        />
+        <StatCard
+          label="Total Teachers"
+          value={teachersQ.data?.totalElements ?? teachers.length}
+          icon={Users}
+          loading={teachersQ.isLoading}
+          accent="success"
+          sub="On faculty roster"
+        />
+        <StatCard
+          label="Total Subjects"
+          value={subjectsQ.data?.length}
+          icon={BookOpen}
+          loading={subjectsQ.isLoading}
+          accent="warning"
+          sub="Across all classes"
+        />
+        <StatCard
+          label="Class Sections"
+          value={sectionsQ.data?.length}
+          icon={Layers}
+          loading={sectionsQ.isLoading}
+          accent="destructive"
+          sub="Active sections"
+        />
       </div>
 
       {/* Charts */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Students per Class Section">
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={studentsPerSection}>
-              <CartesianGrid stroke={GRID} vertical={false} />
-              <XAxis dataKey="name" stroke={AXIS} fontSize={12} />
-              <YAxis stroke={AXIS} fontSize={12} allowDecimals={false} />
-              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "hsl(244 90% 96%)" }} />
-              <Bar dataKey="students" fill={PRIMARY} radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
+      <div>
+        <div className="db-section-header">
+          <h2 className="db-section-title">
+            Analytics Overview
+            <span className="db-section-subtitle">Charts & distributions</span>
+          </h2>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
 
-        <ChartCard title="Student Admissions over Time">
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={admissionsByMonth}>
-              <CartesianGrid stroke={GRID} vertical={false} />
-              <XAxis dataKey="month" stroke={AXIS} fontSize={12} />
-              <YAxis stroke={AXIS} fontSize={12} allowDecimals={false} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Line type="monotone" dataKey="admissions" stroke={PRIMARY} strokeWidth={2.5} dot={{ r: 3, fill: PRIMARY }} activeDot={{ r: 5 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
+          <ChartCard title="Students per Class Section" icon={<BarChart2 />}>
+            <ResponsiveContainer width="100%" height={248}>
+              <BarChart data={studentsPerSection}>
+                <CartesianGrid stroke={GRID} vertical={false} />
+                <XAxis dataKey="name" stroke={AXIS} fontSize={11} />
+                <YAxis stroke={AXIS} fontSize={11} allowDecimals={false} />
+                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "hsl(244 90% 96%)" }} />
+                <Bar dataKey="students" fill={PRIMARY} radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
 
-        <ChartCard title="Active vs Inactive Teachers">
-          <ResponsiveContainer width="100%" height={260}>
-            <PieChart>
-              <Pie data={teacherStatus} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2}>
-                {teacherStatus.map((entry) => (
-                  <Cell key={entry.name} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={tooltipStyle} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartCard>
+          <ChartCard title="Student Admissions over Time" icon={<TrendingUp />}>
+            <ResponsiveContainer width="100%" height={248}>
+              <LineChart data={admissionsByMonth}>
+                <CartesianGrid stroke={GRID} vertical={false} />
+                <XAxis dataKey="month" stroke={AXIS} fontSize={11} />
+                <YAxis stroke={AXIS} fontSize={11} allowDecimals={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Line
+                  type="monotone"
+                  dataKey="admissions"
+                  stroke={PRIMARY}
+                  strokeWidth={2.5}
+                  dot={{ r: 3, fill: PRIMARY }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartCard>
 
-        <ChartCard title="Enrollment by Academic Year">
-          <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={yearEnrollment}>
-              <defs>
-                <linearGradient id="enrollFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={PRIMARY} stopOpacity={0.4} />
-                  <stop offset="100%" stopColor={PRIMARY} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke={GRID} vertical={false} />
-              <XAxis dataKey="year" stroke={AXIS} fontSize={12} />
-              <YAxis stroke={AXIS} fontSize={12} allowDecimals={false} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Area type="monotone" dataKey="students" stroke={PRIMARY} strokeWidth={2.5} fill="url(#enrollFill)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
+          <ChartCard title="Active vs Inactive Teachers" icon={<PieIcon />}>
+            <ResponsiveContainer width="100%" height={248}>
+              <PieChart>
+                <Pie
+                  data={teacherStatus}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={52}
+                  outerRadius={90}
+                  paddingAngle={3}
+                >
+                  {teacherStatus.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          <ChartCard title="Enrollment by Academic Year" icon={<Activity />}>
+            <ResponsiveContainer width="100%" height={248}>
+              <AreaChart data={yearEnrollment}>
+                <defs>
+                  <linearGradient id="enrollFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={PRIMARY} stopOpacity={0.35} />
+                    <stop offset="100%" stopColor={PRIMARY} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke={GRID} vertical={false} />
+                <XAxis dataKey="year" stroke={AXIS} fontSize={11} />
+                <YAxis stroke={AXIS} fontSize={11} allowDecimals={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Area
+                  type="monotone"
+                  dataKey="students"
+                  stroke={PRIMARY}
+                  strokeWidth={2.5}
+                  fill="url(#enrollFill)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+        </div>
       </div>
 
-      {/* Quick Actions (Academic and Class section buttons removed from here and moved to their dedicated pages) */}
-      <Card className="p-5">
-        <div className="mb-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Quick Actions</h2>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button
-            variant="outline"
-            className="h-auto justify-start gap-3 py-4 text-left min-w-[200px]"
-            onClick={() => setOpenFormOptions(true)}
-          >
-            <ListTree className="h-4 w-4 shrink-0" />
-            <span className="text-sm font-medium">Form Options</span>
-          </Button>
-          <Button
-            variant="default"
-            className="h-auto justify-start gap-3 py-4 text-left min-w-[200px]"
-            onClick={() => setOpenAdmitStudent(true)}
-          >
-            <UserPlus className="h-4 w-4 shrink-0" />
-            <span className="text-sm font-medium">Admit Student</span>
-          </Button>
-        </div>
-
-        <FormOptionsDialog open={openFormOptions} onOpenChange={setOpenFormOptions} />
-        <AdmitStudentDrawer open={openAdmitStudent} onOpenChange={setOpenAdmitStudent} />
-      </Card>
     </div>
   );
 }
 
-const tooltipStyle = {
-  background: "hsl(0 0% 100%)",
-  border: "1px solid hsl(220 13% 91%)",
-  borderRadius: 8,
-  fontSize: 12,
-};
-
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+function ChartCard({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <Card className="p-5" style={{ boxShadow: "var(--shadow-card)" }}>
-      <h3 className="mb-3 text-sm font-semibold">{title}</h3>
-      {children}
-    </Card>
+    <div className="db-chart-card">
+      <div className="db-chart-card-header">
+        <span className="db-chart-card-title">{title}</span>
+        {icon && <span className="db-chart-card-icon">{icon}</span>}
+      </div>
+      <div className="db-chart-body">{children}</div>
+    </div>
   );
 }
