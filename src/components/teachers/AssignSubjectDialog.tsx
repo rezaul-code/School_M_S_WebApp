@@ -1,15 +1,10 @@
-import { useEffect } from "react";
+// src/components/teachers/AssignSubjectDialog.tsx
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
@@ -23,7 +18,6 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-
 import {
   Select,
   SelectContent,
@@ -42,6 +36,8 @@ import {
 } from "@/lib/api/teachers";
 
 import { getApiErrorMessage } from "@/lib/api/client";
+
+import "@/styles/teacher.css";
 
 const schema = z.object({
   classLevelId: z.string().min(1, "Class level required"),
@@ -68,26 +64,18 @@ export default function AssignSubjectDialog({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      classLevelId: "",
-      subjectId: "",
-      classSectionId: "",
-    },
+    defaultValues: { classLevelId: "", subjectId: "", classSectionId: "" },
   });
 
   const selectedClassLevelId = form.watch("classLevelId");
 
-  // Clear dependent fields when class level changes
   useEffect(() => {
     form.setValue("subjectId", "");
     form.setValue("classSectionId", "");
   }, [selectedClassLevelId, form]);
 
-  // Reset form when dialog closes
   useEffect(() => {
-    if (!open) {
-      form.reset();
-    }
+    if (!open) form.reset();
   }, [open, form]);
 
   const classLevelsQuery = useQuery({
@@ -95,14 +83,12 @@ export default function AssignSubjectDialog({
     queryFn: getClassLevels,
   });
 
-  // Only fires once a class level is selected; re-fires when it changes
   const subjectsQuery = useQuery({
     queryKey: ["subjects", selectedClassLevelId],
     queryFn: () => getSubjects(Number(selectedClassLevelId)),
     enabled: !!selectedClassLevelId,
   });
 
-  // Only fires once a class level is selected; re-fires when it changes
   const sectionsQuery = useQuery({
     queryKey: ["sections", selectedClassLevelId],
     queryFn: () => getSectionsByClassLevel(Number(selectedClassLevelId)),
@@ -114,25 +100,15 @@ export default function AssignSubjectDialog({
       assignSubjectToTeacher(teacherId, {
         classLevelId: Number(values.classLevelId),
         subjectId: Number(values.subjectId),
-        classSectionId: values.classSectionId
-          ? Number(values.classSectionId)
-          : undefined,
+        classSectionId: values.classSectionId ? Number(values.classSectionId) : undefined,
       }),
-
     onSuccess: () => {
       toast.success("Subject assigned successfully");
-
-      qc.invalidateQueries({
-        queryKey: ["subject-assignments", teacherId],
-      });
-      qc.invalidateQueries({
-        queryKey: ["teacher-assignments-page"],
-      });
-
+      qc.invalidateQueries({ queryKey: ["subject-assignments", teacherId] });
+      qc.invalidateQueries({ queryKey: ["teacher-assignments-page"] });
       onOpenChange(false);
       onSuccess?.();
     },
-
     onError: (err) => {
       toast.error(getApiErrorMessage(err, "Failed to assign subject"));
     },
@@ -140,28 +116,26 @@ export default function AssignSubjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md tm-dialog">
         <DialogHeader>
           <DialogTitle>Assign Subject</DialogTitle>
-          <DialogDescription>
-            Assign a subject to this teacher
-          </DialogDescription>
+          <DialogDescription>Assign a subject to this teacher</DialogDescription>
         </DialogHeader>
 
         <form
           onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
           className="space-y-4"
         >
+          <div className="tm-section-label">Assignment Details</div>
+
           {/* CLASS LEVEL */}
-          <div className="space-y-1.5">
+          <div className="tm-field">
             <Label>Class Level</Label>
             <Select
               value={form.watch("classLevelId")}
-              onValueChange={(value) =>
-                form.setValue("classLevelId", value)
-              }
+              onValueChange={(value) => form.setValue("classLevelId", value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="tm-dialog-select">
                 <SelectValue placeholder="Select class level" />
               </SelectTrigger>
               <SelectContent>
@@ -173,21 +147,19 @@ export default function AssignSubjectDialog({
               </SelectContent>
             </Select>
             {form.formState.errors.classLevelId && (
-              <p className="text-xs text-destructive">
-                {form.formState.errors.classLevelId.message}
-              </p>
+              <p className="tm-field-error">{form.formState.errors.classLevelId.message}</p>
             )}
           </div>
 
           {/* SUBJECT */}
-          <div className="space-y-1.5">
+          <div className="tm-field">
             <Label>Subject</Label>
             <Select
               value={form.watch("subjectId")}
               onValueChange={(value) => form.setValue("subjectId", value)}
               disabled={!selectedClassLevelId || subjectsQuery.isLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="tm-dialog-select">
                 <SelectValue
                   placeholder={
                     !selectedClassLevelId
@@ -209,23 +181,19 @@ export default function AssignSubjectDialog({
               </SelectContent>
             </Select>
             {form.formState.errors.subjectId && (
-              <p className="text-xs text-destructive">
-                {form.formState.errors.subjectId.message}
-              </p>
+              <p className="tm-field-error">{form.formState.errors.subjectId.message}</p>
             )}
           </div>
 
           {/* SECTION (optional) */}
-          <div className="space-y-1.5">
-            <Label>Section (optional)</Label>
+          <div className="tm-field">
+            <Label>Section <span style={{ fontWeight: 400, color: "hsl(var(--muted-foreground))" }}>(optional)</span></Label>
             <Select
               value={form.watch("classSectionId")}
-              onValueChange={(value) =>
-                form.setValue("classSectionId", value)
-              }
+              onValueChange={(value) => form.setValue("classSectionId", value)}
               disabled={!selectedClassLevelId || sectionsQuery.isLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="tm-dialog-select">
                 <SelectValue
                   placeholder={
                     !selectedClassLevelId
@@ -249,17 +217,10 @@ export default function AssignSubjectDialog({
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-
-            <SubmitButton loading={mutation.isPending}>
-              Assign Subject
-            </SubmitButton>
+            <SubmitButton loading={mutation.isPending}>Assign Subject</SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>

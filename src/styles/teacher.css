@@ -1,0 +1,1111 @@
+/* ================================================================
+   teacher.css  —  Teacher Module Design System
+   Place at: src/styles/teacher.css
+   Uses shadcn CSS variables + sidebar theme for full consistency.
+   ================================================================ */
+
+/* ── Shared animations ─────────────────────────────────────────── */
+@keyframes tm-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes tm-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes tm-shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+@keyframes tm-pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.18); }
+  50%       { box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
+}
+
+/* ================================================================
+   GLOBAL HEADER — matches sidebar theme
+   Targets AppLayout's <header> element.
+   ================================================================ */
+.tm-header {
+  background: hsl(222 47% 11%) !important;
+  border-bottom: 1px solid hsl(222 28% 20%) !important;
+  box-shadow:
+    0 1px 0 hsl(0 0% 100% / 0.04),
+    0 4px 16px hsl(240 70% 5% / 0.35) !important;
+  backdrop-filter: none !important;
+}
+
+.tm-header h1 {
+  color: hsl(210 40% 98%) !important;
+  font-weight: 700;
+  letter-spacing: -0.018em;
+}
+
+.tm-header nav,
+.tm-header nav span {
+  color: hsl(210 20% 68%) !important;
+}
+
+.tm-header nav .text-foreground {
+  color: hsl(250 95% 78%) !important;
+}
+
+.tm-header .text-muted-foreground {
+  color: hsl(210 20% 60%) !important;
+}
+
+/* Mobile menu button in header */
+.tm-header button[aria-label="Open menu"] {
+  color: hsl(210 40% 85%);
+}
+.tm-header button[aria-label="Open menu"]:hover {
+  background: hsl(222 35% 18%);
+  color: hsl(210 40% 98%);
+}
+
+/* ================================================================
+   PAGE SHELL
+   ================================================================ */
+.tm-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.375rem;
+  padding-bottom: 3rem;
+  animation: tm-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Page heading block ─────────────────────────────────────────── */
+.tm-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tm-page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.028em;
+  color: hsl(var(--foreground));
+  margin: 0 0 0.2rem;
+  line-height: 1.2;
+}
+
+.tm-page-subtitle {
+  font-size: 0.8125rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ================================================================
+   HERO BANNER (register / list page top)
+   ================================================================ */
+.tm-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 1.75rem 2rem 1.875rem;
+  background: linear-gradient(
+    130deg,
+    hsl(244 75% 22%) 0%,
+    hsl(238 60% 26%) 40%,
+    hsl(230 50% 30%) 75%,
+    hsl(220 42% 32%) 100%
+  );
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.08),
+    0 4px 24px hsl(244 75% 10% / 0.22),
+    inset 0 1px 0 hsl(0 0% 100% / 0.07);
+}
+
+.tm-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle,
+    hsl(0 0% 100% / 0.055) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+  pointer-events: none;
+}
+
+.tm-hero::after {
+  content: "";
+  position: absolute;
+  top: -80px; right: -60px;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    hsl(270 70% 65% / 0.2) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+
+.tm-hero-glow {
+  position: absolute;
+  bottom: -50px; left: -30px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    hsl(200 85% 60% / 0.12) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+
+.tm-hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tm-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.tm-hero-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background: hsl(0 0% 100% / 0.12);
+  border: 1px solid hsl(0 0% 100% / 0.18);
+  flex-shrink: 0;
+}
+.tm-hero-icon-wrap svg {
+  width: 1.375rem;
+  height: 1.375rem;
+  color: hsl(0 0% 100% / 0.9);
+}
+
+.tm-hero-text { min-width: 0; }
+.tm-hero-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: hsl(0 0% 98%);
+  letter-spacing: -0.018em;
+  margin: 0 0 0.2rem;
+  line-height: 1.25;
+}
+.tm-hero-sub {
+  font-size: 0.8rem;
+  color: hsl(0 0% 100% / 0.52);
+  margin: 0;
+}
+
+.tm-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 2rem;
+  background: hsl(0 0% 100% / 0.1);
+  border: 1px solid hsl(0 0% 100% / 0.16);
+  color: hsl(0 0% 100% / 0.78);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.tm-hero-badge svg { width: 0.75rem; height: 0.75rem; }
+
+/* ================================================================
+   FILTER / TOOLBAR BAR
+   ================================================================ */
+.tm-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.875rem;
+  flex-wrap: wrap;
+  padding: 0.875rem 1.125rem;
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.04);
+}
+
+.tm-search-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  flex-shrink: 0;
+}
+.tm-search-wrap .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.875rem;
+  height: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+}
+.tm-search-wrap input {
+  padding-left: 2.25rem !important;
+  background: hsl(var(--muted) / 0.5);
+  border-color: hsl(var(--border));
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+.tm-search-wrap input:focus {
+  background: hsl(var(--background));
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+}
+
+/* Primary CTA button in toolbar */
+.tm-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1.125rem;
+  border-radius: 0.625rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.16s, transform 0.14s, box-shadow 0.16s;
+  box-shadow: 0 2px 8px hsl(var(--primary) / 0.3);
+  white-space: nowrap;
+}
+.tm-btn-primary:hover {
+  background: hsl(244 75% 52%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px hsl(var(--primary) / 0.38);
+}
+.tm-btn-primary svg { width: 0.9rem; height: 0.9rem; }
+
+/* ================================================================
+   TABLE CARD
+   ================================================================ */
+.tm-card {
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.04),
+    0 2px 10px hsl(0 0% 0% / 0.03);
+  overflow: hidden;
+}
+
+.tm-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--muted) / 0.5),
+    hsl(var(--muted) / 0.2)
+  );
+  position: relative;
+}
+.tm-card-header::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: hsl(var(--primary));
+  border-radius: 0 2px 2px 0;
+  opacity: 0.8;
+}
+
+.tm-card-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.tm-card-subtitle {
+  font-size: 0.72rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0.1rem 0 0;
+}
+
+.tm-card-body { padding: 1.125rem; }
+
+/* ── Table wrapper inside card ──────────────────────────────────── */
+.tm-table-wrap { overflow-x: auto; }
+
+.tm-table {
+  width: 100%;
+}
+
+/* thead styling */
+.tm-table thead tr {
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--muted) / 0.55),
+    hsl(var(--muted) / 0.3)
+  );
+}
+.tm-table thead th {
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground)) !important;
+  padding: 0.7rem 1rem !important;
+  white-space: nowrap;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+}
+
+/* tbody styling */
+.tm-table tbody tr {
+  border-bottom: 1px solid hsl(var(--border) / 0.6) !important;
+  transition: background 0.12s;
+}
+.tm-table tbody tr:last-child {
+  border-bottom: none !important;
+}
+.tm-table tbody tr:hover {
+  background: hsl(var(--muted) / 0.38);
+}
+.tm-table tbody td {
+  padding: 0.75rem 1rem !important;
+  font-size: 0.8125rem;
+  vertical-align: middle;
+  color: hsl(var(--foreground));
+}
+
+/* Teacher name cell */
+.tm-name-cell {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+/* Email / phone cell */
+.tm-meta-cell {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.8rem;
+}
+
+/* ── Row action buttons ─────────────────────────────────────────── */
+.tm-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+.tm-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.14s, border-color 0.14s, color 0.14s;
+  color: hsl(var(--muted-foreground));
+}
+.tm-icon-btn:hover {
+  background: hsl(var(--muted));
+  border-color: hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+.tm-icon-btn--danger:hover {
+  background: hsl(0 72% 51% / 0.1);
+  border-color: hsl(0 72% 51% / 0.3);
+  color: hsl(0 72% 51%);
+}
+.tm-icon-btn svg { width: 0.875rem; height: 0.875rem; }
+
+/* ── Status toggle row ──────────────────────────────────────────── */
+.tm-status-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* ================================================================
+   STAT SUMMARY STRIP
+   (shown on Teacher List page above table)
+   ================================================================ */
+.tm-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.tm-stat {
+  position: relative;
+  padding: 1rem 1.125rem 1.125rem;
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  overflow: hidden;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s;
+  box-shadow: 0 1px 3px hsl(0 0% 0% / 0.04);
+}
+.tm-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px hsl(0 0% 0% / 0.08);
+}
+.tm-stat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--tm-color);
+  opacity: 0.04;
+  pointer-events: none;
+}
+.tm-stat::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--tm-color);
+  opacity: 0.7;
+  border-radius: 0.875rem 0.875rem 0 0;
+}
+
+.tm-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: var(--tm-color);
+  margin-bottom: 0.75rem;
+  position: relative;
+}
+.tm-stat-icon svg { width: 0.9rem; height: 0.9rem; color: #fff; }
+
+.tm-stat-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.065em;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.25rem;
+  position: relative;
+}
+.tm-stat-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: hsl(var(--foreground));
+  line-height: 1;
+  position: relative;
+}
+
+.tm-stat--blue   { --tm-color: hsl(217 91% 50%); }
+.tm-stat--green  { --tm-color: hsl(142 71% 38%); }
+.tm-stat--amber  { --tm-color: hsl(38 92% 44%); }
+.tm-stat--violet { --tm-color: hsl(263 70% 52%); }
+
+/* ================================================================
+   FORM SECTIONS (Register / Edit)
+   ================================================================ */
+.tm-form-card {
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow:
+    0 1px 4px hsl(0 0% 0% / 0.05),
+    0 4px 16px hsl(0 0% 0% / 0.04);
+  overflow: hidden;
+  max-width: 42rem;
+}
+
+.tm-form-section {
+  padding: 1.375rem 1.5rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+}
+.tm-form-section:last-of-type {
+  border-bottom: none;
+}
+
+.tm-section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: hsl(var(--primary));
+  margin-bottom: 1rem;
+}
+.tm-section-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: hsl(var(--primary) / 0.15);
+}
+
+/* Form fields */
+.tm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.tm-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.01em;
+}
+.tm-field input,
+.tm-field textarea {
+  background: hsl(var(--muted) / 0.45);
+  border-color: hsl(var(--border));
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+.tm-field input:focus,
+.tm-field textarea:focus {
+  background: hsl(var(--background));
+  border-color: hsl(var(--primary) / 0.55);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+}
+.tm-field-error {
+  font-size: 0.72rem;
+  color: hsl(var(--destructive));
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tm-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Form footer */
+.tm-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.3);
+}
+
+/* ================================================================
+   TEACHER DETAIL DRAWER
+   ================================================================ */
+.tm-drawer-body {
+  padding: 1.25rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tm-drawer-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tm-drawer-section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: hsl(var(--border));
+}
+
+/* Detail row inside drawer */
+.tm-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.tm-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  background: hsl(var(--muted) / 0.4);
+  border: 1px solid hsl(var(--border) / 0.6);
+  transition: background 0.14s;
+}
+.tm-detail-item:hover {
+  background: hsl(var(--muted) / 0.65);
+}
+
+.tm-detail-label {
+  font-size: 0.67rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground));
+}
+.tm-detail-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+.tm-detail-value--empty {
+  font-weight: 400;
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+}
+
+/* Assignment pill inside drawer */
+.tm-assign-pill {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.625rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  transition: background 0.14s, border-color 0.14s;
+  animation: tm-fade 0.2s ease both;
+}
+.tm-assign-pill:hover {
+  background: hsl(var(--muted) / 0.45);
+  border-color: hsl(var(--primary) / 0.25);
+}
+
+.tm-assign-pill-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+.tm-assign-pill-sub {
+  font-size: 0.72rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.2rem;
+}
+
+/* ================================================================
+   ASSIGNMENTS PAGE — Two-panel layout
+   ================================================================ */
+.tm-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 900px) {
+  .tm-split {
+    grid-template-columns: 22rem 1fr;
+    align-items: start;
+  }
+}
+
+/* Teacher picker card */
+.tm-picker-card {
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  overflow: hidden;
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.04);
+  position: sticky;
+  top: 1rem;
+}
+
+.tm-picker-card .tm-card-header {
+  background: linear-gradient(
+    to bottom,
+    hsl(244 75% 22% / 0.08),
+    hsl(var(--muted) / 0.25)
+  );
+}
+.tm-picker-card .tm-card-header::before {
+  background: hsl(263 70% 52%);
+}
+
+/* Teacher select row */
+.tm-teacher-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  transition: background 0.12s;
+  cursor: pointer;
+}
+.tm-teacher-row:last-child { border-bottom: none; }
+.tm-teacher-row:hover { background: hsl(var(--muted) / 0.4); }
+.tm-teacher-row.active {
+  background: hsl(var(--primary) / 0.08);
+  border-color: hsl(var(--primary) / 0.2);
+}
+
+.tm-teacher-row-info { flex: 1; min-width: 0; }
+.tm-teacher-row-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tm-teacher-row-email {
+  font-size: 0.72rem;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Teacher avatar circle */
+.tm-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    hsl(244 75% 55%),
+    hsl(263 70% 52%)
+  );
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: -0.01em;
+}
+
+/* Panel: assignments list on right */
+.tm-panel-card {
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  overflow: hidden;
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.04);
+}
+
+.tm-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--muted) / 0.5),
+    hsl(var(--muted) / 0.2)
+  );
+  position: relative;
+}
+.tm-panel-header::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: hsl(142 71% 38%);
+  border-radius: 0 2px 2px 0;
+}
+
+.tm-panel-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+.tm-panel-teacher {
+  font-size: 0.72rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0.1rem 0 0;
+}
+
+/* Assignment card item */
+.tm-assign-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.55);
+  transition: background 0.12s;
+  animation: tm-enter 0.2s ease both;
+}
+.tm-assign-card:last-child { border-bottom: none; }
+.tm-assign-card:hover { background: hsl(var(--muted) / 0.35); }
+
+.tm-assign-subject {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+.tm-assign-subject-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.tm-assign-meta {
+  font-size: 0.72rem;
+  color: hsl(var(--muted-foreground));
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.tm-assign-meta-sep {
+  opacity: 0.4;
+}
+
+/* ================================================================
+   EMPTY STATE
+   ================================================================ */
+.tm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  border: 1.5px dashed hsl(var(--border));
+  border-radius: 0.75rem;
+  background: hsl(var(--muted) / 0.15);
+  margin: 0.5rem;
+}
+.tm-empty-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: hsl(var(--muted-foreground) / 0.4);
+  margin-bottom: 0.25rem;
+}
+.tm-empty-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+.tm-empty-desc {
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+}
+
+/* ================================================================
+   SELECT BUTTON (teacher picker select/selected)
+   ================================================================ */
+.tm-select-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 0.4375rem;
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.tm-select-btn:hover {
+  border-color: hsl(var(--primary) / 0.5);
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.06);
+}
+.tm-select-btn.selected {
+  background: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  animation: tm-pulse-ring 1.2s ease-out 1;
+}
+
+/* ================================================================
+   DIALOG OVERRIDES (AssignSubjectDialog, EditTeacherDialog)
+   ================================================================ */
+.tm-dialog .tm-section-label {
+  font-size: 0.68rem;
+  margin-bottom: 0.75rem;
+}
+
+.tm-dialog-select {
+  background: hsl(var(--muted) / 0.45) !important;
+  transition: border-color 0.18s, box-shadow 0.18s !important;
+}
+.tm-dialog-select:focus-within {
+  border-color: hsl(var(--primary) / 0.5) !important;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1) !important;
+}
+
+/* ================================================================
+   SKELETON SHIMMER
+   ================================================================ */
+.tm-skel {
+  border-radius: 0.5rem;
+  background: hsl(var(--muted));
+  position: relative;
+  overflow: hidden;
+  min-height: 1rem;
+}
+.tm-skel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--muted-foreground) / 0.07) 50%,
+    transparent 100%
+  );
+  animation: tm-shimmer 1.5s infinite ease-in-out;
+}
+
+/* ================================================================
+   BADGE OVERRIDES
+   ================================================================ */
+.tm-badge-active {
+  background: hsl(142 71% 38% / 0.12) !important;
+  color: hsl(142 60% 32%) !important;
+  border: 1px solid hsl(142 60% 38% / 0.25) !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tm-badge-inactive {
+  background: hsl(0 72% 51% / 0.1) !important;
+  color: hsl(0 65% 42%) !important;
+  border: 1px solid hsl(0 65% 51% / 0.25) !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tm-badge-subject {
+  background: hsl(var(--primary) / 0.1) !important;
+  color: hsl(var(--primary)) !important;
+  border: 1px solid hsl(var(--primary) / 0.2) !important;
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tm-badge-active { color: hsl(142 60% 55%) !important; }
+  .tm-badge-inactive { color: hsl(0 72% 65%) !important; }
+}
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 768px) {
+  .tm-hero { padding: 1.375rem 1.25rem 1.5rem; }
+  .tm-grid-2 { grid-template-columns: 1fr; }
+  .tm-stats { grid-template-columns: 1fr 1fr; }
+  .tm-detail-grid { grid-template-columns: 1fr; }
+  .tm-page-title { font-size: 1.25rem; }
+  .tm-form-card { max-width: 100%; }
+  .tm-form-section { padding: 1rem 1.125rem; }
+  .tm-form-footer { padding: 0.75rem 1.125rem; }
+  .tm-toolbar { gap: 0.625rem; }
+  .tm-search-wrap { max-width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .tm-hero-badge { display: none; }
+  .tm-stats { grid-template-columns: 1fr 1fr; }
+}
+
+/* ================================================================
+   REGISTER TEACHER FORM WIDTH FIX
+   ================================================================ */
+
+/* Wider professional container */
+.tm-form-card--wide {
+  width: 100%;
+  max-width: 1400px !important;
+  margin: 0 auto;
+}
+
+/* Better desktop split layout */
+.tm-form-row-split {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 1.5rem;
+  align-items: start;
+  padding: 1.25rem;
+}
+
+/* Equal column behavior */
+.tm-form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+/* Improve section sizing */
+.tm-form-card--wide .tm-form-section {
+  border-radius: 1rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.04),
+    0 4px 14px hsl(0 0% 0% / 0.03);
+}
+
+/* Better textarea usage */
+.tm-form-card--wide textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Better form footer spacing */
+.tm-form-card--wide .tm-form-footer {
+  padding: 1.25rem 1.5rem;
+}
+
+/* Large desktop optimization */
+@media (min-width: 1600px) {
+  .tm-form-card--wide {
+    max-width: 1550px !important;
+  }
+}
+
+/* Tablet responsiveness */
+@media (max-width: 1100px) {
+  .tm-form-row-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .tm-form-row-split {
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+
+  .tm-form-card--wide {
+    max-width: 100% !important;
+  }
+}

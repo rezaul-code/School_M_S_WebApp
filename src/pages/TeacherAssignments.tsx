@@ -1,12 +1,10 @@
+// src/pages/TeacherAssignments.tsx
+
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Search, ClipboardList } from "lucide-react";
 
-import { Search } from "lucide-react";
-
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-
 import {
   Table,
   TableBody,
@@ -23,6 +21,8 @@ import Pagination from "@/components/common/Pagination";
 import { getTeacherAssignments, listTeachers } from "@/lib/api/teachers";
 import { useDebounce } from "@/hooks/useDebounce";
 
+import "@/styles/teacher.css";
+
 export default function TeacherAssignmentsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -30,11 +30,7 @@ export default function TeacherAssignmentsPage() {
   const debouncedSearch = useDebounce(search, 400);
 
   const params = useMemo(
-    () => ({
-      page,
-      size: 20,
-      search: debouncedSearch || undefined,
-    }),
+    () => ({ page, size: 20, search: debouncedSearch || undefined }),
     [page, debouncedSearch]
   );
 
@@ -45,16 +41,13 @@ export default function TeacherAssignmentsPage() {
 
   const teachers = teachersQuery.data?.content || [];
 
-  // Fetch assignments for each teacher on the current page
   const assignmentsQuery = useQuery({
     queryKey: ["teacher-assignments-page", teachers.map((t) => t.id)],
     enabled: teachers.length > 0,
-
     queryFn: async () => {
       const results = await Promise.all(
         teachers.map(async (teacher) => {
           const assignments = await getTeacherAssignments(teacher.id);
-
           return assignments.map((assignment) => ({
             ...assignment,
             teacherName:
@@ -63,54 +56,65 @@ export default function TeacherAssignmentsPage() {
           }));
         })
       );
-
       return results.flat();
     },
   });
 
   const assignments = assignmentsQuery.data || [];
-  const isLoading =
-    teachersQuery.isLoading || assignmentsQuery.isLoading;
+  const isLoading = teachersQuery.isLoading || assignmentsQuery.isLoading;
 
   return (
-    <div className="space-y-4">
-      {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-bold">Teacher Assignments</h1>
-        <p className="text-sm text-muted-foreground">
-          View all subject assignments across teachers
-        </p>
+    <div className="tm-page">
+      {/* HERO */}
+      <div className="tm-hero">
+        <div className="tm-hero-glow" />
+        <div className="tm-hero-inner">
+          <div className="tm-hero-left">
+            <div className="tm-hero-icon-wrap">
+              <ClipboardList />
+            </div>
+            <div className="tm-hero-text">
+              <h2 className="tm-hero-title">Teacher Assignments</h2>
+              <p className="tm-hero-sub">View all subject assignments across teachers</p>
+            </div>
+          </div>
+          <span className="tm-hero-badge">{assignments.length} Assignments</span>
+        </div>
       </div>
 
-      {/* SEARCH */}
-      <Card className="p-4">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+      {/* TOOLBAR */}
+      <div className="tm-toolbar">
+        <div className="tm-search-wrap">
+          <Search className="search-icon" />
+          <input
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
               setPage(0);
             }}
             placeholder="Search teacher..."
-            className="pl-9"
           />
         </div>
-      </Card>
+      </div>
 
-      {/* TABLE */}
-      <Card className="p-4">
+      {/* TABLE CARD */}
+      <div className="tm-card">
         {isLoading ? (
-          <LoadingTable cols={5} />
+          <div className="tm-card-body">
+            <LoadingTable cols={5} />
+          </div>
         ) : assignments.length === 0 ? (
-          <EmptyState
-            title="No assignments found"
-            description="No teacher assignments available."
-          />
+          <div className="tm-card-body">
+            <EmptyState
+              title="No assignments found"
+              description="No teacher assignments available."
+            />
+          </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="tm-table-wrap">
+              <Table className="tm-table">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Teacher</TableHead>
@@ -120,48 +124,44 @@ export default function TeacherAssignmentsPage() {
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
-
                 <TableBody>
                   {assignments.map((assignment) => (
-                    <TableRow
-                      key={`${assignment.teacherId}-${assignment.id}`}
-                    >
-                      <TableCell className="font-medium">
+                    <TableRow key={`${assignment.teacherId}-${assignment.id}`}>
+                      <TableCell className="tm-name-cell">
                         {assignment.teacherName}
                       </TableCell>
-
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary">
+                        <div className="tm-assign-subject">
+                          <Badge className="tm-badge-subject">
                             {assignment.subjectCode}
                           </Badge>
-                          <span>{assignment.subjectName}</span>
+                          <span className="tm-assign-subject-name">
+                            {assignment.subjectName}
+                          </span>
                         </div>
                       </TableCell>
-
-                      <TableCell>{assignment.className}</TableCell>
-
-                      <TableCell>
+                      <TableCell className="tm-meta-cell">{assignment.className}</TableCell>
+                      <TableCell className="tm-meta-cell">
                         {assignment.classSectionName || "—"}
                       </TableCell>
-
                       <TableCell>
-                        <Badge>Active</Badge>
+                        <Badge className="tm-badge-active">Active</Badge>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
-
-            <Pagination
-              page={teachersQuery.data?.number ?? page}
-              totalPages={teachersQuery.data?.totalPages ?? 1}
-              onChange={setPage}
-            />
+            <div style={{ padding: "0.75rem 1rem" }}>
+              <Pagination
+                page={teachersQuery.data?.number ?? page}
+                totalPages={teachersQuery.data?.totalPages ?? 1}
+                onChange={setPage}
+              />
+            </div>
           </>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

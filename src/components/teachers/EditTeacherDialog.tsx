@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+// src/components/teachers/EditTeacherDialog.tsx
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -27,6 +27,8 @@ import { getApiErrorMessage } from "@/lib/api/client";
 
 import type { Teacher } from "@/types/api";
 
+import "@/styles/teacher.css";
+
 const schema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
@@ -40,28 +42,17 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function EditTeacherDialog({
-  teacher,
-  open,
-  onOpenChange,
-}: Props) {
+export default function EditTeacherDialog({ teacher, open, onOpenChange }: Props) {
   const qc = useQueryClient();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      phone: "",
-      address: "",
-    },
+    defaultValues: { phone: "", address: "" },
   });
 
-  // Populate form when teacher changes
   useEffect(() => {
     if (teacher) {
-      form.reset({
-        phone: teacher.phone || "",
-        address: teacher.address || "",
-      });
+      form.reset({ phone: teacher.phone || "", address: teacher.address || "" });
     } else {
       form.reset({ phone: "", address: "" });
     }
@@ -70,19 +61,16 @@ export default function EditTeacherDialog({
   const mutation = useMutation({
     mutationFn: (values: FormValues) => {
       if (!teacher) throw new Error("No teacher selected");
-
       return updateTeacher(teacher.id, {
         phone: values.phone || undefined,
         address: values.address || undefined,
       });
     },
-
     onSuccess: () => {
       toast.success("Teacher updated successfully");
       qc.invalidateQueries({ queryKey: ["teachers"] });
       onOpenChange(false);
     },
-
     onError: (err) => {
       toast.error(getApiErrorMessage(err, "Failed to update teacher"));
     },
@@ -94,7 +82,7 @@ export default function EditTeacherDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md tm-dialog">
         <DialogHeader>
           <DialogTitle>Edit Teacher</DialogTitle>
           <DialogDescription>{displayName}</DialogDescription>
@@ -104,28 +92,23 @@ export default function EditTeacherDialog({
           onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
           className="space-y-4"
         >
-          <div className="space-y-1.5">
+          <div className="tm-section-label">Contact Details</div>
+
+          <div className="tm-field">
             <Label>Phone</Label>
             <Input {...form.register("phone")} />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="tm-field">
             <Label>Address</Label>
             <Textarea rows={3} {...form.register("address")} />
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+          <div className="flex justify-end gap-3 pt-2 border-t" style={{ borderColor: "hsl(var(--border))" }}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-
-            <SubmitButton loading={mutation.isPending}>
-              Save Changes
-            </SubmitButton>
+            <SubmitButton loading={mutation.isPending}>Save Changes</SubmitButton>
           </div>
         </form>
       </DialogContent>

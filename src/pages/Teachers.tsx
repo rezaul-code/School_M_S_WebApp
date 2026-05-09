@@ -1,18 +1,11 @@
+// src/pages/Teachers.tsx
+
 import { useMemo, useState } from "react";
-
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-
-import { Eye, Pencil, Search, UserPlus } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Eye, Pencil, Search, UserPlus, Users, UserCheck, UserX } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 
@@ -43,6 +36,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 import type { Teacher } from "@/types/api";
 
+import "@/styles/teacher.css";
+
 export default function TeachersPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -55,11 +50,7 @@ export default function TeachersPage() {
   const debouncedSearch = useDebounce(search, 400);
 
   const params = useMemo(
-    () => ({
-      page,
-      size: 20,
-      search: debouncedSearch || undefined,
-    }),
+    () => ({ page, size: 20, search: debouncedSearch || undefined }),
     [page, debouncedSearch]
   );
 
@@ -71,79 +62,116 @@ export default function TeachersPage() {
 
   const toggleMutation = useMutation({
     mutationFn: async (teacher: Teacher) => {
-      if (teacher.active) {
-        return deactivateTeacher(teacher.id);
-      }
+      if (teacher.active) return deactivateTeacher(teacher.id);
       return reactivateTeacher(teacher.id);
     },
-
     onSuccess: () => {
       toast.success("Teacher status updated");
       qc.invalidateQueries({ queryKey: ["teachers"] });
     },
-
     onError: (err) => {
-      toast.error(
-        getApiErrorMessage(err, "Failed to update teacher status")
-      );
+      toast.error(getApiErrorMessage(err, "Failed to update teacher status"));
     },
   });
 
   const teachers = teachersQuery.data?.content || [];
+
+  const activeCount = teachers.filter((t) => t.active).length;
+  const inactiveCount = teachers.filter((t) => !t.active).length;
 
   const getDisplayName = (teacher: Teacher) =>
     teacher.fullName ||
     `${teacher.firstName || ""} ${teacher.lastName || ""}`.trim();
 
   return (
-    <div className="space-y-4">
-      {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-bold">Teacher List</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage all registered teachers
-        </p>
+    <div className="tm-page">
+      {/* HERO */}
+      <div className="tm-hero">
+        <div className="tm-hero-glow" />
+        <div className="tm-hero-inner">
+          <div className="tm-hero-left">
+            <div className="tm-hero-icon-wrap">
+              <Users />
+            </div>
+            <div className="tm-hero-text">
+              <h2 className="tm-hero-title">Teacher List</h2>
+              <p className="tm-hero-sub">Manage all registered teachers</p>
+            </div>
+          </div>
+          <span className="tm-hero-badge">
+            {teachersQuery.data?.totalElements ?? "—"} Total
+          </span>
+        </div>
       </div>
 
-      {/* FILTERS */}
-      <Card className="p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(0);
-              }}
-              placeholder="Search by name or email..."
-              className="pl-9"
+      {/* STATS */}
+      {!teachersQuery.isLoading && (
+        <div className="tm-stats">
+          <div className="tm-stat tm-stat--blue">
+            <div className="tm-stat-icon">
+              <Users />
+            </div>
+            <div className="tm-stat-label">Total Teachers</div>
+            <div className="tm-stat-value">{teachersQuery.data?.totalElements ?? 0}</div>
+          </div>
+          <div className="tm-stat tm-stat--green">
+            <div className="tm-stat-icon">
+              <UserCheck />
+            </div>
+            <div className="tm-stat-label">Active</div>
+            <div className="tm-stat-value">{activeCount}</div>
+          </div>
+          <div className="tm-stat tm-stat--amber">
+            <div className="tm-stat-icon">
+              <UserX />
+            </div>
+            <div className="tm-stat-label">Inactive</div>
+            <div className="tm-stat-value">{inactiveCount}</div>
+          </div>
+        </div>
+      )}
+
+      {/* TOOLBAR */}
+      <div className="tm-toolbar">
+        <div className="tm-search-wrap">
+          <Search className="search-icon" />
+          <input
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
+            placeholder="Search by name or email..."
+          />
+        </div>
+
+        <button
+          className="tm-btn-primary"
+          onClick={() => navigate("/teachers/register")}
+        >
+          <UserPlus />
+          Register Teacher
+        </button>
+      </div>
+
+      {/* TABLE CARD */}
+      <div className="tm-card">
+        {teachersQuery.isLoading ? (
+          <div className="tm-card-body">
+            <LoadingTable cols={6} />
+          </div>
+        ) : teachers.length === 0 ? (
+          <div className="tm-card-body">
+            <EmptyState
+              title="No teachers found"
+              description="Register your first teacher."
             />
           </div>
-
-          <Button
-            className="gap-2"
-            onClick={() => navigate("/teachers/register")}
-          >
-            <UserPlus className="h-4 w-4" />
-            Register Teacher
-          </Button>
-        </div>
-      </Card>
-
-      {/* TABLE */}
-      <Card className="p-4">
-        {teachersQuery.isLoading ? (
-          <LoadingTable cols={6} />
-        ) : teachers.length === 0 ? (
-          <EmptyState
-            title="No teachers found"
-            description="Register your first teacher."
-          />
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="tm-table-wrap">
+              <Table className="tm-table">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
@@ -154,54 +182,45 @@ export default function TeachersPage() {
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-
                 <TableBody>
                   {teachers.map((teacher) => (
                     <TableRow key={teacher.id}>
-                      <TableCell className="font-medium">
+                      <TableCell className="tm-name-cell">
                         {getDisplayName(teacher)}
                       </TableCell>
-
-                      <TableCell>{teacher.email}</TableCell>
-
-                      <TableCell>{teacher.phone || "—"}</TableCell>
-
-                      <TableCell>{teacher.joiningDate || "—"}</TableCell>
-
+                      <TableCell className="tm-meta-cell">{teacher.email}</TableCell>
+                      <TableCell className="tm-meta-cell">{teacher.phone || "—"}</TableCell>
+                      <TableCell className="tm-meta-cell">{teacher.joiningDate || "—"}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-3">
+                        <div className="tm-status-cell">
                           <Switch
                             checked={teacher.active}
                             disabled={toggleMutation.isPending}
-                            onCheckedChange={() =>
-                              toggleMutation.mutate(teacher)
-                            }
+                            onCheckedChange={() => toggleMutation.mutate(teacher)}
                           />
                           {teacher.active ? (
-                            <Badge>Active</Badge>
+                            <Badge className="tm-badge-active">Active</Badge>
                           ) : (
-                            <Badge variant="destructive">Inactive</Badge>
+                            <Badge className="tm-badge-inactive">Inactive</Badge>
                           )}
                         </div>
                       </TableCell>
-
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                      <TableCell>
+                        <div className="tm-row-actions">
+                          <button
+                            className="tm-icon-btn"
                             onClick={() => setViewId(teacher.id)}
+                            title="View details"
                           >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                            <Eye />
+                          </button>
+                          <button
+                            className="tm-icon-btn"
                             onClick={() => setEditTeacher(teacher)}
+                            title="Edit teacher"
                           >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                            <Pencil />
+                          </button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -210,30 +229,28 @@ export default function TeachersPage() {
               </Table>
             </div>
 
-            <Pagination
-              page={teachersQuery.data?.number ?? page}
-              totalPages={teachersQuery.data?.totalPages ?? 1}
-              onChange={setPage}
-            />
+            <div style={{ padding: "0.75rem 1rem" }}>
+              <Pagination
+                page={teachersQuery.data?.number ?? page}
+                totalPages={teachersQuery.data?.totalPages ?? 1}
+                onChange={setPage}
+              />
+            </div>
           </>
         )}
-      </Card>
+      </div>
 
       {/* DRAWERS / DIALOGS */}
       <TeacherDetailDrawer
         teacherId={viewId}
         open={!!viewId}
-        onOpenChange={(o) => {
-          if (!o) setViewId(null);
-        }}
+        onOpenChange={(o) => { if (!o) setViewId(null); }}
       />
 
       <EditTeacherDialog
         teacher={editTeacher}
         open={!!editTeacher}
-        onOpenChange={(o) => {
-          if (!o) setEditTeacher(null);
-        }}
+        onOpenChange={(o) => { if (!o) setEditTeacher(null); }}
       />
     </div>
   );
