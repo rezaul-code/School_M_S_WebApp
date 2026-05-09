@@ -1,30 +1,30 @@
 import { api } from "./client";
-
-import type { 
-  ApiResponse, 
-  AcademicYear, 
-  ClassLevel, 
-  Section, 
-  ClassSubjectMapping, 
-  Subject, 
-  ClassSection 
+ 
+import type {
+  ApiResponse,
+  AcademicYear,
+  ClassLevel,
+  Section,
+  ClassSubjectMapping,
+  Subject,
+  ClassSection
 } from "@/types/api";
-
+ 
 // ─────────────────────────────────────────────────
 // Academic Years
 // ─────────────────────────────────────────────────
-
+ 
 // ✅ Updated to strictly match your backend API URL
 export const getActiveAcademicYear = async () => {
   const res = await api.get("/api/master/academic-years/active");
   return res.data.data;
 };
-
+ 
 export async function listAcademicYears() {
   const response = await api.get<ApiResponse<AcademicYear[]>>("/api/master/academic-years");
   return response.data.data;
 }
-
+ 
 export async function createAcademicYear(payload: {
   name: string;
   startDate: string;
@@ -34,16 +34,16 @@ export async function createAcademicYear(payload: {
   const response = await api.post<ApiResponse<AcademicYear>>("/api/master/academic-years", payload);
   return response.data.data;
 }
-
+ 
 // ─────────────────────────────────────────────────
 // Class Levels
 // ─────────────────────────────────────────────────
-
+ 
 export async function getClassLevelOptions() {
   const response = await api.get<ApiResponse<ClassLevel[]>>("/api/master/options/class-levels");
   return response.data.data;
 }
-
+ 
 export async function createClassLevel(payload: {
   name: string;
   displayName: string;
@@ -51,16 +51,16 @@ export async function createClassLevel(payload: {
   const response = await api.post<ApiResponse<ClassLevel>>("/api/master/class-levels", payload);
   return response.data.data;
 }
-
+ 
 // ─────────────────────────────────────────────────
 // Sections
 // ─────────────────────────────────────────────────
-
+ 
 export async function getSectionOptions() {
   const response = await api.get<ApiResponse<Section[]>>("/api/master/options/sections");
   return response.data.data;
 }
-
+ 
 export async function createSection(payload: {
   name: string;
   displayName: string;
@@ -68,11 +68,11 @@ export async function createSection(payload: {
   const response = await api.post<ApiResponse<Section>>("/api/master/sections", payload);
   return response.data.data;
 }
-
+ 
 // ─────────────────────────────────────────────────
 // Subjects
 // ─────────────────────────────────────────────────
-
+ 
 export async function createSubject(payload: {
   name: string;
   code: string;
@@ -80,11 +80,11 @@ export async function createSubject(payload: {
   const response = await api.post<ApiResponse<Subject>>("/api/master/subjects", payload);
   return response.data.data;
 }
-
+ 
 // ─────────────────────────────────────────────────
 // Curriculum / Class-Subjects
 // ─────────────────────────────────────────────────
-
+ 
 export async function createClassSubject(payload: {
   classLevelId: number;
   subjectId: number;
@@ -98,37 +98,37 @@ export async function createClassSubject(payload: {
   );
   return response.data.data;
 }
-
+ 
 export async function getAllClassSubjects() {
   const response = await api.get<ApiResponse<ClassSubjectMapping[]>>(
     "/api/master/class-subjects"
   );
   return response.data.data;
 }
-
+ 
 export async function getClassSubjectById(id: number | string) {
   const response = await api.get<ApiResponse<ClassSubjectMapping>>(
     `/api/master/class-subjects/${id}`
   );
   return response.data.data;
 }
-
+ 
 export async function deleteClassSubject(id: number | string) {
   const response = await api.delete<ApiResponse<null>>(
     `/api/master/class-subjects/${id}`
   );
   return response.data;
 }
-
+ 
 // ─────────────────────────────────────────────────
 // Class-Sections (Mappings)
 // ─────────────────────────────────────────────────
-
+ 
 export async function listClassSections() {
   const response = await api.get<ApiResponse<ClassSection[]>>("/api/master/class-sections");
   return response.data.data;
 }
-
+ 
 export async function createClassSection(payload: {
   classLevelId: number;
   sectionId: number;
@@ -141,6 +141,6 @@ export async function createClassSection(payload: {
   });
   return response.data.data;
 }
-
+ 
 // Keeping this around just in case you still rely on it in other parts of the app
 export const CLASS_OPTIONS = Array.from({ length: 12 }, (_, i) => `CLASS_${i + 1}`);
