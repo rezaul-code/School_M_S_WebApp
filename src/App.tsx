@@ -1,12 +1,7 @@
 // src/App.tsx
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes,
-} from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -69,54 +64,30 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-              <Route
-                path="/"
-                element={<Navigate to="/dashboard" replace />}
-              />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
               {/* DASHBOARD */}
               <Route path="/dashboard" element={<Dashboard />} />
 
-              {/* STUDENTS */}
-              <Route path="/students" element={<StudentsPage />} />
-              <Route
-                path="/students/admit"
-                element={<AdmissionWizardPage />}
-              />
-              <Route
-                path="/students/:studentId"
-                element={<StudentDetailsPage />}
-              />
-              <Route
-                path="/students/:studentId/fee-summary"
-                element={<StudentFeeSummaryPage />}
-              />
+              {/* STUDENTS — static routes before dynamic :studentId */}
+              <Route path="/students"       element={<StudentsPage />} />
+              <Route path="/students/admit" element={<AdmissionWizardPage />} />
+              <Route path="/students/:studentId"              element={<StudentDetailsPage />} />
+              <Route path="/students/:studentId/fee-summary"  element={<StudentFeeSummaryPage />} />
 
-              {/* TEACHERS — all four submenu routes */}
-              <Route
-                path="/teachers/register"
-                element={<RegisterTeacherPage />}
-              />
-              <Route path="/teachers" element={<TeachersPage />} />
-              <Route
-                path="/teachers/assignments"
-                element={<TeacherAssignmentsPage />}
-              />
-              <Route
-                path="/teachers/subject-assignments"
-                element={<SubjectAssignmentsPage />}
-              />
+              {/* TEACHERS */}
+              <Route path="/teachers/register"          element={<RegisterTeacherPage />} />
+              <Route path="/teachers"                   element={<TeachersPage />} />
+              <Route path="/teachers/assignments"       element={<TeacherAssignmentsPage />} />
+              <Route path="/teachers/subject-assignments" element={<SubjectAssignmentsPage />} />
 
               {/* MASTER DATA */}
-              <Route path="/academic-years" element={<AcademicYears />} />
-              <Route path="/class-levels" element={<ClassLevels />} />
-              <Route path="/sections" element={<Sections />} />
-              <Route path="/class-sections" element={<ClassSections />} />
-              <Route path="/subjects" element={<Subjects />} />
-              <Route
-                path="/class-subject-mappings"
-                element={<ClassSubjectMappings />}
-              />
+              <Route path="/academic-years"        element={<AcademicYears />} />
+              <Route path="/class-levels"          element={<ClassLevels />} />
+              <Route path="/sections"              element={<Sections />} />
+              <Route path="/class-sections"        element={<ClassSections />} />
+              <Route path="/subjects"              element={<Subjects />} />
+              <Route path="/class-subject-mappings" element={<ClassSubjectMappings />} />
 
               {/* FEES */}
               <Route path="/fee-structures" element={<FeeStructures />} />
