@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useActiveAcademicYear } from "@/hooks/useActiveAcademicYear";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -112,14 +113,17 @@ export default function FeeSummaryDrawer({
   studentId,
   open,
   onOpenChange,
-  academicYearId = 1,
 }: {
   studentId: string | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  academicYearId?: number;
 }) {
   const [expandedFeeTypes, setExpandedFeeTypes] = useState<string[]>([]);
+  
+  // 🔧 Fetch the active academic year dynamically
+  const { data: activeAcademicYear, isLoading: isLoadingAcademicYear } = useActiveAcademicYear();
+  
+  const academicYearId = activeAcademicYear?.id;
 
   React.useEffect(() => {
     if (!open) setExpandedFeeTypes([]);
@@ -129,13 +133,14 @@ export default function FeeSummaryDrawer({
   console.log("studentId", studentId);
   console.log(
     "API URL",
-    `/api/students/${studentId}/fees/summary`
+    `/api/students/${studentId}/fees/summary?academicYearId=${academicYearId}`
   );
 
   const q = useQuery({
     queryKey: ["student-fee-summary", studentId, academicYearId],
-    queryFn: () => getStudentFeeSummary(studentId as string, academicYearId),
-    enabled: open && !!studentId,
+    queryFn: () => getStudentFeeSummary(studentId as string, academicYearId as number),
+    // 🔧 Only enable when drawer is open, studentId exists, AND academicYearId is loaded
+    enabled: open && !!studentId && !!academicYearId,
   });
 
   const summary = (q.data ?? null) as StudentFeeSummary | null;
@@ -166,7 +171,7 @@ export default function FeeSummaryDrawer({
         </SheetHeader>
 
         <div className="mt-6 space-y-6 pb-10">
-          {q.isLoading && (
+          {(q.isLoading || isLoadingAcademicYear) && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -184,7 +189,7 @@ export default function FeeSummaryDrawer({
             </div>
           )}
 
-          {!q.isLoading && q.isError && (
+          {!q.isLoading && !isLoadingAcademicYear && q.isError && (
             <Alert variant="destructive">
               <AlertTitle>Failed to load fee summary</AlertTitle>
               <AlertDescription>
@@ -194,7 +199,7 @@ export default function FeeSummaryDrawer({
             </Alert>
           )}
 
-          {!q.isLoading && !q.isError && summary && (
+          {!q.isLoading && !isLoadingAcademicYear && !q.isError && summary && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                 <MetricCard
@@ -341,7 +346,7 @@ export default function FeeSummaryDrawer({
             </>
           )}
 
-          {!q.isLoading && !q.isError && !summary && (
+          {!q.isLoading && !isLoadingAcademicYear && !q.isError && !summary && (
             <div className="space-y-4">
               <Alert>
                 <AlertTitle>Fee summary unavailable</AlertTitle>
@@ -356,4 +361,3 @@ export default function FeeSummaryDrawer({
     </Sheet>
   );
 }
-
