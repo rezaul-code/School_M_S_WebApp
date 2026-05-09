@@ -1,0 +1,1286 @@
+/* ================================================================
+   master-data.css  —  Master Data Module Design System
+   Place at: src/styles/master-data.css
+   Mirrors teacher.css + sidebar theme. Reusable across all
+   Master Data pages: Academic Years, Class Levels, Sections,
+   Subjects, Class-Section, Class-Subject, Fee Structures.
+   ================================================================ */
+
+/* ── Shared animations ─────────────────────────────────────────── */
+@keyframes md-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes md-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes md-slide-right {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes md-shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+@keyframes md-pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.18); }
+  50%       { box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
+}
+@keyframes md-scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ================================================================
+   PAGE SHELL
+   ================================================================ */
+.md-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 3rem;
+  animation: md-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Page heading block ─────────────────────────────────────────── */
+.md-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.md-page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.028em;
+  color: hsl(var(--foreground));
+  margin: 0 0 0.2rem;
+  line-height: 1.2;
+}
+
+.md-page-subtitle {
+  font-size: 0.8125rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ================================================================
+   HERO BANNER
+   Per-page accent via --md-hero-* variables set on the element.
+   Defaults to a blue-indigo palette matching Teacher module.
+   ================================================================ */
+.md-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 1.625rem 2rem 1.75rem;
+  background: linear-gradient(
+    130deg,
+    var(--md-hero-from,   hsl(224 76% 18%)) 0%,
+    var(--md-hero-mid,    hsl(230 60% 24%)) 45%,
+    var(--md-hero-to,     hsl(218 48% 30%)) 100%
+  );
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.08),
+    0 4px 24px hsl(224 76% 10% / 0.24),
+    inset 0 1px 0 hsl(0 0% 100% / 0.07);
+}
+
+/* Dot-grid texture */
+.md-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle,
+    hsl(0 0% 100% / 0.05) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+  pointer-events: none;
+}
+
+/* Top-right glow orb */
+.md-hero::after {
+  content: "";
+  position: absolute;
+  top: -70px; right: -50px;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    var(--md-hero-orb, hsl(260 65% 60% / 0.22)) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+
+.md-hero-glow {
+  position: absolute;
+  bottom: -45px; left: -25px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    hsl(195 85% 60% / 0.12) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+
+.md-hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.md-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.md-hero-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.875rem;
+  height: 2.875rem;
+  border-radius: 0.75rem;
+  background: hsl(0 0% 100% / 0.12);
+  border: 1px solid hsl(0 0% 100% / 0.18);
+  flex-shrink: 0;
+}
+.md-hero-icon-wrap svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: hsl(0 0% 100% / 0.9);
+}
+
+.md-hero-text { min-width: 0; }
+.md-hero-title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: hsl(0 0% 98%);
+  letter-spacing: -0.016em;
+  margin: 0 0 0.175rem;
+  line-height: 1.25;
+}
+.md-hero-sub {
+  font-size: 0.78rem;
+  color: hsl(0 0% 100% / 0.5);
+  margin: 0;
+}
+
+.md-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.275rem 0.7rem;
+  border-radius: 2rem;
+  background: hsl(0 0% 100% / 0.1);
+  border: 1px solid hsl(0 0% 100% / 0.16);
+  color: hsl(0 0% 100% / 0.78);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.md-hero-badge svg { width: 0.7rem; height: 0.7rem; }
+
+/* ── Per-page hero color overrides ─────────────────────────────── */
+/* Academic Years — emerald-teal */
+.md-hero--academic {
+  --md-hero-from: hsl(168 60% 16%);
+  --md-hero-mid:  hsl(175 52% 22%);
+  --md-hero-to:   hsl(185 44% 28%);
+  --md-hero-orb:  hsl(160 70% 55% / 0.2);
+}
+
+/* Class Levels — indigo */
+.md-hero--class {
+  --md-hero-from: hsl(244 75% 18%);
+  --md-hero-mid:  hsl(238 62% 24%);
+  --md-hero-to:   hsl(230 52% 30%);
+  --md-hero-orb:  hsl(270 70% 65% / 0.22);
+}
+
+/* Sections — violet */
+.md-hero--sections {
+  --md-hero-from: hsl(263 70% 18%);
+  --md-hero-mid:  hsl(255 60% 24%);
+  --md-hero-to:   hsl(245 50% 30%);
+  --md-hero-orb:  hsl(280 75% 65% / 0.22);
+}
+
+/* Subjects — amber-orange */
+.md-hero--subjects {
+  --md-hero-from: hsl(24 80% 18%);
+  --md-hero-mid:  hsl(32 70% 24%);
+  --md-hero-to:   hsl(42 60% 30%);
+  --md-hero-orb:  hsl(40 90% 60% / 0.22);
+}
+
+/* Class-Section, Class-Subject — slate */
+.md-hero--mapping {
+  --md-hero-from: hsl(215 55% 16%);
+  --md-hero-mid:  hsl(220 48% 22%);
+  --md-hero-to:   hsl(225 42% 28%);
+  --md-hero-orb:  hsl(210 80% 60% / 0.2);
+}
+
+/* Fee Structures — rose */
+.md-hero--fee {
+  --md-hero-from: hsl(345 70% 16%);
+  --md-hero-mid:  hsl(340 58% 22%);
+  --md-hero-to:   hsl(335 48% 28%);
+  --md-hero-orb:  hsl(355 80% 62% / 0.22);
+}
+
+/* ================================================================
+   STAT STRIP  (row of KPI cards above the table)
+   ================================================================ */
+.md-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 0.75rem;
+}
+
+.md-stat {
+  position: relative;
+  padding: 1rem 1.125rem 1.125rem;
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  overflow: hidden;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s;
+  box-shadow: 0 1px 3px hsl(0 0% 0% / 0.04);
+}
+.md-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px hsl(0 0% 0% / 0.08);
+}
+.md-stat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--md-color);
+  opacity: 0.04;
+  pointer-events: none;
+}
+.md-stat::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--md-color);
+  opacity: 0.75;
+  border-radius: 0.875rem 0.875rem 0 0;
+}
+
+.md-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 0.5rem;
+  background: var(--md-color);
+  margin-bottom: 0.625rem;
+  position: relative;
+}
+.md-stat-icon svg { width: 0.875rem; height: 0.875rem; color: #fff; }
+
+.md-stat-label {
+  font-size: 0.67rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.065em;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.2rem;
+  position: relative;
+}
+.md-stat-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: hsl(var(--foreground));
+  line-height: 1;
+  position: relative;
+}
+
+/* Palette tokens */
+.md-stat--blue   { --md-color: hsl(217 91% 50%); }
+.md-stat--green  { --md-color: hsl(142 71% 38%); }
+.md-stat--amber  { --md-color: hsl(38 92% 44%); }
+.md-stat--violet { --md-color: hsl(263 70% 52%); }
+.md-stat--rose   { --md-color: hsl(343 80% 50%); }
+.md-stat--teal   { --md-color: hsl(172 66% 38%); }
+.md-stat--slate  { --md-color: hsl(215 28% 48%); }
+.md-stat--orange { --md-color: hsl(24 90% 48%); }
+
+/* ================================================================
+   TOOLBAR / FILTER BAR
+   ================================================================ */
+.md-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.875rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.04);
+}
+
+.md-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.md-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-shrink: 0;
+}
+
+/* Search input wrapper */
+.md-search-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 21rem;
+}
+.md-search-wrap .md-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.8125rem;
+  height: 0.8125rem;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+}
+.md-search-wrap input {
+  padding-left: 2.125rem !important;
+  background: hsl(var(--muted) / 0.5);
+  border-color: hsl(var(--border));
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+.md-search-wrap input:focus {
+  background: hsl(var(--background));
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+  outline: none;
+}
+
+/* Filter select */
+.md-filter-select {
+  background: hsl(var(--muted) / 0.5) !important;
+  border-color: hsl(var(--border)) !important;
+  font-size: 0.8125rem !important;
+  transition: border-color 0.18s, box-shadow 0.18s !important;
+  min-width: 130px;
+}
+.md-filter-select:focus-within {
+  border-color: hsl(var(--primary) / 0.45) !important;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1) !important;
+}
+
+/* Primary action button */
+.md-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.475rem 1.0625rem;
+  border-radius: 0.625rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.16s, transform 0.14s, box-shadow 0.16s;
+  box-shadow: 0 2px 8px hsl(var(--primary) / 0.28);
+  white-space: nowrap;
+  text-decoration: none;
+}
+.md-btn-primary:hover {
+  background: hsl(244 75% 50%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px hsl(var(--primary) / 0.36);
+}
+.md-btn-primary svg { width: 0.875rem; height: 0.875rem; }
+
+/* Secondary / ghost button */
+.md-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.475rem 0.875rem;
+  border-radius: 0.625rem;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: 1px solid hsl(var(--border));
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.md-btn-ghost:hover {
+  background: hsl(var(--muted) / 0.6);
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+.md-btn-ghost svg { width: 0.875rem; height: 0.875rem; }
+
+/* ================================================================
+   TABLE CARD
+   ================================================================ */
+.md-card {
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.04),
+    0 2px 10px hsl(0 0% 0% / 0.03);
+  overflow: hidden;
+}
+
+/* Card header bar */
+.md-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8125rem 1.25rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--muted) / 0.5),
+    hsl(var(--muted) / 0.2)
+  );
+  position: relative;
+}
+.md-card-header::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: hsl(var(--primary));
+  border-radius: 0 2px 2px 0;
+  opacity: 0.8;
+}
+
+/* Per-section accent left bar */
+.md-card-header--green::before  { background: hsl(142 71% 38%); }
+.md-card-header--amber::before  { background: hsl(38 92% 44%); }
+.md-card-header--violet::before { background: hsl(263 70% 52%); }
+.md-card-header--rose::before   { background: hsl(343 80% 50%); }
+.md-card-header--teal::before   { background: hsl(172 66% 38%); }
+
+.md-card-title-group { min-width: 0; }
+.md-card-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.3;
+}
+.md-card-subtitle {
+  font-size: 0.71rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0.1rem 0 0;
+}
+
+.md-card-body { padding: 1rem; }
+
+/* ── Table wrapper ──────────────────────────────────────────────── */
+.md-table-wrap { overflow-x: auto; }
+
+.md-table { width: 100%; }
+
+.md-table thead tr {
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--muted) / 0.55),
+    hsl(var(--muted) / 0.3)
+  );
+}
+.md-table thead th {
+  font-size: 0.69rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.065em;
+  color: hsl(var(--muted-foreground)) !important;
+  padding: 0.65rem 1rem !important;
+  white-space: nowrap;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+}
+
+.md-table tbody tr {
+  border-bottom: 1px solid hsl(var(--border) / 0.6) !important;
+  transition: background 0.12s;
+}
+.md-table tbody tr:last-child { border-bottom: none !important; }
+.md-table tbody tr:hover { background: hsl(var(--muted) / 0.36); }
+
+.md-table tbody td {
+  padding: 0.75rem 1rem !important;
+  font-size: 0.8125rem;
+  vertical-align: middle;
+  color: hsl(var(--foreground));
+}
+
+/* Specific cell types */
+.md-cell-name {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+.md-cell-meta {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.79rem;
+}
+.md-cell-mono {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.775rem;
+  color: hsl(var(--muted-foreground));
+}
+.md-cell-id {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.725rem;
+  color: hsl(var(--muted-foreground) / 0.7);
+  background: hsl(var(--muted) / 0.5);
+  padding: 0.15rem 0.45rem !important;
+  border-radius: 0.3rem;
+  display: inline-block;
+}
+
+/* Row index indicator */
+.md-cell-index {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground) / 0.6);
+  width: 2.25rem;
+  text-align: right;
+}
+
+/* ── Row action buttons ─────────────────────────────────────────── */
+.md-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+.md-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.14s, border-color 0.14s, color 0.14s;
+  color: hsl(var(--muted-foreground));
+}
+.md-icon-btn:hover {
+  background: hsl(var(--muted));
+  border-color: hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+.md-icon-btn--danger:hover {
+  background: hsl(0 72% 51% / 0.1);
+  border-color: hsl(0 72% 51% / 0.3);
+  color: hsl(0 72% 51%);
+}
+.md-icon-btn--edit:hover {
+  background: hsl(var(--primary) / 0.1);
+  border-color: hsl(var(--primary) / 0.3);
+  color: hsl(var(--primary));
+}
+.md-icon-btn svg { width: 0.825rem; height: 0.825rem; }
+
+/* ================================================================
+   INLINE SECTION DIVIDER  (inside panels / forms)
+   ================================================================ */
+.md-section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: hsl(var(--primary));
+  margin-bottom: 0.875rem;
+}
+.md-section-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: hsl(var(--primary) / 0.14);
+}
+
+/* ================================================================
+   FORM CARD  (create / edit)
+   ================================================================ */
+.md-form-card {
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow:
+    0 1px 4px hsl(0 0% 0% / 0.05),
+    0 4px 16px hsl(0 0% 0% / 0.04);
+  overflow: hidden;
+}
+
+.md-form-section {
+  padding: 1.25rem 1.375rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+}
+.md-form-section:last-of-type { border-bottom: none; }
+
+/* Form field */
+.md-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.325rem;
+}
+.md-field label {
+  font-size: 0.79rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.01em;
+}
+.md-field input,
+.md-field textarea,
+.md-field select {
+  background: hsl(var(--muted) / 0.45);
+  border-color: hsl(var(--border));
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+.md-field input:focus,
+.md-field textarea:focus,
+.md-field select:focus {
+  background: hsl(var(--background));
+  border-color: hsl(var(--primary) / 0.55);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+  outline: none;
+}
+.md-field-error {
+  font-size: 0.71rem;
+  color: hsl(var(--destructive));
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.1rem;
+}
+.md-field-hint {
+  font-size: 0.71rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.1rem;
+}
+
+/* 2-column grid */
+.md-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* 3-column grid */
+.md-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Form footer */
+.md-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0.875rem 1.375rem;
+  border-top: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.3);
+}
+
+/* ================================================================
+   BADGE SYSTEM
+   ================================================================ */
+.md-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 2rem;
+  font-size: 0.69rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.md-badge svg { width: 0.65rem; height: 0.65rem; }
+
+.md-badge--active {
+  background: hsl(142 71% 38% / 0.12);
+  color: hsl(142 60% 32%);
+  border-color: hsl(142 60% 38% / 0.25);
+}
+.md-badge--inactive {
+  background: hsl(0 72% 51% / 0.1);
+  color: hsl(0 65% 42%);
+  border-color: hsl(0 65% 51% / 0.25);
+}
+.md-badge--current {
+  background: hsl(217 91% 50% / 0.1);
+  color: hsl(217 80% 42%);
+  border-color: hsl(217 80% 50% / 0.25);
+}
+.md-badge--pending {
+  background: hsl(38 92% 44% / 0.12);
+  color: hsl(32 80% 36%);
+  border-color: hsl(38 80% 44% / 0.25);
+}
+.md-badge--primary {
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  border-color: hsl(var(--primary) / 0.2);
+}
+.md-badge--violet {
+  background: hsl(263 70% 52% / 0.1);
+  color: hsl(263 60% 44%);
+  border-color: hsl(263 60% 52% / 0.22);
+}
+
+@media (prefers-color-scheme: dark) {
+  .md-badge--active   { color: hsl(142 60% 58%); }
+  .md-badge--inactive { color: hsl(0 72% 68%); }
+  .md-badge--current  { color: hsl(217 80% 68%); }
+  .md-badge--pending  { color: hsl(38 80% 60%); }
+  .md-badge--violet   { color: hsl(263 70% 70%); }
+}
+
+/* ================================================================
+   STATUS TOGGLE ROW
+   ================================================================ */
+.md-status-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* ================================================================
+   EMPTY STATE
+   ================================================================ */
+.md-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2.75rem 1.5rem;
+  text-align: center;
+  border: 1.5px dashed hsl(var(--border));
+  border-radius: 0.75rem;
+  background: hsl(var(--muted) / 0.14);
+  margin: 0.375rem;
+  animation: md-fade 0.25s ease;
+}
+.md-empty-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  color: hsl(var(--muted-foreground) / 0.38);
+  margin-bottom: 0.25rem;
+}
+.md-empty-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+.md-empty-desc {
+  font-size: 0.79rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+  max-width: 28ch;
+}
+
+/* ================================================================
+   PAGINATION BAR
+   ================================================================ */
+.md-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 1rem;
+  border-top: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.2);
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.md-pagination-info {
+  font-size: 0.76rem;
+  color: hsl(var(--muted-foreground));
+}
+.md-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ================================================================
+   DETAIL PANEL / DRAWER
+   ================================================================ */
+.md-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
+}
+
+.md-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.175rem;
+  padding: 0.5625rem 0.75rem;
+  border-radius: 0.5rem;
+  background: hsl(var(--muted) / 0.4);
+  border: 1px solid hsl(var(--border) / 0.6);
+  transition: background 0.14s;
+}
+.md-detail-item:hover { background: hsl(var(--muted) / 0.65); }
+
+.md-detail-label {
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground));
+}
+.md-detail-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+.md-detail-value--empty {
+  font-weight: 400;
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+}
+
+/* ================================================================
+   TABS (Fee Structures page)
+   ================================================================ */
+.md-tabs-list {
+  display: grid;
+  border-radius: 0.875rem;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.4);
+  padding: 0.3rem;
+  gap: 0.2rem;
+}
+
+.md-tab-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.55rem 1rem;
+  border-radius: 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.md-tab-trigger:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--muted) / 0.6);
+}
+.md-tab-trigger[data-state="active"] {
+  color: hsl(var(--foreground));
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.06);
+}
+.md-tab-trigger svg { width: 0.875rem; height: 0.875rem; }
+
+/* ================================================================
+   FEE STRUCTURE SPECIFIC
+   ================================================================ */
+.md-fee-panel {
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  overflow: hidden;
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.04);
+  animation: md-scale-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.md-fee-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--muted) / 0.5),
+    hsl(var(--muted) / 0.2)
+  );
+  position: relative;
+}
+.md-fee-panel-header::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: hsl(343 80% 50%);
+  border-radius: 0 2px 2px 0;
+}
+
+.md-fee-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.55);
+  transition: background 0.12s;
+  animation: md-enter 0.2s ease both;
+}
+.md-fee-row:last-child { border-bottom: none; }
+.md-fee-row:hover { background: hsl(var(--muted) / 0.35); }
+
+.md-fee-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+.md-fee-amount {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  font-variant-numeric: tabular-nums;
+}
+.md-fee-meta {
+  font-size: 0.72rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ================================================================
+   PILL / CHIP  (e.g. subject tags on Class-Subject page)
+   ================================================================ */
+.md-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.225rem 0.6rem;
+  border-radius: 2rem;
+  background: hsl(var(--primary) / 0.09);
+  border: 1px solid hsl(var(--primary) / 0.18);
+  color: hsl(var(--primary));
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.md-chip svg { width: 0.625rem; height: 0.625rem; }
+
+.md-chip--green {
+  background: hsl(142 71% 38% / 0.09);
+  border-color: hsl(142 60% 38% / 0.2);
+  color: hsl(142 55% 34%);
+}
+.md-chip--amber {
+  background: hsl(38 92% 44% / 0.1);
+  border-color: hsl(38 80% 44% / 0.2);
+  color: hsl(32 75% 36%);
+}
+.md-chip--violet {
+  background: hsl(263 70% 52% / 0.1);
+  border-color: hsl(263 60% 52% / 0.2);
+  color: hsl(263 60% 44%);
+}
+.md-chip--slate {
+  background: hsl(215 28% 48% / 0.1);
+  border-color: hsl(215 28% 48% / 0.2);
+  color: hsl(215 25% 40%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .md-chip--green  { color: hsl(142 60% 58%); }
+  .md-chip--amber  { color: hsl(38 80% 60%); }
+  .md-chip--violet { color: hsl(263 70% 70%); }
+  .md-chip--slate  { color: hsl(215 30% 68%); }
+}
+
+/* ================================================================
+   CHIPS ROW  (wrapping row of chips)
+   ================================================================ */
+.md-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  align-items: center;
+}
+
+/* ================================================================
+   SPLIT LAYOUT  (picker + panel side-by-side)
+   ================================================================ */
+.md-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+@media (min-width: 860px) {
+  .md-split {
+    grid-template-columns: 21rem 1fr;
+    align-items: start;
+  }
+}
+
+/* Sticky picker card */
+.md-picker-card {
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  overflow: hidden;
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.04);
+  position: sticky;
+  top: 1rem;
+}
+
+/* Row inside picker */
+.md-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.625rem;
+  padding: 0.5625rem 1rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  transition: background 0.12s;
+  cursor: pointer;
+}
+.md-picker-row:last-child { border-bottom: none; }
+.md-picker-row:hover { background: hsl(var(--muted) / 0.4); }
+.md-picker-row.active {
+  background: hsl(var(--primary) / 0.08);
+}
+
+.md-picker-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.md-picker-sub {
+  font-size: 0.71rem;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ================================================================
+   AVATAR CIRCLE
+   ================================================================ */
+.md-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    hsl(244 75% 55%),
+    hsl(263 70% 52%)
+  );
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: -0.01em;
+}
+
+/* ================================================================
+   SKELETON SHIMMER
+   ================================================================ */
+.md-skel {
+  border-radius: 0.5rem;
+  background: hsl(var(--muted));
+  position: relative;
+  overflow: hidden;
+  min-height: 1rem;
+}
+.md-skel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--muted-foreground) / 0.07) 50%,
+    transparent 100%
+  );
+  animation: md-shimmer 1.5s infinite ease-in-out;
+}
+
+/* ================================================================
+   SELECT / CONNECT BUTTON  (picker select state)
+   ================================================================ */
+.md-select-btn {
+  font-size: 0.73rem;
+  font-weight: 600;
+  padding: 0.275rem 0.7rem;
+  border-radius: 0.4375rem;
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.md-select-btn:hover {
+  border-color: hsl(var(--primary) / 0.5);
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.06);
+}
+.md-select-btn.selected {
+  background: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  animation: md-pulse-ring 1.2s ease-out 1;
+}
+
+/* ================================================================
+   DIALOG OVERRIDES
+   ================================================================ */
+.md-dialog .md-section-label {
+  font-size: 0.67rem;
+  margin-bottom: 0.625rem;
+}
+.md-dialog-select {
+  background: hsl(var(--muted) / 0.45) !important;
+  transition: border-color 0.18s, box-shadow 0.18s !important;
+}
+.md-dialog-select:focus-within {
+  border-color: hsl(var(--primary) / 0.5) !important;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1) !important;
+}
+
+/* ================================================================
+   INFO BOX  (callout / notice strip)
+   ================================================================ */
+.md-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem 0.9375rem;
+  border-radius: 0.625rem;
+  background: hsl(var(--primary) / 0.06);
+  border: 1px solid hsl(var(--primary) / 0.14);
+  font-size: 0.79rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.5;
+}
+.md-info-box svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: hsl(var(--primary));
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+.md-info-box--warning {
+  background: hsl(38 92% 44% / 0.07);
+  border-color: hsl(38 80% 44% / 0.18);
+}
+.md-info-box--warning svg { color: hsl(38 80% 44%); }
+
+/* ================================================================
+   WIDE FORM LAYOUT  (create panels with more screen real estate)
+   ================================================================ */
+.md-form-card--wide {
+  width: 100%;
+  max-width: 100%;
+}
+
+.md-form-row-split {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 1.375rem;
+  align-items: start;
+  padding: 1.125rem;
+}
+
+.md-form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.md-form-card--wide .md-form-section {
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.04),
+    0 4px 12px hsl(0 0% 0% / 0.03);
+}
+
+.md-form-card--wide textarea { min-height: 110px; resize: vertical; }
+.md-form-card--wide .md-form-footer { padding: 1.125rem 1.375rem; }
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 1100px) {
+  .md-form-row-split { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .md-hero { padding: 1.25rem 1.125rem 1.375rem; }
+  .md-grid-2,
+  .md-grid-3 { grid-template-columns: 1fr; }
+  .md-stats { grid-template-columns: 1fr 1fr; }
+  .md-detail-grid { grid-template-columns: 1fr; }
+  .md-page-title { font-size: 1.25rem; }
+  .md-form-row-split { padding: 0.75rem; gap: 0.875rem; }
+  .md-toolbar { gap: 0.5rem; }
+  .md-search-wrap { max-width: 100%; }
+  .md-card-body { padding: 0.75rem; }
+}
+
+@media (max-width: 480px) {
+  .md-hero-badge { display: none; }
+  .md-stats { grid-template-columns: 1fr 1fr; }
+  .md-hero-icon-wrap { width: 2.375rem; height: 2.375rem; }
+}

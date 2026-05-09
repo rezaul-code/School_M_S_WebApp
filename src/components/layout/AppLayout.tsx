@@ -15,6 +15,7 @@ import SidebarContent, {
 } from "@/components/layout/Sidebar";
 
 import "@/styles/teacher.css";
+import "@/styles/master-data.css";
 
 interface NavItem {
   to: string;
