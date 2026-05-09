@@ -1,4 +1,5 @@
 import { api } from "./client";
+
 import type { 
   ApiResponse, 
   AcademicYear, 
@@ -12,6 +13,12 @@ import type {
 // ─────────────────────────────────────────────────
 // Academic Years
 // ─────────────────────────────────────────────────
+
+// ✅ Updated to strictly match your backend API URL
+export const getActiveAcademicYear = async () => {
+  const res = await api.get("/api/master/academic-years/active");
+  return res.data.data;
+};
 
 export async function listAcademicYears() {
   const response = await api.get<ApiResponse<AcademicYear[]>>("/api/master/academic-years");
