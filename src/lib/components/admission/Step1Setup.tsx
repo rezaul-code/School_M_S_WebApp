@@ -3,50 +3,50 @@ import { AlertCircle } from 'lucide-react';
 import type { WizardState } from '@/pages/AdmissionWizard';
 import type { AcademicYear, ClassLevel, ClassSection } from '@/types/api';
 import { getFormOptions } from '@/lib/api/students';
-
+ 
 interface FormOptions {
   academicYears: AcademicYear[];
   classLevels: ClassLevel[];           // ← NEW: From updated form-options
   classSections: ClassSection[];
 }
-
+ 
 interface Step1SetupProps {
   state: WizardState;
   setState: React.Dispatch<React.SetStateAction<WizardState>>;
 }
-
+ 
 export default function Step1Setup({ state, setState }: Step1SetupProps) {
   const formOptionsQuery = useQuery<FormOptions>({
     queryKey: ['form-options'],
     queryFn: () => getFormOptions() as unknown as Promise<FormOptions>,
   });
-
+ 
   const academicYears = formOptionsQuery.data?.academicYears ?? [];
   const classLevels = formOptionsQuery.data?.classLevels ?? [];       // ← NEW
   const classSections = formOptionsQuery.data?.classSections ?? [];
-
+ 
   // ── CASCADING FILTERS ────────────────────────────────────────────────────────
-  
+ 
   // Filter class sections by BOTH academic year AND class level
   const filteredSections = classSections.filter((s) => {
-    const matchesYear = !state.setupData.academicYearId || 
+    const matchesYear = !state.setupData.academicYearId ||
                         s.academicYearId === state.setupData.academicYearId;
-    const matchesClass = !state.setupData.classLevelId || 
+    const matchesClass = !state.setupData.classLevelId ||
                          s.classLevelId === state.setupData.classLevelId;    // ← NEW
     return matchesYear && matchesClass;
   });
-
+ 
   const selectedYear = academicYears.find((y) => y.id === state.setupData.academicYearId);
   const selectedClass = classLevels.find((c) => c.id === state.setupData.classLevelId);  // ← NEW
   const selectedSection = filteredSections.find((s) => s.id === state.setupData.classSectionId);
-
+ 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-5">
           Academic Setup
         </h2>
-
+ 
         {/* API status indicator */}
         <div className="mb-5 flex items-center gap-2 text-xs text-gray-500 bg-gray-800/60 border border-gray-700 rounded-lg px-4 py-2.5">
           <AlertCircle className="w-3.5 h-3.5 shrink-0 text-yellow-500" />
@@ -59,7 +59,7 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
             }
           </span>
         </div>
-
+ 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {/* Academic Year */}
           <div className="space-y-2">
@@ -92,7 +92,7 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
               ))}
             </select>
           </div>
-
+ 
           {/* Class Level - NEW */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-200">
@@ -106,8 +106,8 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
                 // When class level changes, reset section
                 setState((prev) => ({
                   ...prev,
-                  setupData: { 
-                    ...prev.setupData, 
+                  setupData: {
+                    ...prev.setupData,
                     classLevelId: id,
                     classSectionId: null,  // Reset section
                   },
@@ -127,7 +127,7 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
               ))}
             </select>
           </div>
-
+ 
           {/* Class Section */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-200">
@@ -148,8 +148,8 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
                 appearance-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <option value="">
-                {!state.setupData.classLevelId 
-                  ? 'First select a class' 
+                {!state.setupData.classLevelId
+                  ? 'First select a class'
                   : filteredSections.length === 0
                   ? 'No sections available'
                   : 'Select section'
@@ -166,7 +166,7 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
             </select>
           </div>
         </div>
-
+ 
         <p className="mt-3 text-xs text-gray-500">
           Select academic year, then class, then section. Class section list filters to your selections.
         </p>

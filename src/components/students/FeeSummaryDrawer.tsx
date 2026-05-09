@@ -1,13 +1,11 @@
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useActiveAcademicYear } from "@/hooks/useActiveAcademicYear";
-
+ 
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -38,14 +36,14 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
-
+ 
 import type {
   MonthlyFeeDetail,
   StudentFeeSummary,
 } from "@/types/api";
 import { getStudentFeeSummary } from "@/lib/api/students";
 import { cn } from "@/lib/utils";
-
+ 
 function formatMoney(v?: number) {
   if (typeof v !== "number") return "—";
   return new Intl.NumberFormat(undefined, {
@@ -54,7 +52,7 @@ function formatMoney(v?: number) {
     maximumFractionDigits: 2,
   }).format(v);
 }
-
+ 
 function getMonthlyStatusBadgeVariant(status: string) {
   const s = (status ?? "").toUpperCase();
   if (s === "OVERDUE") return "destructive";
@@ -62,7 +60,7 @@ function getMonthlyStatusBadgeVariant(status: string) {
   if (s === "PARTIAL") return "outline";
   return "outline";
 }
-
+ 
 function getMonthlyStatusBadgeClassName(status: string) {
   const s = (status ?? "").toUpperCase();
   if (s === "OVERDUE")
@@ -73,18 +71,18 @@ function getMonthlyStatusBadgeClassName(status: string) {
     return "bg-yellow-500 text-black border-yellow-500 hover:bg-yellow-500/90";
   return "";
 }
-
+ 
 function StatusBadge({ status }: { status: string }) {
   const variant = getMonthlyStatusBadgeVariant(status);
   const className = getMonthlyStatusBadgeClassName(status);
-
+ 
   return (
     <Badge variant={variant as any} className={cn("capitalize", className)}>
       {status || "—"}
     </Badge>
   );
 }
-
+ 
 function MetricCard({ title, value }: { title: string; value: string }) {
   return (
     <Card>
@@ -99,7 +97,7 @@ function MetricCard({ title, value }: { title: string; value: string }) {
     </Card>
   );
 }
-
+ 
 function SmallMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border p-3">
@@ -108,43 +106,39 @@ function SmallMetric({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
+ 
 export default function FeeSummaryDrawer({
   studentId,
   open,
   onOpenChange,
+  academicYearId,
 }: {
   studentId: string | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  academicYearId: number;
 }) {
   const [expandedFeeTypes, setExpandedFeeTypes] = useState<string[]>([]);
-  
-  // 🔧 Fetch the active academic year dynamically
-  const { data: activeAcademicYear, isLoading: isLoadingAcademicYear } = useActiveAcademicYear();
-  
-  const academicYearId = activeAcademicYear?.id;
-
+ 
   React.useEffect(() => {
     if (!open) setExpandedFeeTypes([]);
   }, [open]);
-
+ 
   console.log("selectedStudent", studentId);
   console.log("studentId", studentId);
   console.log(
     "API URL",
     `/api/students/${studentId}/fees/summary?academicYearId=${academicYearId}`
   );
-
+ 
   const q = useQuery({
     queryKey: ["student-fee-summary", studentId, academicYearId],
-    queryFn: () => getStudentFeeSummary(studentId as string, academicYearId as number),
-    // 🔧 Only enable when drawer is open, studentId exists, AND academicYearId is loaded
+    queryFn: () => getStudentFeeSummary(studentId as string, academicYearId),
     enabled: open && !!studentId && !!academicYearId,
   });
-
+ 
   const summary = (q.data ?? null) as StudentFeeSummary | null;
-
+ 
   const totals = useMemo(() => {
     if (!summary) return null;
     return {
@@ -154,9 +148,9 @@ export default function FeeSummaryDrawer({
       totalOverdue: summary.totalOverdue,
     };
   }, [summary]);
-
+ 
   const hasAnyBreakdown = (summary?.breakdown?.length ?? 0) > 0;
-
+ 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -169,9 +163,9 @@ export default function FeeSummaryDrawer({
             Gross, paid and outstanding amounts by fee type.
           </SheetDescription>
         </SheetHeader>
-
+ 
         <div className="mt-6 space-y-6 pb-10">
-          {(q.isLoading || isLoadingAcademicYear) && (
+          {q.isLoading && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -188,8 +182,8 @@ export default function FeeSummaryDrawer({
               <Skeleton className="h-[220px] w-full" />
             </div>
           )}
-
-          {!q.isLoading && !isLoadingAcademicYear && q.isError && (
+ 
+          {!q.isLoading && q.isError && (
             <Alert variant="destructive">
               <AlertTitle>Failed to load fee summary</AlertTitle>
               <AlertDescription>
@@ -198,8 +192,8 @@ export default function FeeSummaryDrawer({
               </AlertDescription>
             </Alert>
           )}
-
-          {!q.isLoading && !isLoadingAcademicYear && !q.isError && summary && (
+ 
+          {!q.isLoading && !q.isError && summary && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                 <MetricCard
@@ -219,7 +213,7 @@ export default function FeeSummaryDrawer({
                   value={formatMoney(totals?.totalOverdue)}
                 />
               </div>
-
+ 
               {!hasAnyBreakdown ? (
                 <Alert>
                   <AlertTitle>No fee breakdown found</AlertTitle>
@@ -259,10 +253,10 @@ export default function FeeSummaryDrawer({
                                 Monthly details
                               </div>
                             </div>
-
+ 
                             <div className="text-sm text-right">
                               <span className="text-muted-foreground">
-                                Balance: {" "}
+                                Balance:{" "}
                               </span>
                               <span className="font-medium">
                                 {formatMoney(b.balanceAmount)}
@@ -270,7 +264,7 @@ export default function FeeSummaryDrawer({
                             </div>
                           </div>
                         </AccordionTrigger>
-
+ 
                         <AccordionContent>
                           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
                             <SmallMetric
@@ -291,7 +285,7 @@ export default function FeeSummaryDrawer({
                             />
                             <div className="md:col-span-1" />
                           </div>
-
+ 
                           {b.monthlyDetails && b.monthlyDetails.length > 0 ? (
                             <div className="rounded-md border overflow-hidden">
                               <div className="overflow-auto">
@@ -345,8 +339,8 @@ export default function FeeSummaryDrawer({
               )}
             </>
           )}
-
-          {!q.isLoading && !isLoadingAcademicYear && !q.isError && !summary && (
+ 
+          {!q.isLoading && !q.isError && !summary && (
             <div className="space-y-4">
               <Alert>
                 <AlertTitle>Fee summary unavailable</AlertTitle>
