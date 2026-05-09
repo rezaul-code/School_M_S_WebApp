@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   BrowserRouter,
@@ -17,6 +19,8 @@ import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import StudentsPage from "@/pages/Students";
 import AdmissionWizardPage from "@/pages/AdmissionWizard";
+import StudentDetailsPage from "@/pages/StudentDetails";
+import StudentFeeSummaryPage from "@/pages/StudentFeeSummary";
 
 // Teachers
 import RegisterTeacherPage from "@/pages/RegisterTeacher";
@@ -78,6 +82,14 @@ export default function App() {
               <Route
                 path="/students/admit"
                 element={<AdmissionWizardPage />}
+              />
+              <Route
+                path="/students/:studentId"
+                element={<StudentDetailsPage />}
+              />
+              <Route
+                path="/students/:studentId/fee-summary"
+                element={<StudentFeeSummaryPage />}
               />
 
               {/* TEACHERS — all four submenu routes */}
