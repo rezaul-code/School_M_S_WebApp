@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { useActiveAcademicYear } from "@/hooks/useActiveAcademicYear";
 
 import {
   GraduationCap,
@@ -62,6 +63,9 @@ export default function Students() {
   const [page, setPage] = useState(0);
 
   const [search, setSearch] = useState("");
+
+  const { data: activeYear, isLoading: academicYearLoading } = useActiveAcademicYear();
+  const activeAcademicYearId = activeYear?.id as number | undefined;
 
   // Filters (restored)
   const [selectedClass, setSelectedClass] = useState("");
@@ -323,15 +327,15 @@ onSelect={() => {
         }
       />
 
-      <FeeSummaryDrawer
-        studentId={feeSummaryStudentId}
-        open={openFeeSummary}
-        onOpenChange={(v) => {
-          setOpenFeeSummary(v);
-          if (!v) setFeeSummaryStudentId(null);
-        }}
-        academicYearId={1}
-      />
+          <FeeSummaryDrawer
+          studentId={feeSummaryStudentId}
+          open={openFeeSummary}
+          onOpenChange={(v) => {
+            setOpenFeeSummary(v);
+            if (!v) setFeeSummaryStudentId(null);
+          }}
+          academicYearId={activeAcademicYearId}
+        />
     </div>
   );
 }

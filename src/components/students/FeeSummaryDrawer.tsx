@@ -116,8 +116,8 @@ export default function FeeSummaryDrawer({
   studentId: string | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  academicYearId: number;
-}) {
+  academicYearId: number | undefined;
+}){
   const [expandedFeeTypes, setExpandedFeeTypes] = useState<string[]>([]);
  
   React.useEffect(() => {
@@ -131,13 +131,15 @@ export default function FeeSummaryDrawer({
     `/api/students/${studentId}/fees/summary?academicYearId=${academicYearId}`
   );
  
-  const q = useQuery({
+    const q = useQuery({
     queryKey: ["student-fee-summary", studentId, academicYearId],
-    queryFn: () => getStudentFeeSummary(studentId as string, academicYearId),
-    enabled: open && !!studentId && !!academicYearId,
+    queryFn: () => getStudentFeeSummary(studentId as string, academicYearId as number),
+    enabled: open && !!studentId && !!academicYearId && academicYearId > 0,
   });
  
   const summary = (q.data ?? null) as StudentFeeSummary | null;
+  const isWaitingForAcademicYear = !academicYearId || academicYearId === 0;
+
  
   const totals = useMemo(() => {
     if (!summary) return null;
@@ -165,7 +167,7 @@ export default function FeeSummaryDrawer({
         </SheetHeader>
  
         <div className="mt-6 space-y-6 pb-10">
-          {q.isLoading && (
+          {(q.isLoading || isWaitingForAcademicYear) && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -340,12 +342,12 @@ export default function FeeSummaryDrawer({
             </>
           )}
  
-          {!q.isLoading && !q.isError && !summary && (
+          {!q.isLoading && !isWaitingForAcademicYear && !q.isError && !summary && (
             <div className="space-y-4">
               <Alert>
                 <AlertTitle>Fee summary unavailable</AlertTitle>
                 <AlertDescription>
-                  Select a student to view fee summary.
+                  No fee data found for this student in the current academic year.
                 </AlertDescription>
               </Alert>
             </div>
