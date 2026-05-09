@@ -1,5 +1,8 @@
+// src/components/layout/Sidebar.tsx
+
 import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+
 import {
   Home,
   GraduationCap,
@@ -21,6 +24,7 @@ import {
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+
 import { cn } from "@/lib/utils";
 import { logout, getCurrentUser } from "@/lib/api/auth";
 
@@ -148,9 +152,11 @@ export default function SidebarContent({
   onNavigate?: () => void;
 }) {
   const location = useLocation();
+
   const navigate = useNavigate();
 
   let user = null;
+
   try {
     user = getCurrentUser();
   } catch {
@@ -169,38 +175,49 @@ export default function SidebarContent({
     location.pathname.startsWith(item.to)
   );
 
-  const isFeeStructuresActive = location.pathname.includes("fee-structures");
+  const isFeeStructuresActive =
+    location.pathname.includes("fee-structures");
 
-  const [expandedSection, setExpandedSection] = useState<string | null>(
-    isTeachersActive
-      ? "teachers"
-      : isStudentsActive
-        ? "students"
-        : isMasterDataActive
-          ? "master-data"
-          : isFeeStructuresActive
-            ? "fee-structures"
-            : null
-  );
+  const [expandedSection, setExpandedSection] =
+    useState<string | null>(
+      isTeachersActive
+        ? "teachers"
+        : isStudentsActive
+          ? "students"
+          : isMasterDataActive
+            ? "master-data"
+            : isFeeStructuresActive
+              ? "fee-structures"
+              : null
+    );
 
   const initials =
-    (user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "") ||
+    (user?.firstName?.[0] ?? "") +
+      (user?.lastName?.[0] ?? "") ||
     user?.email?.[0]?.toUpperCase() ||
     "A";
 
   const handleLogout = () => {
     logout();
-    navigate("/login", { replace: true });
+
+    navigate("/login", {
+      replace: true,
+    });
   };
 
   return (
-  <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground backdrop-blur-xl">      {/* Header */}
-      <div className="flex items-center gap-2 px-6 py-5 border-b border-sidebar-border">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground backdrop-blur-xl">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-sidebar-border/70 px-6 py-5">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
           <Logo className="h-5 w-5" />
         </div>
+
         <div className="leading-tight">
-          <div className="text-sm font-semibold">School Admin</div>
+          <div className="text-sm font-semibold tracking-wide">
+            School Admin
+          </div>
+
           <div className="text-xs text-muted-foreground">
             Management Panel
           </div>
@@ -214,6 +231,7 @@ export default function SidebarContent({
           const active =
             location.pathname === item.to ||
             location.pathname.startsWith(item.to + "/");
+
           const Icon = item.icon;
 
           return (
@@ -222,296 +240,266 @@ export default function SidebarContent({
               to={item.to}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out",
                 "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground border border-sidebar-border/60 shadow-sm"
                   : "text-sidebar-foreground"
               )}
             >
               <Icon
-                className={cn("h-4 w-4", active && "text-primary")}
+                className={cn(
+                  "h-4 w-4",
+                  active && "text-primary"
+                )}
               />
+
               <span>{item.label}</span>
             </NavLink>
           );
         })}
 
-        {/* TEACHERS SECTION */}
-        <div className="space-y-1 pt-2">
-          <button
-            onClick={() =>
-              setExpandedSection(
-                expandedSection === "teachers" ? null : "teachers"
-              )
-            }
-            className={cn(
-              "w-full flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        {/* TEACHERS */}
+        <SidebarSection
+          title="Teachers"
+          icon={Users}
+          expanded={expandedSection === "teachers"}
+          onClick={() =>
+            setExpandedSection(
               expandedSection === "teachers"
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <Users
-                className={cn(
-                  "h-4 w-4",
-                  expandedSection === "teachers" && "text-primary"
-                )}
+                ? null
+                : "teachers"
+            )
+          }
+        >
+          {teacherItems.map((item) => {
+            const active = location.pathname === item.to;
+
+            const ItemIcon = item.icon;
+
+            return (
+              <SidebarSubItem
+                key={item.to}
+                to={item.to}
+                active={active}
+                onNavigate={onNavigate}
+                icon={<ItemIcon className="h-3.5 w-3.5" />}
+                label={item.label}
               />
-              <span>Teachers</span>
-            </div>
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 transition-transform",
-                expandedSection === "teachers" && "rotate-180"
-              )}
-            />
-          </button>
+            );
+          })}
+        </SidebarSection>
 
-          {expandedSection === "teachers" && (
-            <div className="space-y-0.5 pl-6 pt-1">
-              {teacherItems.map((item) => {
-                const active = location.pathname === item.to;
-                const ItemIcon = item.icon;
-
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={onNavigate}
-                    className={cn(
-                      "flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                      "hover:bg-sidebar-accent/50",
-                      active
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground/70"
-                    )}
-                  >
-                    <ItemIcon className="h-3.5 w-3.5" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* MASTER DATA SECTION */}
-        <div className="space-y-1 pt-2">
-          <button
-            onClick={() =>
-              setExpandedSection(
-                expandedSection === "master-data" ? null : "master-data"
-              )
-            }
-            className={cn(
-              "w-full flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        {/* MASTER DATA */}
+        <SidebarSection
+          title="Master Data Setup"
+          icon={Database}
+          expanded={expandedSection === "master-data"}
+          onClick={() =>
+            setExpandedSection(
               expandedSection === "master-data"
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <Database
-                className={cn(
-                  "h-4 w-4",
-                  expandedSection === "master-data" && "text-primary"
-                )}
+                ? null
+                : "master-data"
+            )
+          }
+        >
+          {masterDataItems.map((item) => {
+            const active =
+              location.pathname.startsWith(item.to);
+
+            const ItemIcon = item.icon;
+
+            return (
+              <SidebarSubItem
+                key={item.to}
+                to={item.to}
+                active={active}
+                onNavigate={onNavigate}
+                icon={<ItemIcon className="h-3.5 w-3.5" />}
+                label={item.label}
               />
-              <span>Master Data Setup</span>
-            </div>
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 transition-transform",
-                expandedSection === "master-data" && "rotate-180"
-              )}
-            />
-          </button>
+            );
+          })}
+        </SidebarSection>
 
-          {expandedSection === "master-data" && (
-            <div className="space-y-0.5 pl-6 pt-1">
-              {masterDataItems.map((item) => {
-                const active = location.pathname.startsWith(item.to);
-                const ItemIcon = item.icon;
-
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={onNavigate}
-                    className={cn(
-                      "flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                      "hover:bg-sidebar-accent/50",
-                      active
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground/70"
-                    )}
-                  >
-                    <ItemIcon className="h-3.5 w-3.5" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* STUDENTS SECTION */}
-        <div className="space-y-1 pt-2">
-          <button
-            onClick={() =>
-              setExpandedSection(
-                expandedSection === "students" ? null : "students"
-              )
-            }
-            className={cn(
-              "w-full flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        {/* STUDENTS */}
+        <SidebarSection
+          title="Students"
+          icon={GraduationCap}
+          expanded={expandedSection === "students"}
+          onClick={() =>
+            setExpandedSection(
               expandedSection === "students"
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <GraduationCap
-                className={cn(
-                  "h-4 w-4",
-                  expandedSection === "students" && "text-primary"
-                )}
+                ? null
+                : "students"
+            )
+          }
+        >
+          {studentItems.map((item) => {
+            const active = location.pathname === item.to;
+
+            return (
+              <SidebarSubItem
+                key={item.to}
+                to={item.to}
+                active={active}
+                onNavigate={onNavigate}
+                label={item.label}
               />
-              <span>Students</span>
-            </div>
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 transition-transform",
-                expandedSection === "students" && "rotate-180"
-              )}
-            />
-          </button>
+            );
+          })}
+        </SidebarSection>
 
-          {expandedSection === "students" && (
-            <div className="space-y-0.5 pl-6 pt-1">
-              {studentItems.map((item) => {
-                const active = location.pathname === item.to;
-
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={onNavigate}
-                    className={cn(
-                      "flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                      "hover:bg-sidebar-accent/50",
-                      active
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground/70"
-                    )}
-                  >
-                    <span className="w-1 h-1 rounded-full bg-current opacity-50" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* FEE STRUCTURES SECTION */}
-        <div className="space-y-1 pt-2">
-          <button
-            onClick={() =>
-              setExpandedSection(
-                expandedSection === "fee-structures"
-                  ? null
-                  : "fee-structures"
-              )
-            }
-            className={cn(
-              "w-full flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        {/* FEE STRUCTURES */}
+        <SidebarSection
+          title="Fee Structures"
+          icon={CreditCard}
+          expanded={expandedSection === "fee-structures"}
+          onClick={() =>
+            setExpandedSection(
               expandedSection === "fee-structures"
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <CreditCard
-                className={cn(
-                  "h-4 w-4",
-                  expandedSection === "fee-structures" && "text-primary"
-                )}
+                ? null
+                : "fee-structures"
+            )
+          }
+        >
+          {feeStructureSubItems.map((item) => {
+            const active =
+              location.pathname === "/fee-structures" &&
+              location.search.includes(
+                `tab=${item.to.split("tab=")[1]}`
+              );
+
+            return (
+              <SidebarSubItem
+                key={item.to}
+                to={item.to}
+                active={active}
+                onNavigate={onNavigate}
+                label={item.label}
               />
-              <span>Fee Structures</span>
-            </div>
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 transition-transform",
-                expandedSection === "fee-structures" && "rotate-180"
-              )}
-            />
-          </button>
-
-          {expandedSection === "fee-structures" && (
-            <div className="space-y-0.5 pl-6 pt-1">
-              {feeStructureSubItems.map((item) => {
-                const active =
-                  location.pathname === "/fee-structures" &&
-                  location.search.includes(`tab=${item.to.split("tab=")[1]}`);
-
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={onNavigate}
-                    className={cn(
-                      "flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                      "hover:bg-sidebar-accent/50",
-                      active
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground/70"
-                    )}
-                  >
-                    <span className="w-1 h-1 rounded-full bg-current opacity-50" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                );
-              })}
-            </div>
-          )}
-        </div>
+            );
+          })}
+        </SidebarSection>
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-sidebar-border p-3">
-        <div className="flex items-center gap-3 rounded-md px-2 py-2">
-          <Avatar className="h-9 w-9">
+      <div className="border-t border-sidebar-border/70 bg-black/10 p-3 backdrop-blur">
+        <div className="flex items-center gap-3 rounded-xl px-2 py-2">
+          <Avatar className="h-10 w-10 border border-sidebar-border/60">
             <AvatarFallback className="bg-primary-soft text-primary text-xs font-semibold">
               {initials.toUpperCase().slice(0, 2)}
             </AvatarFallback>
           </Avatar>
+
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium">
               {user?.firstName
-                ? `${user.firstName} ${user.lastName ?? ""}`.trim()
+                ? `${user.firstName} ${
+                    user.lastName ?? ""
+                  }`.trim()
                 : "Administrator"}
             </div>
+
             <div className="truncate text-xs text-muted-foreground">
               {user?.email ?? "admin"}
             </div>
           </div>
+
           <Button
             variant="ghost"
             size="icon"
             onClick={handleLogout}
             aria-label="Logout"
+            className="rounded-lg hover:bg-sidebar-accent"
           >
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </div>
     </div>
+  );
+}
+
+/* =========================================================
+   SECTION COMPONENT
+========================================================= */
+
+function SidebarSection({
+  title,
+  icon: Icon,
+  expanded,
+  onClick,
+  children,
+}: any) {
+  return (
+    <div className="space-y-1 pt-2">
+      <button
+        onClick={onClick}
+        className={cn(
+          "w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out",
+          "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+          expanded
+            ? "bg-sidebar-accent text-sidebar-accent-foreground border border-sidebar-border/60 shadow-sm"
+            : "text-sidebar-foreground"
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <Icon
+            className={cn(
+              "h-4 w-4",
+              expanded && "text-primary"
+            )}
+          />
+
+          <span>{title}</span>
+        </div>
+
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 transition-transform duration-200",
+            expanded && "rotate-180"
+          )}
+        />
+      </button>
+
+      {expanded && (
+        <div className="space-y-1 pl-6 pt-1">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   SUB ITEM COMPONENT
+========================================================= */
+
+function SidebarSubItem({
+  to,
+  active,
+  label,
+  icon,
+  onNavigate,
+}: any) {
+  return (
+    <NavLink
+      to={to}
+      onClick={onNavigate}
+      className={cn(
+        "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-200 ease-out",
+        "hover:bg-sidebar-accent/50",
+        active
+          ? "bg-sidebar-accent text-sidebar-accent-foreground border border-sidebar-border/60"
+          : "text-sidebar-foreground/70"
+      )}
+    >
+      {icon || (
+        <span className="w-1 h-1 rounded-full bg-current opacity-50" />
+      )}
+
+      <span>{label}</span>
+    </NavLink>
   );
 }
