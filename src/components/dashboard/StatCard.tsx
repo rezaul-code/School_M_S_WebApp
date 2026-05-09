@@ -1,7 +1,8 @@
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+// src/components/dashboard/StatCard.tsx
+
 import type { LucideIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface StatCardProps {
   label: string;
@@ -9,29 +10,45 @@ interface StatCardProps {
   icon: LucideIcon;
   loading?: boolean;
   accent?: "primary" | "success" | "warning" | "destructive";
+  sub?: string;
 }
 
-const accentMap = {
-  primary: "bg-primary-soft text-primary",
-  success: "bg-success-soft text-success",
-  warning: "bg-warning/10 text-warning",
-  destructive: "bg-destructive/10 text-destructive",
-} as const;
+const accentClassMap: Record<string, string> = {
+  primary: "db-stat-card--primary",
+  success: "db-stat-card--success",
+  warning: "db-stat-card--warning",
+  destructive: "db-stat-card--violet",
+};
 
-export default function StatCard({ label, value, icon: Icon, loading, accent = "primary" }: StatCardProps) {
+export default function StatCard({
+  label,
+  value,
+  icon: Icon,
+  loading,
+  accent = "primary",
+  sub,
+}: StatCardProps) {
   return (
-    <Card className="p-5 flex items-center gap-4" style={{ boxShadow: "var(--shadow-card)" }}>
-      <div className={cn("h-11 w-11 rounded-lg flex items-center justify-center", accentMap[accent])}>
-        <Icon className="h-5 w-5" />
+    <div className={cn("db-stat-card", accentClassMap[accent])}>
+      <div className="db-stat-glow" />
+
+      <div className="db-stat-top">
+        <div className="db-stat-icon-wrap">
+          <Icon />
+        </div>
       </div>
-      <div className="min-w-0">
-        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</div>
+
+      <div className="db-stat-body">
+        <div className="db-stat-label">{label}</div>
         {loading ? (
-          <Skeleton className="mt-1 h-7 w-16" />
+          <Skeleton className="mt-1 h-8 w-20" />
         ) : (
-          <div className="mt-0.5 text-2xl font-semibold tabular-nums">{value ?? "—"}</div>
+          <div className="db-stat-value">{value ?? "—"}</div>
+        )}
+        {sub && !loading && (
+          <div className="db-stat-sub">{sub}</div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
