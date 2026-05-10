@@ -13,11 +13,13 @@ import SidebarContent, {
   masterDataItems,
   studentItems,
   reportingItems,
+  accountingItems,
 } from "@/components/layout/Sidebar";
 
 import "@/styles/teacher.css";
 import "@/styles/master-data.css";
 import "@/styles/report.css";
+import "@/styles/accounting.css";
 
 interface NavItem {
   to: string;
@@ -33,6 +35,7 @@ function getActiveNav(pathname: string): NavItem {
     ...masterDataItems,
     { to: "/fee-structures", label: "Fee Structures" },
     ...reportingItems,
+    ...accountingItems,
   ];
 
   return (
