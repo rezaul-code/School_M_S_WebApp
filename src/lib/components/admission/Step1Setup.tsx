@@ -43,12 +43,10 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-5">
-          Academic Setup
-        </h2>
+        
  
-        {/* API status indicator */}
-        <div className="mb-5 flex items-center gap-2 text-xs text-gray-500 bg-gray-800/60 border border-gray-700 rounded-lg px-4 py-2.5">
+        API status indicator
+        {/* <div className="mb-5 flex items-center gap-2 text-xs text-gray-500 bg-gray-800/60 border border-gray-700 rounded-lg px-4 py-2.5">
           <AlertCircle className="w-3.5 h-3.5 shrink-0 text-yellow-500" />
           <span>
             {formOptionsQuery.isLoading
@@ -58,7 +56,7 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
               : <>Loaded from <code className="font-mono text-gray-300">/api/students/form-options</code></>
             }
           </span>
-        </div>
+        </div> */}
  
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {/* Academic Year */}
