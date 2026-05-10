@@ -32,6 +32,9 @@ import ClassLevels from "@/pages/ClassLevels";
 import Sections from "@/pages/Sections";
 import ClassSections from "@/pages/ClassSections";
 
+// Reporting
+import FeeReport from "@/pages/FeeReport";
+
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -72,25 +75,28 @@ export default function App() {
               {/* STUDENTS — static routes before dynamic :studentId */}
               <Route path="/students"       element={<StudentsPage />} />
               <Route path="/students/admit" element={<AdmissionWizardPage />} />
-              <Route path="/students/:studentId"              element={<StudentDetailsPage />} />
-              <Route path="/students/:studentId/fee-summary"  element={<StudentFeeSummaryPage />} />
+              <Route path="/students/:studentId"             element={<StudentDetailsPage />} />
+              <Route path="/students/:studentId/fee-summary" element={<StudentFeeSummaryPage />} />
 
               {/* TEACHERS */}
-              <Route path="/teachers/register"          element={<RegisterTeacherPage />} />
-              <Route path="/teachers"                   element={<TeachersPage />} />
-              <Route path="/teachers/assignments"       element={<TeacherAssignmentsPage />} />
+              <Route path="/teachers/register"            element={<RegisterTeacherPage />} />
+              <Route path="/teachers"                     element={<TeachersPage />} />
+              <Route path="/teachers/assignments"         element={<TeacherAssignmentsPage />} />
               <Route path="/teachers/subject-assignments" element={<SubjectAssignmentsPage />} />
 
               {/* MASTER DATA */}
-              <Route path="/academic-years"        element={<AcademicYears />} />
-              <Route path="/class-levels"          element={<ClassLevels />} />
-              <Route path="/sections"              element={<Sections />} />
-              <Route path="/class-sections"        element={<ClassSections />} />
-              <Route path="/subjects"              element={<Subjects />} />
+              <Route path="/academic-years"         element={<AcademicYears />} />
+              <Route path="/class-levels"           element={<ClassLevels />} />
+              <Route path="/sections"               element={<Sections />} />
+              <Route path="/class-sections"         element={<ClassSections />} />
+              <Route path="/subjects"               element={<Subjects />} />
               <Route path="/class-subject-mappings" element={<ClassSubjectMappings />} />
 
               {/* FEES */}
               <Route path="/fee-structures" element={<FeeStructures />} />
+
+              {/* REPORTING */}
+              <Route path="/reports/fees" element={<FeeReport />} />
             </Route>
 
             {/* FALLBACK */}
