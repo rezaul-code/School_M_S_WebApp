@@ -1,14 +1,19 @@
 // src/lib/api/accounting.ts
 
 import { api } from "./client";
-import type { ApiResponse, Page } from "@/types/api";
 
-// ======================================================
+// =====================================================================
 // TYPES
-// ======================================================
+// =====================================================================
 
-export type PaymentMode = "CASH" | "UPI" | "CARD" | "BANK_TRANSFER";
-export type CollectionStatus = "SUCCESS" | "PENDING" | "FAILED" | "REFUNDED";
+export type PaymentMode =
+  | "CASH"
+  | "UPI"
+  | "CARD"
+  | "BANK_TRANSFER"
+  | "CHEQUE";
+
+export type TimeFrame = "TODAY" | "CURRENT_MONTH" | "DATE_RANGE";
 
 export interface FeeCollection {
   id: number;
@@ -23,192 +28,195 @@ export interface FeeCollection {
   paymentMode: PaymentMode;
   transactionReference: string | null;
   remarks: string | null;
-  status: CollectionStatus;
-  paidAt: string; // ISO date-time
+  paidAt: string;
   collectedBy: string | null;
 }
 
 /**
- * All optional filter fields use `number | undefined` (never `number | ""`).
- * The UI state layer converts empty-select values to undefined before
- * calling the API, so Spring Boot never receives an invalid param.
+ * Query parameters sent to GET /api/accounting/collections
+ *
+ * TODAY        → timeFrame=TODAY
+ * CURRENT_MONTH→ timeFrame=CURRENT_MONTH  [+ academicYearId?]  [+ paymentMode?]
+ * DATE_RANGE   → timeFrame=DATE_RANGE  + startDate  + endDate  [+ paymentMode?]
+ *
+ * NOTE: NO `month` param — CURRENT_MONTH always means the server's current month.
  */
-export interface FeeCollectionFilters {
-  academicYearId?: number;
-  classLevelId?:   number;
-  sectionId?:      number;
-  paymentMode?:    PaymentMode;
-  feeType?:        string;
-  search?:         string;
-  fromDate?:       string;
-  toDate?:         string;
+export interface CollectionParams {
+  timeFrame:      TimeFrame;
+  academicYearId?: number;          // CURRENT_MONTH only
+  startDate?:      string;          // DATE_RANGE only  "YYYY-MM-DD"
+  endDate?:        string;          // DATE_RANGE only  "YYYY-MM-DD"
+  paymentMode?:    PaymentMode;     // CURRENT_MONTH + DATE_RANGE
   page:            number;
   size:            number;
 }
 
 /**
  * What getFeeCollections() resolves to.
- * `page` is the raw Spring Page<T>; the aggregate fields are either
- * returned by the backend or derived client-side from the page content.
  */
-export interface FeeCollectionPageResult {
-  page:               Page<FeeCollection>;
-  totalCollected:     number;
-  totalTransactions:  number;
-  cashTotal:          number;
-  upiTotal:           number;
-  cardTotal:          number;
-  bankTransferTotal:  number;
+export interface FeeCollectionResult {
+  rows:              FeeCollection[];
+  totalElements:     number;
+  totalPages:        number;
+  currentPage:       number;
+  pageSize:          number;
+  // KPI totals
+  totalCollected:    number;
+  totalCash:         number;
+  totalUpi:          number;
+  totalCard:         number;
+  totalBankTransfer: number;
 }
 
-// ======================================================
+// =====================================================================
 // PARAM BUILDER
-// Strips undefined / empty values so the backend never
-// receives invalid query parameters.
-// ======================================================
+// Only sends params that are defined and non-empty.
+// Spring Boot will return 400/500 for unexpected / empty params.
+// =====================================================================
 
-function buildParams(
-  filters: FeeCollectionFilters,
-): Record<string, string | number> {
-  const params: Record<string, string | number> = {
-    page: filters.page,
-    size: filters.size,
+function buildParams(p: CollectionParams): Record<string, string | number> {
+  const out: Record<string, string | number> = {
+    timeFrame: p.timeFrame,
+    page:      p.page,
+    size:      p.size,
   };
 
-  // Numeric IDs — only include when a real value is present
-  if (filters.academicYearId != null && filters.academicYearId > 0)
-    params.academicYearId = filters.academicYearId;
-  if (filters.classLevelId != null && filters.classLevelId > 0)
-    params.classLevelId = filters.classLevelId;
-  if (filters.sectionId != null && filters.sectionId > 0)
-    params.sectionId = filters.sectionId;
+  if (p.timeFrame === "CURRENT_MONTH") {
+    // academicYearId — only when a real positive number
+    if (p.academicYearId != null && p.academicYearId > 0)
+      out.academicYearId = p.academicYearId;
+    // paymentMode — only when a specific mode is selected (not ALL)
+    if (p.paymentMode)
+      out.paymentMode = p.paymentMode;
+  }
 
-  // String / enum fields — only include non-empty strings
-  if (filters.paymentMode)        params.paymentMode = filters.paymentMode;
-  if (filters.feeType)            params.feeType     = filters.feeType;
-  if (filters.search?.trim())     params.search      = filters.search.trim();
-  if (filters.fromDate)           params.fromDate    = filters.fromDate;
-  if (filters.toDate)             params.toDate      = filters.toDate;
+  if (p.timeFrame === "DATE_RANGE") {
+    if (p.startDate) out.startDate = p.startDate;
+    if (p.endDate)   out.endDate   = p.endDate;
+    if (p.paymentMode) out.paymentMode = p.paymentMode;
+  }
 
-  return params;
+  // TODAY sends nothing extra
+  return out;
 }
 
-// ======================================================
+// =====================================================================
+// RESPONSE SHAPE (internal — not exported)
+//
+// The CONFIRMED backend JSON structure is:
+//
+//   {                                        ← HTTP response body
+//     "success": true,
+//     "message": "...",
+//     "errorCode": null,
+//     "data": {                              ← response.data.data  (Axios strips one .data)
+//       "totalCollected": 2000.00,           ← KPI totals live HERE
+//       "totalCash": 0,
+//       "totalUpi": 2000.00,
+//       "totalCard": 0,
+//       "totalBankTransfer": 0,
+//       "data": {                            ← response.data.data.data  (the Page)
+//         "content": [...],                  ← response.data.data.data.content
+//         "totalElements": 5,
+//         "totalPages": 1,
+//         "number": 0,
+//         "size": 10
+//       }
+//     }
+//   }
+//
+// Axios response.data == the JSON body above.
+// So:
+//   response.data.success         → true/false
+//   response.data.data            → the payload object (has totals + nested Page)
+//   response.data.data.totalCollected  → KPI total
+//   response.data.data.data            → Page<FeeCollection>
+//   response.data.data.data.content    → FeeCollection[]
+// =====================================================================
+
+interface ApiOuter {
+  success:    boolean;
+  message:    string | null;
+  errorCode:  string | null;
+  data:       ApiInnerPayload;
+}
+
+interface ApiInnerPayload {
+  totalCollected:    number;
+  totalCash:         number;
+  totalUpi:          number;
+  totalCard:         number;
+  totalBankTransfer: number;
+  data:              PageShape;
+}
+
+interface PageShape {
+  content:       FeeCollection[];
+  totalElements: number;
+  totalPages:    number;
+  number:        number;
+  size:          number;
+  first?:        boolean;
+  last?:         boolean;
+}
+
+// =====================================================================
 // API FUNCTION
-// ======================================================
+// =====================================================================
 
-/**
- * GET /api/accounting/fee-collections
- *
- * Backend contract (mirrors every other endpoint in this project):
- *   response body → ApiResponse<Page<FeeCollection>>
- *
- * Some backends also embed aggregate totals as extra fields on the
- * `data` object alongside the Page fields. Both shapes are handled.
- */
 export async function getFeeCollections(
-  filters: FeeCollectionFilters,
-): Promise<FeeCollectionPageResult> {
-  const params = buildParams(filters);
+  params: CollectionParams,
+): Promise<FeeCollectionResult> {
+  const queryParams = buildParams(params);
 
-  console.debug("[accounting] getFeeCollections → params:", params);
+  console.log("[accounting] getFeeCollections → request params:", queryParams);
 
   try {
-    const response = await api.get<
-      ApiResponse<
-        Page<FeeCollection> & {
-          // Optional aggregates the backend MAY co-locate on the Page object
-          totalCollected?:    number;
-          totalTransactions?: number;
-          cashTotal?:         number;
-          upiTotal?:          number;
-          cardTotal?:         number;
-          bankTransferTotal?: number;
-        }
-      >
-    >("/api/accounting/fee-collections", { params });
-
-    console.debug(
-      "[accounting] getFeeCollections ← status:", response.status,
-      "| success:", response.data?.success,
+    const response = await api.get<ApiOuter>(
+      "/api/accounting/fee-collections",
+      { params: queryParams },
     );
-    console.debug("[accounting] getFeeCollections ← raw data:", response.data?.data);
 
-    const outer = response.data;
+    // ── Full response dump for debugging ──────────────────────────
+    console.log("[accounting] getFeeCollections ← HTTP status  :", response.status);
+    console.log("[accounting] getFeeCollections ← response.data:", response.data);
+
+    const outer = response.data; // ApiOuter
 
     if (!outer?.success) {
-      console.warn(
-        "[accounting] getFeeCollections: backend returned success=false →",
-        outer,
-      );
+      console.warn("[accounting] success=false →", outer);
     }
 
-    const raw = outer?.data;
+    // response.data.data  → ApiInnerPayload (has totals + nested Page)
+    const payload = outer?.data as ApiInnerPayload | undefined;
+    console.log("[accounting] getFeeCollections ← payload (data.data):", payload);
 
-    // ── Normalise page fields (defensive guards on every field) ──
-    const page: Page<FeeCollection> = {
-      content:       Array.isArray(raw?.content) ? raw.content : [],
-      totalElements: raw?.totalElements ?? 0,
-      totalPages:    raw?.totalPages    ?? 0,
-      number:        raw?.number        ?? 0,
-      size:          raw?.size          ?? filters.size,
-      first:         raw?.first,
-      last:          raw?.last,
+    // response.data.data.data → Page<FeeCollection>
+    const page = payload?.data as PageShape | undefined;
+    console.log("[accounting] getFeeCollections ← page (data.data.data):", page);
+    console.log("[accounting] getFeeCollections ← content:", page?.content);
+
+    const rows: FeeCollection[] = Array.isArray(page?.content) ? page!.content : [];
+
+    const result: FeeCollectionResult = {
+      rows,
+      totalElements:     page?.totalElements ?? 0,
+      totalPages:        page?.totalPages    ?? 0,
+      currentPage:       page?.number        ?? 0,
+      pageSize:          page?.size          ?? params.size,
+      // KPI totals — from payload (response.data.data), NOT from outer
+      totalCollected:    typeof payload?.totalCollected    === "number" ? payload.totalCollected    : 0,
+      totalCash:         typeof payload?.totalCash         === "number" ? payload.totalCash         : 0,
+      totalUpi:          typeof payload?.totalUpi          === "number" ? payload.totalUpi          : 0,
+      totalCard:         typeof payload?.totalCard         === "number" ? payload.totalCard         : 0,
+      totalBankTransfer: typeof payload?.totalBankTransfer === "number" ? payload.totalBankTransfer : 0,
     };
 
-    const content = page.content;
+    console.log("[accounting] getFeeCollections ← resolved result:", result);
+    return result;
 
-    // ── Aggregate totals: prefer backend value, fall back to page sum ──
-    const totalCollected =
-      typeof raw?.totalCollected === "number"
-        ? raw.totalCollected
-        : content.reduce((s, r) => s + (r.amountPaid ?? 0), 0);
-
-    const totalTransactions =
-      typeof raw?.totalTransactions === "number"
-        ? raw.totalTransactions
-        : page.totalElements;
-
-    const cashTotal =
-      typeof raw?.cashTotal === "number"
-        ? raw.cashTotal
-        : content
-            .filter((r) => r.paymentMode === "CASH")
-            .reduce((s, r) => s + (r.amountPaid ?? 0), 0);
-
-    const upiTotal =
-      typeof raw?.upiTotal === "number"
-        ? raw.upiTotal
-        : content
-            .filter((r) => r.paymentMode === "UPI")
-            .reduce((s, r) => s + (r.amountPaid ?? 0), 0);
-
-    const cardTotal =
-      typeof raw?.cardTotal === "number"
-        ? raw.cardTotal
-        : content
-            .filter((r) => r.paymentMode === "CARD")
-            .reduce((s, r) => s + (r.amountPaid ?? 0), 0);
-
-    const bankTransferTotal =
-      typeof raw?.bankTransferTotal === "number"
-        ? raw.bankTransferTotal
-        : content
-            .filter((r) => r.paymentMode === "BANK_TRANSFER")
-            .reduce((s, r) => s + (r.amountPaid ?? 0), 0);
-
-    return {
-      page,
-      totalCollected,
-      totalTransactions,
-      cashTotal,
-      upiTotal,
-      cardTotal,
-      bankTransferTotal,
-    };
   } catch (error: unknown) {
-    // Full diagnostic dump — visible in browser DevTools console
-    const axiosErr = error as {
+    const e = error as {
       response?: {
         status:  number;
         data:    unknown;
@@ -217,17 +225,14 @@ export async function getFeeCollections(
       message?: string;
     };
 
-    console.error("━━━━━ [accounting] getFeeCollections FAILED ━━━━━");
-    console.error(
-      "  URL   :",
-      axiosErr?.response?.config?.url ?? "/api/accounting/fee-collections",
-    );
-    console.error("  Params:", axiosErr?.response?.config?.params ?? params);
-    console.error("  Status:", axiosErr?.response?.status);
-    console.error("  Body  :", axiosErr?.response?.data);
-    console.error("  Msg   :", axiosErr?.message);
-    console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.error("━━━ [accounting] getFeeCollections FAILED ━━━");
+    console.error("  URL    :", e?.response?.config?.url ?? "/api/accounting/collections");
+    console.error("  Params :", e?.response?.config?.params ?? queryParams);
+    console.error("  Status :", e?.response?.status);
+    console.error("  Body   :", JSON.stringify(e?.response?.data, null, 2));
+    console.error("  Message:", e?.message);
+    console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    throw error; // Let React Query set isError = true
+    throw error;
   }
 }
