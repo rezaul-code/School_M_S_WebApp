@@ -52,7 +52,7 @@ export async function applyDiscount(
   payload: ApplyDiscountPayload,
 ) {
   assertFeeId(feeId, "apply discount");
-  const response = await api.post<ApiResponse<{ id: number }>>(
+  const response = await api.patch<ApiResponse<{ id: number }>>(
     `/api/students/${studentId}/fees/${feeId}/discount`,
     payload,
   );
@@ -63,7 +63,7 @@ export async function applyDiscount(
 
 export async function waiveFee(studentId: string, feeId: number) {
   assertFeeId(feeId, "waive fee");
-  const response = await api.post<ApiResponse<{ id: number }>>(
+  const response = await api.patch<ApiResponse<{ id: number }>>(
     `/api/students/${studentId}/fees/${feeId}/waive`,
   );
   return response.data.data;

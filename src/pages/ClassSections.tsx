@@ -1,72 +1,239 @@
+// src/pages/ClassSections.tsx
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Users } from "lucide-react";
+import {
+  Plus,
+  Network,
+  Search,
+  Users,
+  Sparkles,
+  BookOpen,
+  Hash,
+} from "lucide-react";
 
-import { Card } from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
-import { Badge } from "../components/ui/badge";
-import CreateClassSectionDialog from "../components/dashboard/CreateClassSectionDialog";
-import { listClassSections } from "../lib/api/master";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import Pagination from "@/components/common/Pagination";
+import CreateClassSectionDialog from "@/components/dashboard/CreateClassSectionDialog";
+import { listClassSections } from "@/lib/api/master";
+
+import "@/styles/master-data.css";
+
+const ITEMS_PER_PAGE = 10;
 
 export default function ClassSections() {
   const [openCreate, setOpenCreate] = useState<boolean>(false);
-  const { data: sections = [], isLoading } = useQuery({ 
-    queryKey: ["class-sections"], 
-    queryFn: listClassSections 
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState("");
+
+  const { data: sections = [], isLoading } = useQuery({
+    queryKey: ["class-sections"],
+    queryFn: listClassSections,
   });
 
+  const filtered = sections.filter(
+    (s) =>
+      s.displayName?.toLowerCase().includes(search.toLowerCase()) ||
+      s.className?.toLowerCase().includes(search.toLowerCase()) ||
+      s.sectionName?.toLowerCase().includes(search.toLowerCase()) ||
+      s.academicYearName?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const startIdx = page * ITEMS_PER_PAGE;
+  const paginatedItems = filtered.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+
+  const totalStudents = sections.reduce(
+    (sum, s) => sum + (s.studentCount || 0),
+    0
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Class Sections</h1>
-          <p className="text-muted-foreground text-sm">Manage the mapping between classes and sections.</p>
+    <div className="md-page">
+      {/* ── Hero Banner ──────────────────────────────────── */}
+      <div className="md-hero md-hero--class-section">
+        <div className="md-hero-glow" />
+        <div className="md-hero-inner">
+          <div className="md-hero-left">
+            <div className="md-hero-icon-wrap">
+              <Network />
+            </div>
+            <div className="md-hero-text">
+              <h2 className="md-hero-title">Class Sections</h2>
+              <p className="md-hero-sub">
+                Manage class–section mappings per academic year
+              </p>
+            </div>
+          </div>
+          <span className="md-hero-badge">
+            <Sparkles />
+            Master Data
+          </span>
         </div>
-        <Button onClick={() => setOpenCreate(true)} className="gap-2 shrink-0">
-          <Plus className="h-4 w-4" /> Create Class Section
-        </Button>
       </div>
 
-      <Card>
-        <div className="rounded-md border">
-          <Table>
+      {/* ── KPI Strip ────────────────────────────────────── */}
+      <div className="md-stats">
+        <div className="md-stat md-stat--orange">
+          <div className="md-stat-icon">
+            <Network />
+          </div>
+          <div>
+            <div className="md-stat-label">Total Mappings</div>
+            <div className="md-stat-value">
+              {isLoading ? "—" : sections.length}
+            </div>
+          </div>
+        </div>
+        <div className="md-stat md-stat--blue">
+          <div className="md-stat-icon">
+            <BookOpen />
+          </div>
+          <div>
+            <div className="md-stat-label">Showing</div>
+            <div className="md-stat-value">
+              {isLoading ? "—" : filtered.length}
+            </div>
+          </div>
+        </div>
+        <div className="md-stat md-stat--green">
+          <div className="md-stat-icon">
+            <Users />
+          </div>
+          <div>
+            <div className="md-stat-label">Total Students</div>
+            <div className="md-stat-value">
+              {isLoading ? "—" : totalStudents}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Toolbar ──────────────────────────────────────── */}
+      <div className="md-toolbar">
+        <div className="md-toolbar-left">
+          <div className="md-search-wrap">
+            <Search className="md-search-icon" />
+            <Input
+              placeholder="Search class sections…"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
+              className="h-9"
+            />
+          </div>
+        </div>
+        <div className="md-toolbar-right">
+          <Button
+            onClick={() => setOpenCreate(true)}
+            className="gap-2 h-9 text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            Create Class Section
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Table Card ───────────────────────────────────── */}
+      <div className="md-card">
+        <div className="md-card-header md-card-header--orange">
+          <div className="md-card-title-group">
+            <p className="md-card-title">Class Section Mappings</p>
+            <p className="md-card-subtitle">
+              {isLoading
+                ? "Loading…"
+                : `${filtered.length} mapping${filtered.length !== 1 ? "s" : ""}`}
+            </p>
+          </div>
+        </div>
+
+        <div className="md-table-wrap">
+          <Table className="md-table">
             <TableHeader>
               <TableRow>
+                <TableHead>#</TableHead>
                 <TableHead>Display Name</TableHead>
                 <TableHead>Class</TableHead>
                 <TableHead>Section</TableHead>
                 <TableHead>Academic Year</TableHead>
-                <TableHead className="text-right">Students</TableHead>
+                <TableHead style={{ textAlign: "right" }}>Students</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    {[40, 130, 100, 80, 110, 50].map((w, j) => (
+                      <TableCell key={j}>
+                        <div
+                          className="md-skel"
+                          style={{ height: "14px", width: `${w}px` }}
+                        />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : paginatedItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
-                </TableRow>
-              ) : sections.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                    No class sections found. Create one to get started.
+                  <TableCell colSpan={6}>
+                    <div className="md-empty">
+                      <Network className="md-empty-icon" />
+                      <p className="md-empty-title">
+                        {search ? "No results found" : "No class sections yet"}
+                      </p>
+                      <p className="md-empty-desc">
+                        {search
+                          ? "Try a different search term."
+                          : "Create your first class section mapping to get started."}
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                sections.map((section) => (
+                paginatedItems.map((section, idx) => (
                   <TableRow key={section.id}>
-                    <TableCell className="font-medium text-primary">
-                      {section.displayName || `${section.className} - ${section.sectionName}`}
+                    <TableCell className="md-cell-index">
+                      {startIdx + idx + 1}
+                    </TableCell>
+                    <TableCell className="md-cell-name">
+                      {section.displayName ||
+                        `${section.className} - ${section.sectionName}`}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{section.className}</Badge>
+                      <span className="md-badge md-badge--outline">
+                        {section.className}
+                      </span>
                     </TableCell>
-                    <TableCell>{section.sectionName}</TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="md-cell-meta">
+                      {section.sectionName}
+                    </TableCell>
+                    <TableCell className="md-cell-meta">
                       {section.academicYearName}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2 text-muted-foreground">
-                        <Users className="h-4 w-4" />
+                    <TableCell>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                          gap: "0.375rem",
+                        }}
+                        className="md-cell-meta"
+                      >
+                        <Users
+                          style={{ width: "0.8rem", height: "0.8rem" }}
+                        />
                         <span>{section.studentCount || 0}</span>
                       </div>
                     </TableCell>
@@ -76,10 +243,16 @@ export default function ClassSections() {
             </TableBody>
           </Table>
         </div>
-      </Card>
 
-      {/* Passed explicitly as an arrow function to prevent IntrinsicAttributes Type Error */}
-      <CreateClassSectionDialog open={openCreate} onOpenChange={(val) => setOpenCreate(val)} />
+        {!isLoading && totalPages > 1 && (
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        )}
+      </div>
+
+      <CreateClassSectionDialog
+        open={openCreate}
+        onOpenChange={(val) => setOpenCreate(val)}
+      />
     </div>
   );
 }

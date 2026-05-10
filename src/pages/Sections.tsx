@@ -1,72 +1,204 @@
+// src/pages/Sections.tsx
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import {
+  Plus,
+  Layers,
+  Search,
+  Hash,
+  Sparkles,
+  ListFilter,
+} from "lucide-react";
 
-import { Card } from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
-import Pagination from "../components/common/Pagination";
-import LoadingTable from "../components/common/LoadingTable";
-import CreateSectionDialog from "../components/dashboard/CreateSectionDialog";
-import { getSectionOptions } from "../lib/api/master";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import Pagination from "@/components/common/Pagination";
+import CreateSectionDialog from "@/components/dashboard/CreateSectionDialog";
+import { getSectionOptions } from "@/lib/api/master";
+
+import "@/styles/master-data.css";
 
 const ITEMS_PER_PAGE = 10;
 
 export default function Sections() {
   const [page, setPage] = useState(0);
   const [openCreate, setOpenCreate] = useState<boolean>(false);
-  
+  const [search, setSearch] = useState("");
+
   const { data: sections = [], isLoading } = useQuery({
     queryKey: ["sections-options"],
     queryFn: getSectionOptions,
   });
 
-  // Calculate pagination
-  const totalItems = sections.length;
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const filtered = sections.filter(
+    (s) =>
+      s.name?.toLowerCase().includes(search.toLowerCase()) ||
+      s.displayName?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const startIdx = page * ITEMS_PER_PAGE;
-  const endIdx = startIdx + ITEMS_PER_PAGE;
-  const paginatedItems = sections.slice(startIdx, endIdx);
+  const paginatedItems = filtered.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Sections</h1>
-          <p className="text-muted-foreground text-sm">Manage class sections (e.g., SUN, STAR, MOON).</p>
+    <div className="md-page">
+      {/* ── Hero Banner ──────────────────────────────────── */}
+      <div className="md-hero md-hero--section">
+        <div className="md-hero-glow" />
+        <div className="md-hero-inner">
+          <div className="md-hero-left">
+            <div className="md-hero-icon-wrap">
+              <Layers />
+            </div>
+            <div className="md-hero-text">
+              <h2 className="md-hero-title">Sections</h2>
+              <p className="md-hero-sub">
+                Configure sections for the school (e.g. SUN, STAR, MOON)
+              </p>
+            </div>
+          </div>
+          <span className="md-hero-badge">
+            <Sparkles />
+            Master Data
+          </span>
         </div>
-        <Button onClick={() => setOpenCreate(true)} className="gap-2 shrink-0">
-          <Plus className="h-4 w-4" /> Create Section
-        </Button>
       </div>
 
-      <Card>
-        <div className="rounded-md border">
-          <Table>
+      {/* ── KPI Strip ────────────────────────────────────── */}
+      <div className="md-stats">
+        <div className="md-stat md-stat--teal">
+          <div className="md-stat-icon">
+            <Layers />
+          </div>
+          <div>
+            <div className="md-stat-label">Total Sections</div>
+            <div className="md-stat-value">
+              {isLoading ? "—" : sections.length}
+            </div>
+          </div>
+        </div>
+        <div className="md-stat md-stat--blue">
+          <div className="md-stat-icon">
+            <ListFilter />
+          </div>
+          <div>
+            <div className="md-stat-label">Showing</div>
+            <div className="md-stat-value">
+              {isLoading ? "—" : filtered.length}
+            </div>
+          </div>
+        </div>
+        <div className="md-stat md-stat--violet">
+          <div className="md-stat-icon">
+            <Hash />
+          </div>
+          <div>
+            <div className="md-stat-label">Current Page</div>
+            <div className="md-stat-value">
+              {isLoading ? "—" : paginatedItems.length}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Toolbar ──────────────────────────────────────── */}
+      <div className="md-toolbar">
+        <div className="md-toolbar-left">
+          <div className="md-search-wrap">
+            <Search className="md-search-icon" />
+            <Input
+              placeholder="Search sections…"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
+              className="h-9"
+            />
+          </div>
+        </div>
+        <div className="md-toolbar-right">
+          <Button
+            onClick={() => setOpenCreate(true)}
+            className="gap-2 h-9 text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            Create Section
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Table Card ───────────────────────────────────── */}
+      <div className="md-card">
+        <div className="md-card-header md-card-header--green">
+          <div className="md-card-title-group">
+            <p className="md-card-title">Section Registry</p>
+            <p className="md-card-subtitle">
+              {isLoading
+                ? "Loading…"
+                : `${filtered.length} section${filtered.length !== 1 ? "s" : ""}`}
+            </p>
+          </div>
+        </div>
+
+        <div className="md-table-wrap">
+          <Table className="md-table">
             <TableHeader>
               <TableRow>
+                <TableHead>#</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Display Name</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={2}>
-                    <LoadingTable rows={6} cols={2} />
-                  </TableCell>
-                </TableRow>
+                Array.from({ length: 6 }).map((_, i) => (
+                  <TableRow key={i}>
+                    {[40, 100, 140].map((w, j) => (
+                      <TableCell key={j}>
+                        <div
+                          className="md-skel"
+                          style={{ height: "14px", width: `${w}px` }}
+                        />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : paginatedItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={2} className="h-24 text-center text-muted-foreground">
-                    No sections found. Create one to get started.
+                  <TableCell colSpan={3}>
+                    <div className="md-empty">
+                      <Layers className="md-empty-icon" />
+                      <p className="md-empty-title">
+                        {search ? "No results found" : "No sections yet"}
+                      </p>
+                      <p className="md-empty-desc">
+                        {search
+                          ? "Try a different search term."
+                          : "Create your first section to get started."}
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedItems.map((section) => (
+                paginatedItems.map((section, idx) => (
                   <TableRow key={section.id}>
-                    <TableCell className="font-medium">{section.name}</TableCell>
-                    <TableCell>{section.displayName}</TableCell>
+                    <TableCell className="md-cell-index">
+                      {startIdx + idx + 1}
+                    </TableCell>
+                    <TableCell className="md-cell-name">{section.name}</TableCell>
+                    <TableCell className="md-cell-meta">
+                      {section.displayName}
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -77,9 +209,12 @@ export default function Sections() {
         {!isLoading && totalPages > 1 && (
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         )}
-      </Card>
+      </div>
 
-      <CreateSectionDialog open={openCreate} onOpenChange={(val) => setOpenCreate(val)} />
+      <CreateSectionDialog
+        open={openCreate}
+        onOpenChange={(val) => setOpenCreate(val)}
+      />
     </div>
   );
 }
