@@ -249,75 +249,67 @@ export interface DashboardStats {
 // ======================================================
 // FEES SUMMARY
 // ======================================================
- 
+
 export interface FeePreviewLineItem {
   feeStructureId: number;
- 
   feeType: string;
- 
   label: string;
- 
   occurrences: number;
- 
   totalAmount: number;
- 
   unitAmount: number;
 }
- 
+
 export interface FeePreview {
   academicYearId: number;
   academicYearName: string;
- 
   classSectionId: number;
   classSectionName: string;
- 
   grandTotal: number;
- 
   lineItems: FeePreviewLineItem[];
 }
- 
+
 export interface InitialPayment {
   feeType: string;
   amountPaid: number;
- 
   monthsToPay?: number;
 }
- 
+
+/**
+ * One monthly fee line item returned by GET /api/students/{id}/fees/summary.
+ *
+ * `feeId` is the backend fee-record PK — used as the path segment for:
+ *   POST /api/students/{studentId}/fees/{feeId}/payments
+ *   POST /api/students/{studentId}/fees/{feeId}/discount
+ *   POST /api/students/{studentId}/fees/{feeId}/waive
+ */
 export interface MonthlyFeeDetail {
+  feeId: number;
   period: string;
- 
   grossAmount: number;
   paidAmount: number;
- 
-  status: string;
+  status: string; // "PAID" | "PARTIAL" | "PENDING" | "OVERDUE" | "WAIVED"
+  balance?: number;
+  discount?: number;
 }
- 
+
 export interface StudentFeeBreakdown {
   feeType: string;
- 
   grossAmount: number;
   paidAmount: number;
   balanceAmount: number;
- 
   discount: number;
   netAmount: number;
- 
   monthlyDetails: MonthlyFeeDetail[];
 }
- 
+
 export interface StudentFeeSummary {
   studentId: string;
- 
   academicYearId: number;
- 
   totalGross: number;
   totalPaid: number;
   totalBalance: number;
- 
   totalDiscount: number;
   totalNet: number;
- 
   totalOverdue: number;
- 
   breakdown: StudentFeeBreakdown[];
 }

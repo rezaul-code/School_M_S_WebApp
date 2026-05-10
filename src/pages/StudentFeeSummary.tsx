@@ -14,6 +14,15 @@ import {
   TrendingDown,
   CircleAlert,
   IndianRupee,
+  CreditCard,
+  Tag,
+  ShieldOff,
+  MoreVertical,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  AlertTriangle,
+  Minus,
 } from "lucide-react";
 
 import {
@@ -23,14 +32,27 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 import type { MonthlyFeeDetail, StudentFeeSummary } from "@/types/api";
 import { getStudentFeeSummary } from "@/lib/api/students";
 import { useActiveAcademicYear } from "@/hooks/useActiveAcademicYear";
 
-import "@/styles/student-pages.css";
+import RecordPaymentDialog from "@/components/fees/RecordPaymentDialog";
+import ApplyDiscountDialog from "@/components/fees/ApplyDiscountDialog";
+import WaiveFeeDialog      from "@/components/fees/WaiveFeeDialog";
 
-// ── Currency — INR ───────────────────────────────────────────────
+import "@/styles/student-pages.css";
+import "@/styles/fee-payment.css";
+
+// ── Currency ─────────────────────────────────────────────────────
 
 function formatINR(v?: number): string {
   if (typeof v !== "number") return "—";
@@ -43,14 +65,27 @@ function formatINR(v?: number): string {
 
 // ── Status badge ─────────────────────────────────────────────────
 
+const STATUS_META: Record<
+  string,
+  { cls: string; icon: React.ElementType; label: string }
+> = {
+  PAID:    { cls: "fp-badge fp-badge--paid",    icon: CheckCircle2,   label: "Paid"    },
+  PARTIAL: { cls: "fp-badge fp-badge--partial", icon: Clock,          label: "Partial" },
+  PENDING: { cls: "fp-badge fp-badge--pending", icon: AlertTriangle,  label: "Pending" },
+  OVERDUE: { cls: "fp-badge fp-badge--overdue", icon: XCircle,        label: "Overdue" },
+  WAIVED:  { cls: "fp-badge fp-badge--waived",  icon: Minus,          label: "Waived"  },
+};
+
 function StatusBadge({ status }: { status: string }) {
-  const s = (status ?? "").toUpperCase();
-  const cls =
-    s === "PAID"    ? "sp-badge sp-badge--paid"    :
-    s === "OVERDUE" ? "sp-badge sp-badge--overdue"  :
-    s === "PARTIAL" ? "sp-badge sp-badge--partial"  :
-                      "sp-badge sp-badge--default";
-  return <span className={cls}>{status || "—"}</span>;
+  const s   = (status ?? "").toUpperCase();
+  const meta = STATUS_META[s] ?? { cls: "fp-badge fp-badge--pending", icon: AlertTriangle, label: status || "—" };
+  const Icon = meta.icon;
+  return (
+    <span className={meta.cls}>
+      <Icon size={10} />
+      {meta.label}
+    </span>
+  );
 }
 
 // ── Skeleton ─────────────────────────────────────────────────────
@@ -63,61 +98,25 @@ function LoadingSkeleton() {
   return (
     <div className="sp-page">
       <Skel style={{ height: "2rem", width: "9rem", borderRadius: "0.5rem" }} />
-
-      {/* Hero */}
-      <div
-        style={{
-          borderRadius: "1rem",
-          padding: "1.75rem 2rem",
-          background: "hsl(var(--muted) / 0.5)",
-          border: "1px solid hsl(var(--border))",
-          display: "flex",
-          alignItems: "center",
-          gap: "0.75rem",
-        }}
-      >
-        <Skel style={{ width: "2.75rem", height: "2.75rem", borderRadius: "0.625rem", flexShrink: 0 }} />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          <Skel style={{ height: "1.125rem", width: "10rem" }} />
-          <Skel style={{ height: "0.8rem", width: "7rem" }} />
+      <div className="sp-hero" style={{ padding: "1.75rem 2rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <Skel style={{ width: "2.75rem", height: "2.75rem", borderRadius: "0.625rem", flexShrink: 0 }} />
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <Skel style={{ height: "1.125rem", width: "10rem" }} />
+            <Skel style={{ height: "0.8rem", width: "7rem" }} />
+          </div>
         </div>
       </div>
-
-      {/* Stat cards */}
       <div className="sp-stat-grid">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            style={{
-              borderRadius: "0.875rem",
-              border: "1px solid hsl(var(--border))",
-              padding: "1.125rem 1.25rem",
-              background: "hsl(var(--card))",
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.5rem",
-            }}
-          >
+          <div key={i} style={{ borderRadius: "0.875rem", border: "1px solid hsl(var(--border))", padding: "1.125rem 1.25rem", background: "hsl(var(--card))", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             <Skel style={{ height: "0.7rem", width: "6rem" }} />
             <Skel style={{ height: "1.375rem", width: "8rem" }} />
           </div>
         ))}
       </div>
-
-      {/* Accordion skeletons */}
       {Array.from({ length: 3 }).map((_, i) => (
-        <div
-          key={i}
-          style={{
-            borderRadius: "0.75rem",
-            border: "1px solid hsl(var(--border))",
-            padding: "1rem 1.25rem",
-            background: "hsl(var(--card))",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+        <div key={i} style={{ borderRadius: "0.75rem", border: "1px solid hsl(var(--border))", padding: "1rem 1.25rem", background: "hsl(var(--card))", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             <Skel style={{ height: "0.875rem", width: "8rem" }} />
             <Skel style={{ height: "0.7rem", width: "5rem" }} />
@@ -129,7 +128,7 @@ function LoadingSkeleton() {
   );
 }
 
-// ── Stat card ────────────────────────────────────────────────────
+// ── Stat card ─────────────────────────────────────────────────────
 
 interface StatCardProps {
   label: string;
@@ -141,16 +140,25 @@ interface StatCardProps {
 function StatCard({ label, value, colorClass, icon: Icon }: StatCardProps) {
   return (
     <div className={`sp-stat ${colorClass}`}>
-      <div className="sp-stat-icon">
-        <Icon size={16} />
-      </div>
+      <div className="sp-stat-icon"><Icon size={16} /></div>
       <div className="sp-stat-label">{label}</div>
       <div className="sp-stat-value">{value}</div>
     </div>
   );
 }
 
-// ── Page ─────────────────────────────────────────────────────────
+// ── Action state ──────────────────────────────────────────────────
+
+interface ActionTarget {
+  feeId: number;
+  period: string;
+  feeType: string;
+  grossAmount: number;
+  balance: number;
+  status: string;
+}
+
+// ── Page ──────────────────────────────────────────────────────────
 
 export default function StudentFeeSummaryPage() {
   const { studentId } = useParams<{ studentId: string }>();
@@ -158,17 +166,18 @@ export default function StudentFeeSummaryPage() {
 
   const [expandedFeeTypes, setExpandedFeeTypes] = useState<string[]>([]);
 
-  const { data: activeYear, isLoading: academicYearLoading } =
-    useActiveAcademicYear();
-  const academicYearId = activeYear?.id as number | undefined;
+  // Dialogs
+  const [payTarget,      setPayTarget]      = useState<ActionTarget | null>(null);
+  const [discountTarget, setDiscountTarget] = useState<ActionTarget | null>(null);
+  const [waiveTarget,    setWaiveTarget]    = useState<ActionTarget | null>(null);
 
-  const isWaitingForAcademicYear =
-    academicYearLoading || !academicYearId || academicYearId === 0;
+  const { data: activeYear, isLoading: academicYearLoading } = useActiveAcademicYear();
+  const academicYearId = activeYear?.id as number | undefined;
+  const isWaitingForAcademicYear = academicYearLoading || !academicYearId || academicYearId === 0;
 
   const q = useQuery({
     queryKey: ["student-fee-summary", studentId, academicYearId],
-    queryFn: () =>
-      getStudentFeeSummary(studentId as string, academicYearId as number),
+    queryFn: () => getStudentFeeSummary(studentId as string, academicYearId as number),
     enabled: !!studentId && !!academicYearId && academicYearId > 0,
   });
 
@@ -186,6 +195,21 @@ export default function StudentFeeSummaryPage() {
 
   const hasAnyBreakdown = (summary?.breakdown?.length ?? 0) > 0;
 
+  // ── Helpers ──────────────────────────────────────────────────
+
+  function canPay(status: string) {
+    const s = status.toUpperCase();
+    return s !== "PAID" && s !== "WAIVED";
+  }
+  function canDiscount(status: string) {
+    const s = status.toUpperCase();
+    return s !== "PAID" && s !== "WAIVED";
+  }
+  function canWaive(status: string) {
+    const s = status.toUpperCase();
+    return s !== "PAID" && s !== "WAIVED";
+  }
+
   // ── Loading
   if (q.isLoading || isWaitingForAcademicYear) return <LoadingSkeleton />;
 
@@ -200,8 +224,7 @@ export default function StudentFeeSummaryPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Failed to load fee summary</AlertTitle>
           <AlertDescription>
-            {(q.error as any)?.message ??
-              "Something went wrong while fetching fee summary."}
+            {(q.error as any)?.message ?? "Something went wrong while fetching fee summary."}
           </AlertDescription>
         </Alert>
       </div>
@@ -215,7 +238,6 @@ export default function StudentFeeSummaryPage() {
         <button className="sp-back" onClick={() => navigate("/students")}>
           <ArrowLeft /> Back to Students
         </button>
-
         <div className="sp-hero">
           <div className="sp-hero-glow2" />
           <div className="sp-hero-inner">
@@ -223,20 +245,15 @@ export default function StudentFeeSummaryPage() {
               <div className="sp-hero-icon"><Receipt /></div>
               <div className="sp-hero-text">
                 <h1 className="sp-hero-title">Fee Summary</h1>
-                <p className="sp-hero-sub">
-                  {activeYear?.name ?? "Current academic year"}
-                </p>
+                <p className="sp-hero-sub">{activeYear?.name ?? "Current academic year"}</p>
               </div>
             </div>
           </div>
         </div>
-
         <div className="sp-empty">
           <FileX className="sp-empty-icon" />
           <p className="sp-empty-title">Fee summary unavailable</p>
-          <p className="sp-empty-desc">
-            No fee data found for this student in the current academic year.
-          </p>
+          <p className="sp-empty-desc">No fee data found for this student in the current academic year.</p>
         </div>
       </div>
     );
@@ -264,7 +281,6 @@ export default function StudentFeeSummaryPage() {
               </p>
             </div>
           </div>
-
           <div className="sp-hero-badge">
             <IndianRupee size={11} />
             {hasAnyBreakdown
@@ -276,43 +292,19 @@ export default function StudentFeeSummaryPage() {
 
       {/* ── Stat cards ── */}
       <div className="sp-stat-grid">
-        <StatCard
-          label="Total Gross"
-          value={formatINR(totals?.totalGross)}
-          colorClass="sp-stat--blue"
-          icon={TrendingUp}
-        />
-        <StatCard
-          label="Total Paid"
-          value={formatINR(totals?.totalPaid)}
-          colorClass="sp-stat--green"
-          icon={Wallet}
-        />
-        <StatCard
-          label="Total Balance"
-          value={formatINR(totals?.totalBalance)}
-          colorClass="sp-stat--amber"
-          icon={TrendingDown}
-        />
-        <StatCard
-          label="Total Overdue"
-          value={formatINR(totals?.totalOverdue)}
-          colorClass="sp-stat--red"
-          icon={CircleAlert}
-        />
+        <StatCard label="Total Gross"   value={formatINR(totals?.totalGross)}   colorClass="sp-stat--blue"  icon={TrendingUp}  />
+        <StatCard label="Total Paid"    value={formatINR(totals?.totalPaid)}    colorClass="sp-stat--green" icon={Wallet}      />
+        <StatCard label="Total Balance" value={formatINR(totals?.totalBalance)} colorClass="sp-stat--amber" icon={TrendingDown} />
+        <StatCard label="Total Overdue" value={formatINR(totals?.totalOverdue)} colorClass="sp-stat--red"   icon={CircleAlert} />
       </div>
 
       {/* ── Fee breakdown ── */}
       <div className="sp-card sp-card--teal">
         <div className="sp-card-header">
-          <div className="sp-card-header-icon">
-            <Receipt size={15} />
-          </div>
+          <div className="sp-card-header-icon"><Receipt size={15} /></div>
           <div>
             <h2 className="sp-card-title">Fee Breakdown by Type</h2>
-            <p className="sp-card-subtitle">
-              Expand each fee type to view monthly details
-            </p>
+            <p className="sp-card-subtitle">Expand each fee type to view monthly details and manage payments</p>
           </div>
         </div>
 
@@ -321,9 +313,7 @@ export default function StudentFeeSummaryPage() {
             <div className="sp-empty">
               <FileX className="sp-empty-icon" />
               <p className="sp-empty-title">No fee breakdown found</p>
-              <p className="sp-empty-desc">
-                The student has no fee records for this academic year.
-              </p>
+              <p className="sp-empty-desc">The student has no fee records for this academic year.</p>
             </div>
           ) : (
             <div>
@@ -332,11 +322,7 @@ export default function StudentFeeSummaryPage() {
                   key={`${b.feeType}-${idx}`}
                   type="single"
                   collapsible
-                  value={
-                    expandedFeeTypes.includes(b.feeType)
-                      ? b.feeType
-                      : undefined
-                  }
+                  value={expandedFeeTypes.includes(b.feeType) ? b.feeType : undefined}
                   onValueChange={(v) => {
                     setExpandedFeeTypes((prev) => {
                       if (!v) return prev.filter((x) => x !== b.feeType);
@@ -345,10 +331,7 @@ export default function StudentFeeSummaryPage() {
                     });
                   }}
                 >
-                  <AccordionItem
-                    value={b.feeType}
-                    className="sp-accord border-0"
-                  >
+                  <AccordionItem value={b.feeType} className="sp-accord border-0">
                     <AccordionTrigger
                       className="px-4 py-3.5 hover:no-underline [&>svg]:shrink-0"
                       style={{ textDecoration: "none" }}
@@ -360,9 +343,7 @@ export default function StudentFeeSummaryPage() {
                         </div>
                         <div className="sp-accord-right" style={{ marginRight: "0.5rem" }}>
                           <span className="sp-accord-right-label">Balance</span>
-                          <span className="sp-accord-right-value">
-                            {formatINR(b.balanceAmount)}
-                          </span>
+                          <span className="sp-accord-right-value">{formatINR(b.balanceAmount)}</span>
                         </div>
                       </div>
                     </AccordionTrigger>
@@ -370,22 +351,10 @@ export default function StudentFeeSummaryPage() {
                     <AccordionContent className="px-4 pb-4">
                       {/* Mini metrics */}
                       <div className="sp-chips">
-                        <div className="sp-chip">
-                          <div className="sp-chip-label">Gross</div>
-                          <div className="sp-chip-value">{formatINR(b.grossAmount)}</div>
-                        </div>
-                        <div className="sp-chip">
-                          <div className="sp-chip-label">Paid</div>
-                          <div className="sp-chip-value">{formatINR(b.paidAmount)}</div>
-                        </div>
-                        <div className="sp-chip">
-                          <div className="sp-chip-label">Balance</div>
-                          <div className="sp-chip-value">{formatINR(b.balanceAmount)}</div>
-                        </div>
-                        <div className="sp-chip">
-                          <div className="sp-chip-label">Discount</div>
-                          <div className="sp-chip-value">{formatINR(b.discount)}</div>
-                        </div>
+                        <div className="sp-chip"><div className="sp-chip-label">Gross</div><div className="sp-chip-value">{formatINR(b.grossAmount)}</div></div>
+                        <div className="sp-chip"><div className="sp-chip-label">Paid</div><div className="sp-chip-value">{formatINR(b.paidAmount)}</div></div>
+                        <div className="sp-chip"><div className="sp-chip-label">Balance</div><div className="sp-chip-value">{formatINR(b.balanceAmount)}</div></div>
+                        <div className="sp-chip"><div className="sp-chip-label">Discount</div><div className="sp-chip-value">{formatINR(b.discount)}</div></div>
                       </div>
 
                       {/* Monthly details table */}
@@ -395,41 +364,120 @@ export default function StudentFeeSummaryPage() {
                             <thead>
                               <tr>
                                 <th>Period</th>
-                                <th>Gross Amount</th>
-                                <th>Paid Amount</th>
+                                <th>Gross</th>
+                                <th>Paid</th>
+                                <th>Balance</th>
+                                <th>Discount</th>
                                 <th>Status</th>
+                                <th style={{ width: "3rem", textAlign: "center" }}>Actions</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {b.monthlyDetails.map(
-                                (m: MonthlyFeeDetail, i: number) => (
+                              {b.monthlyDetails.map((m: MonthlyFeeDetail, i: number) => {
+                                const balance  = m.balance  ?? (m.grossAmount - m.paidAmount);
+                                const discount = m.discount ?? 0;
+                                const status   = (m.status ?? "").toUpperCase();
+
+                                return (
                                   <tr key={`${b.feeType}-${i}-${m.period}`}>
-                                    <td>{m.period}</td>
+                                    <td className="font-medium">{m.period}</td>
                                     <td>{formatINR(m.grossAmount)}</td>
                                     <td>{formatINR(m.paidAmount)}</td>
                                     <td>
-                                      <StatusBadge status={m.status} />
+                                      {balance > 0
+                                        ? <span className="fp-balance-due">{formatINR(balance)}</span>
+                                        : <span>{formatINR(balance)}</span>
+                                      }
+                                    </td>
+                                    <td>
+                                      {discount > 0
+                                        ? <span className="fp-discount-value">{formatINR(discount)}</span>
+                                        : <span className="text-muted-foreground">—</span>
+                                      }
+                                    </td>
+                                    <td><StatusBadge status={m.status} /></td>
+                                    <td style={{ textAlign: "center" }}>
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            disabled={status === "PAID" || status === "WAIVED"}
+                                          >
+                                            <MoreVertical size={14} />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-44">
+                                          <DropdownMenuItem
+                                            disabled={!canPay(m.status)}
+                                            onSelect={() =>
+                                              canPay(m.status) &&
+                                              setPayTarget({
+                                                feeId:       m.feeId,
+                                                period:      m.period,
+                                                feeType:     b.feeType,
+                                                grossAmount: m.grossAmount,
+                                                balance,
+                                                status:      m.status,
+                                              })
+                                            }
+                                          >
+                                            <CreditCard size={13} className="mr-2 text-emerald-600" />
+                                            Pay Fee
+                                          </DropdownMenuItem>
+
+                                          <DropdownMenuItem
+                                            disabled={!canDiscount(m.status)}
+                                            onSelect={() =>
+                                              canDiscount(m.status) &&
+                                              setDiscountTarget({
+                                                feeId:       m.feeId,
+                                                period:      m.period,
+                                                feeType:     b.feeType,
+                                                grossAmount: m.grossAmount,
+                                                balance,
+                                                status:      m.status,
+                                              })
+                                            }
+                                          >
+                                            <Tag size={13} className="mr-2 text-violet-600" />
+                                            Apply Discount
+                                          </DropdownMenuItem>
+
+                                          <DropdownMenuSeparator />
+
+                                          <DropdownMenuItem
+                                            disabled={!canWaive(m.status)}
+                                            className="text-destructive focus:text-destructive"
+                                            onSelect={() =>
+                                              canWaive(m.status) &&
+                                              setWaiveTarget({
+                                                feeId:       m.feeId,
+                                                period:      m.period,
+                                                feeType:     b.feeType,
+                                                grossAmount: m.grossAmount,
+                                                balance,
+                                                status:      m.status,
+                                              })
+                                            }
+                                          >
+                                            <ShieldOff size={13} className="mr-2" />
+                                            Waive Fee
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
                                     </td>
                                   </tr>
-                                )
-                              )}
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
                       ) : (
-                        <div
-                          className="sp-empty"
-                          style={{ padding: "1.25rem 1rem" }}
-                        >
-                          <p
-                            className="sp-empty-title"
-                            style={{ fontSize: "0.8rem" }}
-                          >
-                            No monthly details
-                          </p>
-                          <p className="sp-empty-desc">
-                            Monthly records are not available for this fee type.
-                          </p>
+                        <div className="sp-empty" style={{ padding: "1.25rem 1rem" }}>
+                          <p className="sp-empty-title" style={{ fontSize: "0.8rem" }}>No monthly details</p>
+                          <p className="sp-empty-desc">Monthly records are not available for this fee type.</p>
                         </div>
                       )}
                     </AccordionContent>
@@ -440,6 +488,46 @@ export default function StudentFeeSummaryPage() {
           )}
         </div>
       </div>
+
+      {/* ── Dialogs ── */}
+      {payTarget && (
+        <RecordPaymentDialog
+          open={!!payTarget}
+          onOpenChange={(v) => !v && setPayTarget(null)}
+          studentId={studentId!}
+          feeId={payTarget.feeId}
+          period={payTarget.period}
+          feeType={payTarget.feeType}
+          balance={payTarget.balance}
+          academicYearId={academicYearId!}
+        />
+      )}
+
+      {discountTarget && (
+        <ApplyDiscountDialog
+          open={!!discountTarget}
+          onOpenChange={(v) => !v && setDiscountTarget(null)}
+          studentId={studentId!}
+          feeId={discountTarget.feeId}
+          period={discountTarget.period}
+          feeType={discountTarget.feeType}
+          grossAmount={discountTarget.grossAmount}
+          academicYearId={academicYearId!}
+        />
+      )}
+
+      {waiveTarget && (
+        <WaiveFeeDialog
+          open={!!waiveTarget}
+          onOpenChange={(v) => !v && setWaiveTarget(null)}
+          studentId={studentId!}
+          feeId={waiveTarget.feeId}
+          period={waiveTarget.period}
+          feeType={waiveTarget.feeType}
+          grossAmount={waiveTarget.grossAmount}
+          academicYearId={academicYearId!}
+        />
+      )}
     </div>
   );
 }

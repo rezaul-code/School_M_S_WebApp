@@ -1,0 +1,106 @@
+/* ================================================================
+   fee-payment.css — Fee Payment Management Design System
+   Place at: src/styles/fee-payment.css
+   ================================================================ */
+
+/* ── Status Badges ──────────────────────────────────────────────── */
+
+.fp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.fp-badge svg {
+  width: 0.6rem;
+  height: 0.6rem;
+  flex-shrink: 0;
+}
+
+.fp-badge--paid {
+  background: hsl(142 71% 38% / 0.12);
+  color: hsl(142 55% 30%);
+  border-color: hsl(142 60% 38% / 0.25);
+}
+.fp-badge--partial {
+  background: hsl(38 92% 44% / 0.12);
+  color: hsl(32 75% 34%);
+  border-color: hsl(38 80% 44% / 0.25);
+}
+.fp-badge--pending {
+  background: hsl(217 91% 50% / 0.1);
+  color: hsl(217 70% 38%);
+  border-color: hsl(217 80% 50% / 0.22);
+}
+.fp-badge--overdue {
+  background: hsl(0 72% 51% / 0.11);
+  color: hsl(0 65% 40%);
+  border-color: hsl(0 65% 51% / 0.25);
+}
+.fp-badge--waived {
+  background: hsl(var(--muted) / 0.8);
+  color: hsl(var(--muted-foreground));
+  border-color: hsl(var(--border));
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  .fp-badge--paid    { color: hsl(142 55% 62%); }
+  .fp-badge--partial { color: hsl(38 80% 58%);  }
+  .fp-badge--pending { color: hsl(217 80% 68%); }
+  .fp-badge--overdue { color: hsl(0 72% 65%);   }
+}
+
+/* ── Amount Highlights ──────────────────────────────────────────── */
+
+.fp-balance-due {
+  font-weight: 700;
+  color: hsl(0 65% 45%);
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-color-scheme: dark) {
+  .fp-balance-due { color: hsl(0 72% 62%); }
+}
+
+.fp-discount-value {
+  font-weight: 600;
+  color: hsl(142 55% 35%);
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-color-scheme: dark) {
+  .fp-discount-value { color: hsl(142 55% 55%); }
+}
+
+/* ── Action button in table ─────────────────────────────────────── */
+
+.fp-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.4375rem;
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s, border-color 0.14s;
+}
+.fp-action-btn:hover {
+  background: hsl(var(--muted) / 0.6);
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+.fp-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.fp-action-btn svg { width: 0.875rem; height: 0.875rem; }
