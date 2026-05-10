@@ -3,7 +3,14 @@
 import * as React from "react";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, IndianRupee, CreditCard, Smartphone, Banknote, Building2 } from "lucide-react";
+import {
+  Loader2,
+  IndianRupee,
+  CreditCard,
+  Smartphone,
+  Banknote,
+  Building2,
+} from "lucide-react";
 
 import {
   Dialog,
@@ -13,9 +20,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button }   from "@/components/ui/button";
+import { Input }    from "@/components/ui/input";
+import { Label }    from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -33,6 +40,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   studentId: string;
+  /** row.id from the fee summary API — the real backend fee-record PK */
   feeId: number;
   period: string;
   feeType: string;
@@ -40,7 +48,11 @@ interface Props {
   academicYearId: number;
 }
 
-const PAYMENT_MODES: { value: PaymentMode; label: string; icon: React.ElementType }[] = [
+const PAYMENT_MODES: {
+  value: PaymentMode;
+  label: string;
+  icon: React.ElementType;
+}[] = [
   { value: "CASH",          label: "Cash",          icon: Banknote   },
   { value: "UPI",           label: "UPI",           icon: Smartphone },
   { value: "CARD",          label: "Card",          icon: CreditCard },
@@ -56,31 +68,35 @@ function formatINR(v: number) {
 }
 
 export default function RecordPaymentDialog({
-  open, onOpenChange, studentId, feeId, period, feeType, balance, academicYearId,
+  open,
+  onOpenChange,
+  studentId,
+  feeId,
+  period,
+  feeType,
+  balance,
+  academicYearId,
 }: Props) {
   const qc = useQueryClient();
 
-  const [amount, setAmount]   = useState("");
-  const [mode, setMode]       = useState<PaymentMode>("UPI");
-  const [txnRef, setTxnRef]   = useState("");
+  const [amount,  setAmount]  = useState("");
+  const [mode,    setMode]    = useState<PaymentMode>("UPI");
+  const [txnRef,  setTxnRef]  = useState("");
   const [remarks, setRemarks] = useState("");
 
   const mutation = useMutation({
-    mutationFn: () => {
-      // Guard: feeId must be a valid number before hitting the API
-      if (!feeId || isNaN(feeId)) {
-        return Promise.reject(new Error("Fee ID is missing. Please close and reopen the dialog."));
-      }
-      return recordPayment(studentId, feeId, {
+    mutationFn: () =>
+      recordPayment(studentId, feeId, {
         amountPaid:           Number(amount),
         paymentMode:          mode,
         transactionReference: txnRef || undefined,
         remarks:              remarks || undefined,
-      });
-    },
+      }),
     onSuccess: () => {
       toast.success("Payment recorded successfully");
-      qc.invalidateQueries({ queryKey: ["student-fee-summary", studentId, academicYearId] });
+      qc.invalidateQueries({
+        queryKey: ["student-fee-summary", studentId, academicYearId],
+      });
       handleClose();
     },
     onError: (err) => {
@@ -97,16 +113,16 @@ export default function RecordPaymentDialog({
   }
 
   const parsedAmount = parseFloat(amount);
-  const isFeeIdMissing = !feeId || isNaN(feeId);
   const isInvalid =
-    isFeeIdMissing ||
-    !amount ||
-    isNaN(parsedAmount) ||
-    parsedAmount <= 0 ||
-    parsedAmount > balance;
+    !amount || isNaN(parsedAmount) || parsedAmount <= 0 || parsedAmount > balance;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !mutation.isPending && (v ? onOpenChange(v) : handleClose())}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) =>
+        !mutation.isPending && (v ? onOpenChange(v) : handleClose())
+      }
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -120,26 +136,23 @@ export default function RecordPaymentDialog({
             {" — "}
             {period}
             <span className="ml-2 text-xs">
-              Balance: <span className="font-semibold text-foreground">{formatINR(balance)}</span>
+              Balance:{" "}
+              <span className="font-semibold text-foreground">
+                {formatINR(balance)}
+              </span>
             </span>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-1">
-          {/* Fee ID guard warning */}
-          {isFeeIdMissing && (
-            <p className="text-xs text-destructive font-medium">
-              Fee record ID is unavailable. Please close and reopen this dialog.
-            </p>
-          )}
-
-          {/* Amount */}
           <div className="space-y-1.5">
             <Label htmlFor="rp-amount">
               Amount Paid <span className="text-destructive">*</span>
             </Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                ₹
+              </span>
               <Input
                 id="rp-amount"
                 type="number"
@@ -150,21 +163,24 @@ export default function RecordPaymentDialog({
                 className="pl-7"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                disabled={mutation.isPending || isFeeIdMissing}
+                disabled={mutation.isPending}
               />
             </div>
             {parsedAmount > balance && (
-              <p className="text-xs text-destructive">Amount cannot exceed balance of {formatINR(balance)}</p>
+              <p className="text-xs text-destructive">
+                Amount cannot exceed balance of {formatINR(balance)}
+              </p>
             )}
           </div>
 
-          {/* Payment Mode */}
           <div className="space-y-1.5">
-            <Label>Payment Mode <span className="text-destructive">*</span></Label>
+            <Label>
+              Payment Mode <span className="text-destructive">*</span>
+            </Label>
             <Select
               value={mode}
               onValueChange={(v) => setMode(v as PaymentMode)}
-              disabled={mutation.isPending || isFeeIdMissing}
+              disabled={mutation.isPending}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -182,7 +198,6 @@ export default function RecordPaymentDialog({
             </Select>
           </div>
 
-          {/* Transaction Reference */}
           <div className="space-y-1.5">
             <Label htmlFor="rp-txn">Transaction Reference</Label>
             <Input
@@ -190,11 +205,10 @@ export default function RecordPaymentDialog({
               placeholder="e.g. UPI-TXN-12345"
               value={txnRef}
               onChange={(e) => setTxnRef(e.target.value)}
-              disabled={mutation.isPending || isFeeIdMissing}
+              disabled={mutation.isPending}
             />
           </div>
 
-          {/* Remarks */}
           <div className="space-y-1.5">
             <Label htmlFor="rp-remarks">Remarks</Label>
             <Textarea
@@ -203,14 +217,18 @@ export default function RecordPaymentDialog({
               rows={2}
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
-              disabled={mutation.isPending || isFeeIdMissing}
+              disabled={mutation.isPending}
               className="resize-none"
             />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={mutation.isPending}>
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={mutation.isPending}
+          >
             Cancel
           </Button>
           <Button
@@ -218,7 +236,9 @@ export default function RecordPaymentDialog({
             disabled={isInvalid || mutation.isPending}
             className="bg-emerald-600 hover:bg-emerald-700 text-white"
           >
-            {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {mutation.isPending && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
             Record Payment
           </Button>
         </DialogFooter>

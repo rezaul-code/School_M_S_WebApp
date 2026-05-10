@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-import type { MonthlyFeeDetail, StudentFeeSummary } from "@/types/api";
+import type { FeeRow, StudentFeeSummary } from "@/types/api";
 import { getStudentFeeSummary } from "@/lib/api/students";
 import { useActiveAcademicYear } from "@/hooks/useActiveAcademicYear";
 
@@ -52,7 +52,7 @@ import WaiveFeeDialog      from "@/components/fees/WaiveFeeDialog";
 import "@/styles/student-pages.css";
 import "@/styles/fee-payment.css";
 
-// ── Currency ─────────────────────────────────────────────────────
+// ── Currency ──────────────────────────────────────────────────────
 
 function formatINR(v?: number): string {
   if (typeof v !== "number") return "—";
@@ -63,22 +63,26 @@ function formatINR(v?: number): string {
   }).format(v);
 }
 
-// ── Status badge ─────────────────────────────────────────────────
+// ── Status badge ──────────────────────────────────────────────────
 
 const STATUS_META: Record<
   string,
   { cls: string; icon: React.ElementType; label: string }
 > = {
-  PAID:    { cls: "fp-badge fp-badge--paid",    icon: CheckCircle2,   label: "Paid"    },
-  PARTIAL: { cls: "fp-badge fp-badge--partial", icon: Clock,          label: "Partial" },
-  PENDING: { cls: "fp-badge fp-badge--pending", icon: AlertTriangle,  label: "Pending" },
-  OVERDUE: { cls: "fp-badge fp-badge--overdue", icon: XCircle,        label: "Overdue" },
-  WAIVED:  { cls: "fp-badge fp-badge--waived",  icon: Minus,          label: "Waived"  },
+  PAID:    { cls: "fp-badge fp-badge--paid",    icon: CheckCircle2,  label: "Paid"    },
+  PARTIAL: { cls: "fp-badge fp-badge--partial", icon: Clock,         label: "Partial" },
+  PENDING: { cls: "fp-badge fp-badge--pending", icon: AlertTriangle, label: "Pending" },
+  OVERDUE: { cls: "fp-badge fp-badge--overdue", icon: XCircle,       label: "Overdue" },
+  WAIVED:  { cls: "fp-badge fp-badge--waived",  icon: Minus,         label: "Waived"  },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const s   = (status ?? "").toUpperCase();
-  const meta = STATUS_META[s] ?? { cls: "fp-badge fp-badge--pending", icon: AlertTriangle, label: status || "—" };
+  const s    = (status ?? "").toUpperCase();
+  const meta = STATUS_META[s] ?? {
+    cls: "fp-badge fp-badge--pending",
+    icon: AlertTriangle,
+    label: status || "—",
+  };
   const Icon = meta.icon;
   return (
     <span className={meta.cls}>
@@ -88,7 +92,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-// ── Skeleton ─────────────────────────────────────────────────────
+// ── Skeleton ──────────────────────────────────────────────────────
 
 function Skel({ style }: { style?: React.CSSProperties }) {
   return <div className="sp-skel" style={style} />;
@@ -109,21 +113,18 @@ function LoadingSkeleton() {
       </div>
       <div className="sp-stat-grid">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} style={{ borderRadius: "0.875rem", border: "1px solid hsl(var(--border))", padding: "1.125rem 1.25rem", background: "hsl(var(--card))", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <div key={i} style={{
+            borderRadius: "0.875rem",
+            border: "1px solid hsl(var(--border))",
+            padding: "1.125rem 1.25rem",
+            background: "hsl(var(--card))",
+            display: "flex", flexDirection: "column", gap: "0.5rem",
+          }}>
             <Skel style={{ height: "0.7rem", width: "6rem" }} />
             <Skel style={{ height: "1.375rem", width: "8rem" }} />
           </div>
         ))}
       </div>
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} style={{ borderRadius: "0.75rem", border: "1px solid hsl(var(--border))", padding: "1rem 1.25rem", background: "hsl(var(--card))", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            <Skel style={{ height: "0.875rem", width: "8rem" }} />
-            <Skel style={{ height: "0.7rem", width: "5rem" }} />
-          </div>
-          <Skel style={{ height: "0.9375rem", width: "6rem" }} />
-        </div>
-      ))}
     </div>
   );
 }
@@ -147,73 +148,102 @@ function StatCard({ label, value, colorClass, icon: Icon }: StatCardProps) {
   );
 }
 
-// ── Action state ──────────────────────────────────────────────────
+// ── Group rows by feeType ─────────────────────────────────────────
 
-interface ActionTarget {
-  feeId: number;
-  period: string;
+interface FeeGroup {
   feeType: string;
-  grossAmount: number;
+  gross: number;
+  amountPaid: number;
   balance: number;
-  status: string;
+  discount: number;
+  rows: FeeRow[];
+}
+
+function groupRowsByFeeType(rows: FeeRow[]): FeeGroup[] {
+  const map = new Map<string, FeeGroup>();
+  for (const row of rows) {
+    const existing = map.get(row.feeType);
+    if (existing) {
+      existing.gross      += row.gross;
+      existing.amountPaid += row.amountPaid;
+      existing.balance    += row.balance;
+      existing.discount   += row.discount;
+      existing.rows.push(row);
+    } else {
+      map.set(row.feeType, {
+        feeType:    row.feeType,
+        gross:      row.gross,
+        amountPaid: row.amountPaid,
+        balance:    row.balance,
+        discount:   row.discount,
+        rows:       [row],
+      });
+    }
+  }
+  return Array.from(map.values());
+}
+
+// ── Action helper ─────────────────────────────────────────────────
+
+function canAct(status: string) {
+  const s = status.toUpperCase();
+  return s !== "PAID" && s !== "WAIVED";
 }
 
 // ── Page ──────────────────────────────────────────────────────────
 
 export default function StudentFeeSummaryPage() {
   const { studentId } = useParams<{ studentId: string }>();
-  const navigate = useNavigate();
+  const navigate      = useNavigate();
 
-  const [expandedFeeTypes, setExpandedFeeTypes] = useState<string[]>([]);
-
-  // Dialogs
-  const [payTarget,      setPayTarget]      = useState<ActionTarget | null>(null);
-  const [discountTarget, setDiscountTarget] = useState<ActionTarget | null>(null);
-  const [waiveTarget,    setWaiveTarget]    = useState<ActionTarget | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+  const [payTarget,      setPayTarget]      = useState<FeeRow | null>(null);
+  const [discountTarget, setDiscountTarget] = useState<FeeRow | null>(null);
+  const [waiveTarget,    setWaiveTarget]    = useState<FeeRow | null>(null);
 
   const { data: activeYear, isLoading: academicYearLoading } = useActiveAcademicYear();
-  const academicYearId = activeYear?.id as number | undefined;
-  const isWaitingForAcademicYear = academicYearLoading || !academicYearId || academicYearId === 0;
+
+  // Always coerce to number — backend id may arrive as string at runtime
+  // even though the type says number|string.
+  const academicYearId: number | undefined = activeYear?.id
+    ? Number(activeYear.id)
+    : undefined;
+
+  const isWaitingForAcademicYear =
+    academicYearLoading || !academicYearId || isNaN(academicYearId) || academicYearId <= 0;
 
   const q = useQuery({
     queryKey: ["student-fee-summary", studentId, academicYearId],
-    queryFn: () => getStudentFeeSummary(studentId as string, academicYearId as number),
-    enabled: !!studentId && !!academicYearId && academicYearId > 0,
+    queryFn:  () => {
+      console.log("[StudentFeeSummary] fetching fees for studentId:", studentId, "academicYearId:", academicYearId);
+      return getStudentFeeSummary(studentId as string, academicYearId as number);
+    },
+    enabled: !!studentId && !isWaitingForAcademicYear,
   });
 
-  const summary = (q.data ?? null) as StudentFeeSummary | null;
+  // Log raw query result every render to confirm shape
+  console.log("[StudentFeeSummary] query state:", {
+    isLoading: q.isLoading,
+    isError: q.isError,
+    data: q.data,
+    academicYearId,
+    isWaitingForAcademicYear,
+  });
 
-  const totals = useMemo(() => {
-    if (!summary) return null;
-    return {
-      totalGross:   summary.totalGross,
-      totalPaid:    summary.totalPaid,
-      totalBalance: summary.totalBalance,
-      totalOverdue: summary.totalOverdue,
-    };
-  }, [summary]);
+  const summary = q.data ?? null;
 
-  const hasAnyBreakdown = (summary?.breakdown?.length ?? 0) > 0;
+  // Safely read rows — guard against undefined/null
+  const rows: FeeRow[] = Array.isArray(summary?.rows) ? summary!.rows : [];
 
-  // ── Helpers ──────────────────────────────────────────────────
+  const groups = useMemo(() => {
+    console.log("[StudentFeeSummary] rows to group:", rows);
+    return groupRowsByFeeType(rows);
+  }, [rows]);
 
-  function canPay(status: string) {
-    const s = status.toUpperCase();
-    return s !== "PAID" && s !== "WAIVED";
-  }
-  function canDiscount(status: string) {
-    const s = status.toUpperCase();
-    return s !== "PAID" && s !== "WAIVED";
-  }
-  function canWaive(status: string) {
-    const s = status.toUpperCase();
-    return s !== "PAID" && s !== "WAIVED";
-  }
-
-  // ── Loading
+  // ── Loading ───────────────────────────────────────────────────
   if (q.isLoading || isWaitingForAcademicYear) return <LoadingSkeleton />;
 
-  // ── Error
+  // ── Error ─────────────────────────────────────────────────────
   if (q.isError) {
     return (
       <div className="sp-page">
@@ -231,7 +261,7 @@ export default function StudentFeeSummaryPage() {
     );
   }
 
-  // ── No data
+  // ── No data ───────────────────────────────────────────────────
   if (!summary) {
     return (
       <div className="sp-page">
@@ -283,8 +313,8 @@ export default function StudentFeeSummaryPage() {
           </div>
           <div className="sp-hero-badge">
             <IndianRupee size={11} />
-            {hasAnyBreakdown
-              ? `${summary.breakdown.length} fee type${summary.breakdown.length !== 1 ? "s" : ""}`
+            {groups.length > 0
+              ? `${groups.length} fee type${groups.length !== 1 ? "s" : ""}`
               : "No records"}
           </div>
         </div>
@@ -292,10 +322,30 @@ export default function StudentFeeSummaryPage() {
 
       {/* ── Stat cards ── */}
       <div className="sp-stat-grid">
-        <StatCard label="Total Gross"   value={formatINR(totals?.totalGross)}   colorClass="sp-stat--blue"  icon={TrendingUp}  />
-        <StatCard label="Total Paid"    value={formatINR(totals?.totalPaid)}    colorClass="sp-stat--green" icon={Wallet}      />
-        <StatCard label="Total Balance" value={formatINR(totals?.totalBalance)} colorClass="sp-stat--amber" icon={TrendingDown} />
-        <StatCard label="Total Overdue" value={formatINR(totals?.totalOverdue)} colorClass="sp-stat--red"   icon={CircleAlert} />
+        <StatCard
+          label="Gross Due"
+          value={formatINR(summary.grossDueYear)}
+          colorClass="sp-stat--blue"
+          icon={TrendingUp}
+        />
+        <StatCard
+          label="Collected"
+          value={formatINR(summary.collectedSoFar)}
+          colorClass="sp-stat--green"
+          icon={Wallet}
+        />
+        <StatCard
+          label="Balance Remaining"
+          value={formatINR(summary.balanceRemaining)}
+          colorClass="sp-stat--amber"
+          icon={TrendingDown}
+        />
+        <StatCard
+          label="Overdue"
+          value={formatINR(summary.overdue)}
+          colorClass="sp-stat--red"
+          icon={CircleAlert}
+        />
       </div>
 
       {/* ── Fee breakdown ── */}
@@ -304,46 +354,56 @@ export default function StudentFeeSummaryPage() {
           <div className="sp-card-header-icon"><Receipt size={15} /></div>
           <div>
             <h2 className="sp-card-title">Fee Breakdown by Type</h2>
-            <p className="sp-card-subtitle">Expand each fee type to view monthly details and manage payments</p>
+            <p className="sp-card-subtitle">
+              Expand each fee type to view records and manage payments
+            </p>
           </div>
         </div>
 
         <div className="sp-card-body">
-          {!hasAnyBreakdown ? (
+          {groups.length === 0 ? (
             <div className="sp-empty">
               <FileX className="sp-empty-icon" />
-              <p className="sp-empty-title">No fee breakdown found</p>
-              <p className="sp-empty-desc">The student has no fee records for this academic year.</p>
+              <p className="sp-empty-title">No fee records found</p>
+              <p className="sp-empty-desc">
+                The student has no fee records for this academic year.
+              </p>
             </div>
           ) : (
             <div>
-              {summary.breakdown.map((b, idx) => (
+              {groups.map((group) => (
                 <Accordion
-                  key={`${b.feeType}-${idx}`}
+                  key={group.feeType}
                   type="single"
                   collapsible
-                  value={expandedFeeTypes.includes(b.feeType) ? b.feeType : undefined}
+                  value={
+                    expandedGroups.includes(group.feeType)
+                      ? group.feeType
+                      : undefined
+                  }
                   onValueChange={(v) => {
-                    setExpandedFeeTypes((prev) => {
-                      if (!v) return prev.filter((x) => x !== b.feeType);
-                      if (prev.includes(b.feeType)) return prev;
-                      return [b.feeType];
+                    setExpandedGroups((prev) => {
+                      if (!v) return prev.filter((x) => x !== group.feeType);
+                      if (prev.includes(group.feeType)) return prev;
+                      return [group.feeType];
                     });
                   }}
                 >
-                  <AccordionItem value={b.feeType} className="sp-accord border-0">
+                  <AccordionItem value={group.feeType} className="sp-accord border-0">
                     <AccordionTrigger
                       className="px-4 py-3.5 hover:no-underline [&>svg]:shrink-0"
                       style={{ textDecoration: "none" }}
                     >
                       <div className="sp-accord-trigger">
                         <div className="sp-accord-left">
-                          <div className="sp-accord-name">{b.feeType}</div>
-                          <div className="sp-accord-sub">Monthly details</div>
+                          <div className="sp-accord-name">{group.feeType}</div>
+                          <div className="sp-accord-sub">
+                            {group.rows.length} record{group.rows.length !== 1 ? "s" : ""}
+                          </div>
                         </div>
                         <div className="sp-accord-right" style={{ marginRight: "0.5rem" }}>
                           <span className="sp-accord-right-label">Balance</span>
-                          <span className="sp-accord-right-value">{formatINR(b.balanceAmount)}</span>
+                          <span className="sp-accord-right-value">{formatINR(group.balance)}</span>
                         </div>
                       </div>
                     </AccordionTrigger>
@@ -351,135 +411,116 @@ export default function StudentFeeSummaryPage() {
                     <AccordionContent className="px-4 pb-4">
                       {/* Mini metrics */}
                       <div className="sp-chips">
-                        <div className="sp-chip"><div className="sp-chip-label">Gross</div><div className="sp-chip-value">{formatINR(b.grossAmount)}</div></div>
-                        <div className="sp-chip"><div className="sp-chip-label">Paid</div><div className="sp-chip-value">{formatINR(b.paidAmount)}</div></div>
-                        <div className="sp-chip"><div className="sp-chip-label">Balance</div><div className="sp-chip-value">{formatINR(b.balanceAmount)}</div></div>
-                        <div className="sp-chip"><div className="sp-chip-label">Discount</div><div className="sp-chip-value">{formatINR(b.discount)}</div></div>
+                        <div className="sp-chip">
+                          <div className="sp-chip-label">Gross</div>
+                          <div className="sp-chip-value">{formatINR(group.gross)}</div>
+                        </div>
+                        <div className="sp-chip">
+                          <div className="sp-chip-label">Paid</div>
+                          <div className="sp-chip-value">{formatINR(group.amountPaid)}</div>
+                        </div>
+                        <div className="sp-chip">
+                          <div className="sp-chip-label">Balance</div>
+                          <div className="sp-chip-value">{formatINR(group.balance)}</div>
+                        </div>
+                        <div className="sp-chip">
+                          <div className="sp-chip-label">Discount</div>
+                          <div className="sp-chip-value">{formatINR(group.discount)}</div>
+                        </div>
                       </div>
 
-                      {/* Monthly details table */}
-                      {b.monthlyDetails && b.monthlyDetails.length > 0 ? (
-                        <div className="sp-tbl-wrap">
-                          <table className="sp-tbl">
-                            <thead>
-                              <tr>
-                                <th>Period</th>
-                                <th>Gross</th>
-                                <th>Paid</th>
-                                <th>Balance</th>
-                                <th>Discount</th>
-                                <th>Status</th>
-                                <th style={{ width: "3rem", textAlign: "center" }}>Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {b.monthlyDetails.map((m: MonthlyFeeDetail, i: number) => {
-                                const balance  = m.balance  ?? (m.grossAmount - m.paidAmount);
-                                const discount = m.discount ?? 0;
-                                const status   = (m.status ?? "").toUpperCase();
+                      {/* Rows table */}
+                      <div className="sp-tbl-wrap">
+                        <table className="sp-tbl">
+                          <thead>
+                            <tr>
+                              <th>Period / Due Date</th>
+                              <th>Gross</th>
+                              <th>Paid</th>
+                              <th>Balance</th>
+                              <th>Discount</th>
+                              <th>Status</th>
+                              <th style={{ width: "3rem", textAlign: "center" }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.rows.map((row) => {
+                              const label = row.period ?? row.dueDate ?? "—";
+                              return (
+                                <tr key={row.id}>
+                                  <td className="font-medium">{label}</td>
+                                  <td>{formatINR(row.gross)}</td>
+                                  <td>{formatINR(row.amountPaid)}</td>
+                                  <td>
+                                    {row.balance > 0
+                                      ? <span className="fp-balance-due">{formatINR(row.balance)}</span>
+                                      : <span>{formatINR(row.balance)}</span>
+                                    }
+                                  </td>
+                                  <td>
+                                    {row.discount > 0
+                                      ? <span className="fp-discount-value">{formatINR(row.discount)}</span>
+                                      : <span className="text-muted-foreground">—</span>
+                                    }
+                                  </td>
+                                  <td><StatusBadge status={row.status} /></td>
+                                  <td style={{ textAlign: "center" }}>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7"
+                                          disabled={!canAct(row.status)}
+                                        >
+                                          <MoreVertical size={14} />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="w-44">
+                                        <DropdownMenuItem
+                                          disabled={!canAct(row.status)}
+                                          onSelect={() => {
+                                            console.log("[StudentFeeSummary] Pay Fee row:", row);
+                                            setPayTarget(row);
+                                          }}
+                                        >
+                                          <CreditCard size={13} className="mr-2 text-emerald-600" />
+                                          Pay Fee
+                                        </DropdownMenuItem>
 
-                                return (
-                                  <tr key={`${b.feeType}-${i}-${m.period}`}>
-                                    <td className="font-medium">{m.period}</td>
-                                    <td>{formatINR(m.grossAmount)}</td>
-                                    <td>{formatINR(m.paidAmount)}</td>
-                                    <td>
-                                      {balance > 0
-                                        ? <span className="fp-balance-due">{formatINR(balance)}</span>
-                                        : <span>{formatINR(balance)}</span>
-                                      }
-                                    </td>
-                                    <td>
-                                      {discount > 0
-                                        ? <span className="fp-discount-value">{formatINR(discount)}</span>
-                                        : <span className="text-muted-foreground">—</span>
-                                      }
-                                    </td>
-                                    <td><StatusBadge status={m.status} /></td>
-                                    <td style={{ textAlign: "center" }}>
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7"
-                                            disabled={status === "PAID" || status === "WAIVED"}
-                                          >
-                                            <MoreVertical size={14} />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-44">
-                                          <DropdownMenuItem
-                                            disabled={!canPay(m.status)}
-                                            onSelect={() =>
-                                              canPay(m.status) &&
-                                              setPayTarget({
-                                                feeId:       m.feeId,
-                                                period:      m.period,
-                                                feeType:     b.feeType,
-                                                grossAmount: m.grossAmount,
-                                                balance,
-                                                status:      m.status,
-                                              })
-                                            }
-                                          >
-                                            <CreditCard size={13} className="mr-2 text-emerald-600" />
-                                            Pay Fee
-                                          </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          disabled={!canAct(row.status)}
+                                          onSelect={() => {
+                                            console.log("[StudentFeeSummary] Apply Discount row:", row);
+                                            setDiscountTarget(row);
+                                          }}
+                                        >
+                                          <Tag size={13} className="mr-2 text-violet-600" />
+                                          Apply Discount
+                                        </DropdownMenuItem>
 
-                                          <DropdownMenuItem
-                                            disabled={!canDiscount(m.status)}
-                                            onSelect={() =>
-                                              canDiscount(m.status) &&
-                                              setDiscountTarget({
-                                                feeId:       m.feeId,
-                                                period:      m.period,
-                                                feeType:     b.feeType,
-                                                grossAmount: m.grossAmount,
-                                                balance,
-                                                status:      m.status,
-                                              })
-                                            }
-                                          >
-                                            <Tag size={13} className="mr-2 text-violet-600" />
-                                            Apply Discount
-                                          </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
 
-                                          <DropdownMenuSeparator />
-
-                                          <DropdownMenuItem
-                                            disabled={!canWaive(m.status)}
-                                            className="text-destructive focus:text-destructive"
-                                            onSelect={() =>
-                                              canWaive(m.status) &&
-                                              setWaiveTarget({
-                                                feeId:       m.feeId,
-                                                period:      m.period,
-                                                feeType:     b.feeType,
-                                                grossAmount: m.grossAmount,
-                                                balance,
-                                                status:      m.status,
-                                              })
-                                            }
-                                          >
-                                            <ShieldOff size={13} className="mr-2" />
-                                            Waive Fee
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <div className="sp-empty" style={{ padding: "1.25rem 1rem" }}>
-                          <p className="sp-empty-title" style={{ fontSize: "0.8rem" }}>No monthly details</p>
-                          <p className="sp-empty-desc">Monthly records are not available for this fee type.</p>
-                        </div>
-                      )}
+                                        <DropdownMenuItem
+                                          disabled={!canAct(row.status)}
+                                          className="text-destructive focus:text-destructive"
+                                          onSelect={() => {
+                                            console.log("[StudentFeeSummary] Waive Fee row:", row);
+                                            setWaiveTarget(row);
+                                          }}
+                                        >
+                                          <ShieldOff size={13} className="mr-2" />
+                                          Waive Fee
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
@@ -495,36 +536,34 @@ export default function StudentFeeSummaryPage() {
           open={!!payTarget}
           onOpenChange={(v) => !v && setPayTarget(null)}
           studentId={studentId!}
-          feeId={payTarget.feeId}
-          period={payTarget.period}
+          feeId={payTarget.id}
+          period={payTarget.period ?? payTarget.dueDate ?? ""}
           feeType={payTarget.feeType}
           balance={payTarget.balance}
           academicYearId={academicYearId!}
         />
       )}
-
       {discountTarget && (
         <ApplyDiscountDialog
           open={!!discountTarget}
           onOpenChange={(v) => !v && setDiscountTarget(null)}
           studentId={studentId!}
-          feeId={discountTarget.feeId}
-          period={discountTarget.period}
+          feeId={discountTarget.id}
+          period={discountTarget.period ?? discountTarget.dueDate ?? ""}
           feeType={discountTarget.feeType}
-          grossAmount={discountTarget.grossAmount}
+          grossAmount={discountTarget.gross}
           academicYearId={academicYearId!}
         />
       )}
-
       {waiveTarget && (
         <WaiveFeeDialog
           open={!!waiveTarget}
           onOpenChange={(v) => !v && setWaiveTarget(null)}
           studentId={studentId!}
-          feeId={waiveTarget.feeId}
-          period={waiveTarget.period}
+          feeId={waiveTarget.id}
+          period={waiveTarget.period ?? waiveTarget.dueDate ?? ""}
           feeType={waiveTarget.feeType}
-          grossAmount={waiveTarget.grossAmount}
+          grossAmount={waiveTarget.gross}
           academicYearId={academicYearId!}
         />
       )}
