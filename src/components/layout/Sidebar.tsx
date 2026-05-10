@@ -22,6 +22,8 @@ import {
   ClipboardList,
   BarChart2,
   ReceiptText,
+  Wallet,
+  BookMarked,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -72,6 +74,11 @@ export const feeStructureSubItems = [
 // Reporting — standalone section
 export const reportingItems = [
   { to: "/reports/fees", label: "Fee Report", icon: ReceiptText, exact: false },
+];
+
+// Accounting — standalone section
+export const accountingItems = [
+  { to: "/accounting/fee-collections", label: "Fee Collections", icon: Wallet, exact: false },
 ];
 
 /* =========================================================
@@ -127,6 +134,7 @@ export default function SidebarContent({
     if (anyActive(masterDataItems, p)) return "master-data";   // ONLY master-data routes
     if (p === "/fee-structures")       return "fee-structures"; // ONLY fee route
     if (anyActive(reportingItems, p))  return "reporting";
+    if (anyActive(accountingItems, p)) return "accounting";
     return null;
   })();
 
@@ -281,6 +289,26 @@ export default function SidebarContent({
           onToggle={toggle}
         >
           {reportingItems.map((item) => (
+            <SidebarSubItem
+              key={item.to}
+              to={item.to}
+              label={item.label}
+              icon={item.icon}
+              active={isRouteActive(location.pathname, item.to, item.exact)}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </SidebarSection>
+
+        {/* 7. Accounting — STANDALONE section ─────────── */}
+        <SidebarSection
+          title="Accounting"
+          icon={BookMarked}
+          sectionKey="accounting"
+          expanded={expandedSection === "accounting"}
+          onToggle={toggle}
+        >
+          {accountingItems.map((item) => (
             <SidebarSubItem
               key={item.to}
               to={item.to}

@@ -35,6 +35,9 @@ import ClassSections from "@/pages/ClassSections";
 // Reporting
 import FeeReport from "@/pages/FeeReport";
 
+// Accounting
+import FeeCollections from "@/pages/FeeCollections";
+
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -97,6 +100,9 @@ export default function App() {
 
               {/* REPORTING */}
               <Route path="/reports/fees" element={<FeeReport />} />
+
+              {/* ACCOUNTING */}
+              <Route path="/accounting/fee-collections" element={<FeeCollections />} />
             </Route>
 
             {/* FALLBACK */}
