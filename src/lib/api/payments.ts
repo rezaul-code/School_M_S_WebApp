@@ -23,7 +23,9 @@ export interface ApplyDiscountPayload {
 
 function assertFeeId(feeId: number, action: string): void {
   if (!feeId || isNaN(feeId)) {
-    throw new Error(`Cannot ${action}: fee ID is missing or invalid (got ${feeId})`);
+    throw new Error(
+      `Cannot ${action}: fee ID is missing or invalid (got ${feeId})`,
+    );
   }
 }
 
@@ -35,12 +37,10 @@ export async function recordPayment(
   payload: RecordPaymentPayload,
 ) {
   assertFeeId(feeId, "record payment");
-
   const response = await api.post<ApiResponse<{ id: number }>>(
     `/api/students/${studentId}/fees/${feeId}/payments`,
     payload,
   );
-
   return response.data.data;
 }
 
@@ -52,26 +52,19 @@ export async function applyDiscount(
   payload: ApplyDiscountPayload,
 ) {
   assertFeeId(feeId, "apply discount");
-
   const response = await api.post<ApiResponse<{ id: number }>>(
     `/api/students/${studentId}/fees/${feeId}/discount`,
     payload,
   );
-
   return response.data.data;
 }
 
 // ── Waive ─────────────────────────────────────────────────────────
 
-export async function waiveFee(
-  studentId: string,
-  feeId: number,
-) {
+export async function waiveFee(studentId: string, feeId: number) {
   assertFeeId(feeId, "waive fee");
-
   const response = await api.post<ApiResponse<{ id: number }>>(
     `/api/students/${studentId}/fees/${feeId}/waive`,
   );
-
   return response.data.data;
 }

@@ -5,12 +5,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Accordion,
   AccordionContent,
@@ -33,11 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,17 +49,16 @@ import {
   Minus,
 } from "lucide-react";
 
-import type { MonthlyFeeDetail, StudentFeeSummary } from "@/types/api";
+import type { FeeRow, StudentFeeSummary } from "@/types/api";
 import { getStudentFeeSummary } from "@/lib/api/students";
-import { cn } from "@/lib/utils";
 
-import RecordPaymentDialog from "@/components/fees/RecordPaymentDialog";
-import ApplyDiscountDialog from "@/components/fees/ApplyDiscountDialog";
-import WaiveFeeDialog      from "@/components/fees/WaiveFeeDialog";
+import RecordPaymentDialog  from "@/components/fees/RecordPaymentDialog";
+import ApplyDiscountDialog  from "@/components/fees/ApplyDiscountDialog";
+import WaiveFeeDialog       from "@/components/fees/WaiveFeeDialog";
 
 import "@/styles/fee-payment.css";
 
-// ── Helpers ──────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────
 
 function formatINR(v?: number) {
   if (typeof v !== "number") return "—";
@@ -79,9 +69,12 @@ function formatINR(v?: number) {
   }).format(v);
 }
 
-// ── Status badge ─────────────────────────────────────────────────
+// ── Status badge ──────────────────────────────────────────────────
 
-const STATUS_META: Record<string, { cls: string; icon: React.ElementType; label: string }> = {
+const STATUS_META: Record<
+  string,
+  { cls: string; icon: React.ElementType; label: string }
+> = {
   PAID:    { cls: "fp-badge fp-badge--paid",    icon: CheckCircle2,  label: "Paid"    },
   PARTIAL: { cls: "fp-badge fp-badge--partial", icon: Clock,         label: "Partial" },
   PENDING: { cls: "fp-badge fp-badge--pending", icon: AlertTriangle, label: "Pending" },
@@ -91,7 +84,11 @@ const STATUS_META: Record<string, { cls: string; icon: React.ElementType; label:
 
 function StatusBadge({ status }: { status: string }) {
   const s    = (status ?? "").toUpperCase();
-  const meta = STATUS_META[s] ?? { cls: "fp-badge fp-badge--pending", icon: AlertTriangle, label: status || "—" };
+  const meta = STATUS_META[s] ?? {
+    cls: "fp-badge fp-badge--pending",
+    icon: AlertTriangle,
+    label: status || "—",
+  };
   const Icon = meta.icon;
   return (
     <span className={meta.cls}>
@@ -101,13 +98,15 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-// ── Metric cards ─────────────────────────────────────────────────
+// ── Metric cards ──────────────────────────────────────────────────
 
 function MetricCard({ title, value }: { title: string; value: string }) {
   return (
     <Card>
       <CardHeader className="py-4">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="text-xl font-semibold font-mono">{value}</div>
@@ -125,15 +124,46 @@ function SmallMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
-// ── Action target ─────────────────────────────────────────────────
+// ── Group rows by feeType ─────────────────────────────────────────
 
-interface ActionTarget {
-  feeId: number;
-  period: string;
+interface FeeGroup {
   feeType: string;
-  grossAmount: number;
+  gross: number;
+  amountPaid: number;
   balance: number;
-  status: string;
+  discount: number;
+  rows: FeeRow[];
+}
+
+function groupRowsByFeeType(rows: FeeRow[]): FeeGroup[] {
+  const map = new Map<string, FeeGroup>();
+  for (const row of rows) {
+    const existing = map.get(row.feeType);
+    if (existing) {
+      existing.gross      += row.gross;
+      existing.amountPaid += row.amountPaid;
+      existing.balance    += row.balance;
+      existing.discount   += row.discount;
+      existing.rows.push(row);
+    } else {
+      map.set(row.feeType, {
+        feeType:    row.feeType,
+        gross:      row.gross,
+        amountPaid: row.amountPaid,
+        balance:    row.balance,
+        discount:   row.discount,
+        rows:       [row],
+      });
+    }
+  }
+  return Array.from(map.values());
+}
+
+// ── Action helpers ────────────────────────────────────────────────
+
+function canAct(status: string) {
+  const s = status.toUpperCase();
+  return s !== "PAID" && s !== "WAIVED";
 }
 
 // ── Drawer ────────────────────────────────────────────────────────
@@ -149,64 +179,63 @@ export default function FeeSummaryDrawer({
   onOpenChange: (v: boolean) => void;
   academicYearId: number | undefined;
 }) {
-  const [expandedFeeTypes, setExpandedFeeTypes] = useState<string[]>([]);
-
-  const [payTarget,      setPayTarget]      = useState<ActionTarget | null>(null);
-  const [discountTarget, setDiscountTarget] = useState<ActionTarget | null>(null);
-  const [waiveTarget,    setWaiveTarget]    = useState<ActionTarget | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+  const [payTarget,      setPayTarget]      = useState<FeeRow | null>(null);
+  const [discountTarget, setDiscountTarget] = useState<FeeRow | null>(null);
+  const [waiveTarget,    setWaiveTarget]    = useState<FeeRow | null>(null);
 
   React.useEffect(() => {
     if (!open) {
-      setExpandedFeeTypes([]);
+      setExpandedGroups([]);
       setPayTarget(null);
       setDiscountTarget(null);
       setWaiveTarget(null);
     }
   }, [open]);
 
+  const isWaitingForAcademicYear = !academicYearId || academicYearId === 0;
+
   const q = useQuery({
     queryKey: ["student-fee-summary", studentId, academicYearId],
-    queryFn: () => getStudentFeeSummary(studentId as string, academicYearId as number),
+    queryFn:  () =>
+      getStudentFeeSummary(studentId as string, academicYearId as number),
     enabled: open && !!studentId && !!academicYearId && academicYearId > 0,
   });
 
   const summary = (q.data ?? null) as StudentFeeSummary | null;
-  const isWaitingForAcademicYear = !academicYearId || academicYearId === 0;
 
-  const totals = useMemo(() => {
-    if (!summary) return null;
-    return {
-      totalGross:   summary.totalGross,
-      totalPaid:    summary.totalPaid,
-      totalBalance: summary.totalBalance,
-      totalOverdue: summary.totalOverdue,
-    };
-  }, [summary]);
-
-  const hasAnyBreakdown = (summary?.breakdown?.length ?? 0) > 0;
-
-  function canPay(status: string)      { const s = status.toUpperCase(); return s !== "PAID" && s !== "WAIVED"; }
-  function canDiscount(status: string) { const s = status.toUpperCase(); return s !== "PAID" && s !== "WAIVED"; }
-  function canWaive(status: string)    { const s = status.toUpperCase(); return s !== "PAID" && s !== "WAIVED"; }
+  const groups = useMemo(
+    () => (summary?.rows ? groupRowsByFeeType(summary.rows) : []),
+    [summary],
+  );
 
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-full sm:max-w-4xl overflow-y-auto">
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-4xl overflow-y-auto"
+        >
           <SheetHeader>
             <SheetTitle>Fee Summary</SheetTitle>
-            <SheetDescription>Gross, paid and outstanding amounts by fee type.</SheetDescription>
+            <SheetDescription>
+              Gross, paid and outstanding amounts by fee type.
+            </SheetDescription>
           </SheetHeader>
 
           <div className="mt-6 space-y-6 pb-10">
-            {/* Loading */}
+            {/* ── Loading ── */}
             {(q.isLoading || isWaitingForAcademicYear) && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                   {Array.from({ length: 4 }).map((_, i) => (
                     <Card key={i}>
-                      <CardHeader className="py-4"><Skeleton className="h-4 w-24" /></CardHeader>
-                      <CardContent className="pt-0"><Skeleton className="h-6 w-36" /></CardContent>
+                      <CardHeader className="py-4">
+                        <Skeleton className="h-4 w-24" />
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <Skeleton className="h-6 w-36" />
+                      </CardContent>
                     </Card>
                   ))}
                 </div>
@@ -214,162 +243,251 @@ export default function FeeSummaryDrawer({
               </div>
             )}
 
-            {/* Error */}
+            {/* ── Error ── */}
             {!q.isLoading && q.isError && (
               <Alert variant="destructive">
                 <AlertTitle>Failed to load fee summary</AlertTitle>
                 <AlertDescription>
-                  {(q.error as any)?.message ?? "Something went wrong while fetching fee summary."}
+                  {(q.error as any)?.message ??
+                    "Something went wrong while fetching fee summary."}
                 </AlertDescription>
               </Alert>
             )}
 
-            {/* Data */}
+            {/* ── Data ── */}
             {!q.isLoading && !q.isError && summary && (
               <>
                 {/* KPI cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-                  <MetricCard title="Total Gross"   value={formatINR(totals?.totalGross)}   />
-                  <MetricCard title="Total Paid"    value={formatINR(totals?.totalPaid)}    />
-                  <MetricCard title="Total Balance" value={formatINR(totals?.totalBalance)} />
-                  <MetricCard title="Total Overdue" value={formatINR(totals?.totalOverdue)} />
+                  <MetricCard
+                    title="Gross Due"
+                    value={formatINR(summary.grossDueYear)}
+                  />
+                  <MetricCard
+                    title="Collected"
+                    value={formatINR(summary.collectedSoFar)}
+                  />
+                  <MetricCard
+                    title="Balance Remaining"
+                    value={formatINR(summary.balanceRemaining)}
+                  />
+                  <MetricCard
+                    title="Total Discount"
+                    value={formatINR(summary.totalDiscount)}
+                  />
                 </div>
 
-                {!hasAnyBreakdown ? (
+                {groups.length === 0 ? (
                   <Alert>
-                    <AlertTitle>No fee breakdown found</AlertTitle>
-                    <AlertDescription>The student has no fee records for this academic year.</AlertDescription>
+                    <AlertTitle>No fee records found</AlertTitle>
+                    <AlertDescription>
+                      The student has no fee records for this academic year.
+                    </AlertDescription>
                   </Alert>
                 ) : (
                   <div className="space-y-4">
-                    {summary.breakdown.map((b, idx) => (
+                    {groups.map((group) => (
                       <Accordion
-                        key={`${b.feeType}-${idx}`}
+                        key={group.feeType}
                         type="single"
                         collapsible
-                        value={expandedFeeTypes.includes(b.feeType) ? b.feeType : undefined}
+                        value={
+                          expandedGroups.includes(group.feeType)
+                            ? group.feeType
+                            : undefined
+                        }
                         onValueChange={(v) => {
-                          setExpandedFeeTypes((prev) => {
-                            if (!v) return prev.filter((x) => x !== b.feeType);
-                            if (prev.includes(b.feeType)) return prev;
-                            return [b.feeType];
+                          setExpandedGroups((prev) => {
+                            if (!v) return prev.filter((x) => x !== group.feeType);
+                            if (prev.includes(group.feeType)) return prev;
+                            return [group.feeType];
                           });
                         }}
                       >
-                        <AccordionItem value={b.feeType} className="border rounded-lg px-4">
+                        <AccordionItem
+                          value={group.feeType}
+                          className="border rounded-lg px-4"
+                        >
                           <AccordionTrigger className="py-4">
                             <div className="flex items-start justify-between w-full gap-3">
                               <div className="text-left">
-                                <div className="font-semibold">{b.feeType}</div>
-                                <div className="text-xs text-muted-foreground">Monthly details</div>
+                                <div className="font-semibold">
+                                  {group.feeType}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {group.rows.length} record
+                                  {group.rows.length !== 1 ? "s" : ""}
+                                </div>
                               </div>
                               <div className="text-sm text-right">
-                                <span className="text-muted-foreground">Balance: </span>
-                                <span className="font-medium font-mono">{formatINR(b.balanceAmount)}</span>
+                                <span className="text-muted-foreground">
+                                  Balance:{" "}
+                                </span>
+                                <span className="font-medium font-mono">
+                                  {formatINR(group.balance)}
+                                </span>
                               </div>
                             </div>
                           </AccordionTrigger>
 
                           <AccordionContent>
+                            {/* Group totals */}
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
-                              <SmallMetric label="Gross"    value={formatINR(b.grossAmount)}   />
-                              <SmallMetric label="Paid"     value={formatINR(b.paidAmount)}    />
-                              <SmallMetric label="Balance"  value={formatINR(b.balanceAmount)} />
-                              <SmallMetric label="Discount" value={formatINR(b.discount)}      />
+                              <SmallMetric
+                                label="Gross"
+                                value={formatINR(group.gross)}
+                              />
+                              <SmallMetric
+                                label="Paid"
+                                value={formatINR(group.amountPaid)}
+                              />
+                              <SmallMetric
+                                label="Balance"
+                                value={formatINR(group.balance)}
+                              />
+                              <SmallMetric
+                                label="Discount"
+                                value={formatINR(group.discount)}
+                              />
                             </div>
 
-                            {b.monthlyDetails && b.monthlyDetails.length > 0 ? (
-                              <div className="rounded-md border overflow-hidden">
-                                <div className="overflow-auto">
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow>
-                                        <TableHead>Period</TableHead>
-                                        <TableHead>Gross</TableHead>
-                                        <TableHead>Paid</TableHead>
-                                        <TableHead>Balance</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="w-10 text-center">Act.</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {b.monthlyDetails.map((m: MonthlyFeeDetail, i: number) => {
-                                        const balance  = m.balance ?? (m.grossAmount - m.paidAmount);
-                                        const status   = (m.status ?? "").toUpperCase();
+                            {/* Rows table */}
+                            <div className="rounded-md border overflow-hidden">
+                              <div className="overflow-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Period / Due</TableHead>
+                                      <TableHead>Gross</TableHead>
+                                      <TableHead>Paid</TableHead>
+                                      <TableHead>Balance</TableHead>
+                                      <TableHead>Discount</TableHead>
+                                      <TableHead>Status</TableHead>
+                                      <TableHead className="w-10 text-center">
+                                        Act.
+                                      </TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {group.rows.map((row) => {
+                                      const status = (
+                                        row.status ?? ""
+                                      ).toUpperCase();
+                                      const label =
+                                        row.period ?? row.dueDate ?? "—";
 
-                                        return (
-                                          <TableRow key={`${b.feeType}-${i}-${m.period}`}>
-                                            <TableCell className="font-medium">{m.period}</TableCell>
-                                            <TableCell className="font-mono text-xs">{formatINR(m.grossAmount)}</TableCell>
-                                            <TableCell className="font-mono text-xs">{formatINR(m.paidAmount)}</TableCell>
-                                            <TableCell>
-                                              {balance > 0
-                                                ? <span className="fp-balance-due font-mono text-xs">{formatINR(balance)}</span>
-                                                : <span className="font-mono text-xs">{formatINR(balance)}</span>
-                                              }
-                                            </TableCell>
-                                            <TableCell><StatusBadge status={m.status} /></TableCell>
-                                            <TableCell className="text-center">
-                                              <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                  <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7"
-                                                    disabled={status === "PAID" || status === "WAIVED"}
-                                                  >
-                                                    <MoreVertical size={13} />
-                                                  </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-44">
-                                                  <DropdownMenuItem
-                                                    disabled={!canPay(m.status)}
-                                                    onSelect={() =>
-                                                      canPay(m.status) &&
-                                                      setPayTarget({ feeId: m.feeId, period: m.period, feeType: b.feeType, grossAmount: m.grossAmount, balance, status: m.status })
-                                                    }
-                                                  >
-                                                    <CreditCard size={13} className="mr-2 text-emerald-600" />
-                                                    Pay Fee
-                                                  </DropdownMenuItem>
-                                                  <DropdownMenuItem
-                                                    disabled={!canDiscount(m.status)}
-                                                    onSelect={() =>
-                                                      canDiscount(m.status) &&
-                                                      setDiscountTarget({ feeId: m.feeId, period: m.period, feeType: b.feeType, grossAmount: m.grossAmount, balance, status: m.status })
-                                                    }
-                                                  >
-                                                    <Tag size={13} className="mr-2 text-violet-600" />
-                                                    Apply Discount
-                                                  </DropdownMenuItem>
-                                                  <DropdownMenuSeparator />
-                                                  <DropdownMenuItem
-                                                    disabled={!canWaive(m.status)}
-                                                    className="text-destructive focus:text-destructive"
-                                                    onSelect={() =>
-                                                      canWaive(m.status) &&
-                                                      setWaiveTarget({ feeId: m.feeId, period: m.period, feeType: b.feeType, grossAmount: m.grossAmount, balance, status: m.status })
-                                                    }
-                                                  >
-                                                    <ShieldOff size={13} className="mr-2" />
-                                                    Waive Fee
-                                                  </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                              </DropdownMenu>
-                                            </TableCell>
-                                          </TableRow>
-                                        );
-                                      })}
-                                    </TableBody>
-                                  </Table>
-                                </div>
+                                      return (
+                                        <TableRow key={row.id}>
+                                          <TableCell className="font-medium">
+                                            {label}
+                                          </TableCell>
+                                          <TableCell className="font-mono text-xs">
+                                            {formatINR(row.gross)}
+                                          </TableCell>
+                                          <TableCell className="font-mono text-xs">
+                                            {formatINR(row.amountPaid)}
+                                          </TableCell>
+                                          <TableCell>
+                                            {row.balance > 0 ? (
+                                              <span className="fp-balance-due font-mono text-xs">
+                                                {formatINR(row.balance)}
+                                              </span>
+                                            ) : (
+                                              <span className="font-mono text-xs">
+                                                {formatINR(row.balance)}
+                                              </span>
+                                            )}
+                                          </TableCell>
+                                          <TableCell className="font-mono text-xs">
+                                            {row.discount > 0 ? (
+                                              <span className="fp-discount-value">
+                                                {formatINR(row.discount)}
+                                              </span>
+                                            ) : (
+                                              <span className="text-muted-foreground">
+                                                —
+                                              </span>
+                                            )}
+                                          </TableCell>
+                                          <TableCell>
+                                            <StatusBadge status={row.status} />
+                                          </TableCell>
+                                          <TableCell className="text-center">
+                                            <DropdownMenu>
+                                              <DropdownMenuTrigger asChild>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  className="h-7 w-7"
+                                                  disabled={!canAct(row.status)}
+                                                >
+                                                  <MoreVertical size={13} />
+                                                </Button>
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent
+                                                align="end"
+                                                className="w-44"
+                                              >
+                                                <DropdownMenuItem
+                                                  disabled={!canAct(row.status)}
+                                                  onSelect={() => {
+                                                    console.log(
+                                                      "[FeeSummaryDrawer] Pay Fee selected, row:",
+                                                      row,
+                                                    );
+                                                    setPayTarget(row);
+                                                  }}
+                                                >
+                                                  <CreditCard
+                                                    size={13}
+                                                    className="mr-2 text-emerald-600"
+                                                  />
+                                                  Pay Fee
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                  disabled={!canAct(row.status)}
+                                                  onSelect={() => {
+                                                    console.log(
+                                                      "[FeeSummaryDrawer] Apply Discount selected, row:",
+                                                      row,
+                                                    );
+                                                    setDiscountTarget(row);
+                                                  }}
+                                                >
+                                                  <Tag
+                                                    size={13}
+                                                    className="mr-2 text-violet-600"
+                                                  />
+                                                  Apply Discount
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                  disabled={!canAct(row.status)}
+                                                  className="text-destructive focus:text-destructive"
+                                                  onSelect={() => {
+                                                    console.log(
+                                                      "[FeeSummaryDrawer] Waive Fee selected, row:",
+                                                      row,
+                                                    );
+                                                    setWaiveTarget(row);
+                                                  }}
+                                                >
+                                                  <ShieldOff
+                                                    size={13}
+                                                    className="mr-2"
+                                                  />
+                                                  Waive Fee
+                                                </DropdownMenuItem>
+                                              </DropdownMenuContent>
+                                            </DropdownMenu>
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </TableBody>
+                                </Table>
                               </div>
-                            ) : (
-                              <Alert className="mt-2">
-                                <AlertTitle>No monthly details</AlertTitle>
-                                <AlertDescription>Monthly records are not available for this fee type.</AlertDescription>
-                              </Alert>
-                            )}
+                            </div>
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>
@@ -379,25 +497,31 @@ export default function FeeSummaryDrawer({
               </>
             )}
 
-            {/* No data */}
-            {!q.isLoading && !isWaitingForAcademicYear && !q.isError && !summary && (
-              <Alert>
-                <AlertTitle>Fee summary unavailable</AlertTitle>
-                <AlertDescription>No fee data found for this student in the current academic year.</AlertDescription>
-              </Alert>
-            )}
+            {/* ── No data ── */}
+            {!q.isLoading &&
+              !isWaitingForAcademicYear &&
+              !q.isError &&
+              !summary && (
+                <Alert>
+                  <AlertTitle>Fee summary unavailable</AlertTitle>
+                  <AlertDescription>
+                    No fee data found for this student in the current academic
+                    year.
+                  </AlertDescription>
+                </Alert>
+              )}
           </div>
         </SheetContent>
       </Sheet>
 
-      {/* Dialogs rendered outside Sheet to avoid stacking context issues */}
+      {/* Dialogs rendered outside Sheet to avoid stacking-context issues */}
       {payTarget && studentId && (
         <RecordPaymentDialog
           open={!!payTarget}
           onOpenChange={(v) => !v && setPayTarget(null)}
           studentId={studentId}
-          feeId={payTarget.feeId}
-          period={payTarget.period}
+          feeId={payTarget.id}
+          period={payTarget.period ?? payTarget.dueDate ?? ""}
           feeType={payTarget.feeType}
           balance={payTarget.balance}
           academicYearId={academicYearId!}
@@ -408,10 +532,10 @@ export default function FeeSummaryDrawer({
           open={!!discountTarget}
           onOpenChange={(v) => !v && setDiscountTarget(null)}
           studentId={studentId}
-          feeId={discountTarget.feeId}
-          period={discountTarget.period}
+          feeId={discountTarget.id}
+          period={discountTarget.period ?? discountTarget.dueDate ?? ""}
           feeType={discountTarget.feeType}
-          grossAmount={discountTarget.grossAmount}
+          grossAmount={discountTarget.gross}
           academicYearId={academicYearId!}
         />
       )}
@@ -420,10 +544,10 @@ export default function FeeSummaryDrawer({
           open={!!waiveTarget}
           onOpenChange={(v) => !v && setWaiveTarget(null)}
           studentId={studentId}
-          feeId={waiveTarget.feeId}
-          period={waiveTarget.period}
+          feeId={waiveTarget.id}
+          period={waiveTarget.period ?? waiveTarget.dueDate ?? ""}
           feeType={waiveTarget.feeType}
-          grossAmount={waiveTarget.grossAmount}
+          grossAmount={waiveTarget.gross}
           academicYearId={academicYearId!}
         />
       )}

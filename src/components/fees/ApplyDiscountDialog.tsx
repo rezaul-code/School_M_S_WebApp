@@ -13,9 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button }   from "@/components/ui/button";
+import { Input }    from "@/components/ui/input";
+import { Label }    from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 import { applyDiscount } from "@/lib/api/payments";
@@ -26,6 +26,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   studentId: string;
+  /** row.id from the fee summary API — the real backend fee-record PK */
   feeId: number;
   period: string;
   feeType: string;
@@ -42,27 +43,31 @@ function formatINR(v: number) {
 }
 
 export default function ApplyDiscountDialog({
-  open, onOpenChange, studentId, feeId, period, feeType, grossAmount, academicYearId,
+  open,
+  onOpenChange,
+  studentId,
+  feeId,
+  period,
+  feeType,
+  grossAmount,
+  academicYearId,
 }: Props) {
   const qc = useQueryClient();
 
   const [discount, setDiscount] = useState("");
-  const [reason, setReason]     = useState("");
+  const [reason,   setReason]   = useState("");
 
   const mutation = useMutation({
-    mutationFn: () => {
-      // Guard: feeId must be a valid number before hitting the API
-      if (!feeId || isNaN(feeId)) {
-        return Promise.reject(new Error("Fee ID is missing. Please close and reopen the dialog."));
-      }
-      return applyDiscount(studentId, feeId, {
+    mutationFn: () =>
+      applyDiscount(studentId, feeId, {
         discount: Number(discount),
         reason,
-      });
-    },
+      }),
     onSuccess: () => {
       toast.success("Discount applied successfully");
-      qc.invalidateQueries({ queryKey: ["student-fee-summary", studentId, academicYearId] });
+      qc.invalidateQueries({
+        queryKey: ["student-fee-summary", studentId, academicYearId],
+      });
       handleClose();
     },
     onError: (err) => {
@@ -77,9 +82,7 @@ export default function ApplyDiscountDialog({
   }
 
   const parsed = parseFloat(discount);
-  const isFeeIdMissing = !feeId || isNaN(feeId);
   const isInvalid =
-    isFeeIdMissing ||
     !discount ||
     isNaN(parsed) ||
     parsed <= 0 ||
@@ -87,7 +90,12 @@ export default function ApplyDiscountDialog({
     !reason.trim();
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !mutation.isPending && (v ? onOpenChange(v) : handleClose())}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) =>
+        !mutation.isPending && (v ? onOpenChange(v) : handleClose())
+      }
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -101,25 +109,23 @@ export default function ApplyDiscountDialog({
             {" — "}
             {period}
             <span className="ml-2 text-xs">
-              Gross: <span className="font-semibold text-foreground">{formatINR(grossAmount)}</span>
+              Gross:{" "}
+              <span className="font-semibold text-foreground">
+                {formatINR(grossAmount)}
+              </span>
             </span>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-1">
-          {/* Fee ID guard warning */}
-          {isFeeIdMissing && (
-            <p className="text-xs text-destructive font-medium">
-              Fee record ID is unavailable. Please close and reopen this dialog.
-            </p>
-          )}
-
           <div className="space-y-1.5">
             <Label htmlFor="disc-amount">
               Discount Amount <span className="text-destructive">*</span>
             </Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                ₹
+              </span>
               <Input
                 id="disc-amount"
                 type="number"
@@ -130,11 +136,13 @@ export default function ApplyDiscountDialog({
                 className="pl-7"
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
-                disabled={mutation.isPending || isFeeIdMissing}
+                disabled={mutation.isPending}
               />
             </div>
             {parsed > grossAmount && (
-              <p className="text-xs text-destructive">Discount cannot exceed gross amount of {formatINR(grossAmount)}</p>
+              <p className="text-xs text-destructive">
+                Discount cannot exceed gross amount of {formatINR(grossAmount)}
+              </p>
             )}
           </div>
 
@@ -148,14 +156,18 @@ export default function ApplyDiscountDialog({
               rows={2}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              disabled={mutation.isPending || isFeeIdMissing}
+              disabled={mutation.isPending}
               className="resize-none"
             />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={mutation.isPending}>
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={mutation.isPending}
+          >
             Cancel
           </Button>
           <Button
@@ -163,7 +175,9 @@ export default function ApplyDiscountDialog({
             disabled={isInvalid || mutation.isPending}
             className="bg-violet-600 hover:bg-violet-700 text-white"
           >
-            {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {mutation.isPending && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
             Apply Discount
           </Button>
         </DialogFooter>
