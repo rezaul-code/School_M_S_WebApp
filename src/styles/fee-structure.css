@@ -1,8 +1,7 @@
 /* ================================================================
    fee-structure.css  —  Fee Structures Module Design System
    Place at: src/styles/fee-structure.css
-   Scoped exclusively to Fee Structures UI; never touches
-   Master Data Setup, Dashboard, or any other module.
+   Mirrors teacher.css patterns for visual consistency.
    ================================================================ */
 
 /* ── Shared animations ─────────────────────────────────────────── */
@@ -10,385 +9,228 @@
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes fs-slide-down {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes fs-fade-in {
+@keyframes fs-fade {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-@keyframes fs-scale-in {
-  from { opacity: 0; transform: scale(0.96); }
-  to   { opacity: 1; transform: scale(1); }
-}
 @keyframes fs-shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
-}
-@keyframes fs-pulse-dot {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.35; }
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
 }
 
 /* ================================================================
-   SIDEBAR — FEE STRUCTURES SECTION WRAPPER
-   Selector is scoped via a data attribute added to the
-   <SidebarSection> wrapper div: data-section="fee-structures"
+   PAGE SHELL
    ================================================================ */
-
-/* Section container */
-[data-section="fee-structures"] {
-  --fs-brand:        hsl(222 80% 58%);
-  --fs-brand-soft:   hsl(222 80% 58% / 0.12);
-  --fs-brand-glow:   hsl(222 80% 58% / 0.22);
-  --fs-accent:       hsl(196 80% 52%);
-  --fs-accent-soft:  hsl(196 80% 52% / 0.1);
-  --fs-surface:      hsl(220 20% 14% / 0.6);
-  --fs-border:       hsl(220 18% 26% / 0.5);
-  --fs-text:         hsl(220 15% 85%);
-  --fs-text-muted:   hsl(220 10% 55%);
-  --fs-radius:       0.75rem;
-  --fs-transition:   0.2s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* ── Section toggle button ─────────────────────────────────────── */
-[data-section="fee-structures"] > .fs-section-btn {
-  position: relative;
-  width: 100%;
+.fs-page {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.625rem 0.875rem;
-  border-radius: var(--fs-radius);
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--fs-text-muted);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  cursor: pointer;
-  transition:
-    background var(--fs-transition),
-    border-color var(--fs-transition),
-    color var(--fs-transition),
-    box-shadow var(--fs-transition);
-  overflow: hidden;
+  flex-direction: column;
+  gap: 1.375rem;
+  padding-bottom: 3rem;
+  animation: fs-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-[data-section="fee-structures"] > .fs-section-btn::before {
+/* ================================================================
+   HERO BANNER — teal/emerald variant to distinguish from teacher purple
+   ================================================================ */
+.fs-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 1.75rem 2rem 1.875rem;
+  background: linear-gradient(
+    130deg,
+    hsl(196 80% 18%) 0%,
+    hsl(200 65% 22%) 35%,
+    hsl(210 55% 27%) 70%,
+    hsl(220 45% 31%) 100%
+  );
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.08),
+    0 4px 24px hsl(196 80% 8% / 0.28),
+    inset 0 1px 0 hsl(0 0% 100% / 0.07);
+}
+
+.fs-hero::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    120deg,
-    var(--fs-brand-soft) 0%,
-    var(--fs-accent-soft) 100%
+  background-image: radial-gradient(
+    circle,
+    hsl(0 0% 100% / 0.055) 1px,
+    transparent 1px
   );
-  opacity: 0;
-  transition: opacity var(--fs-transition);
-  border-radius: inherit;
+  background-size: 22px 22px;
+  pointer-events: none;
 }
 
-[data-section="fee-structures"] > .fs-section-btn:hover::before,
-[data-section="fee-structures"] > .fs-section-btn[data-expanded="true"]::before {
-  opacity: 1;
-}
-
-[data-section="fee-structures"] > .fs-section-btn:hover,
-[data-section="fee-structures"] > .fs-section-btn[data-expanded="true"] {
-  border-color: var(--fs-border);
-  color: var(--fs-text);
-  box-shadow: 0 2px 10px var(--fs-brand-glow);
-}
-
-[data-section="fee-structures"] > .fs-section-btn[data-expanded="true"] {
-  border-color: hsl(222 80% 58% / 0.3);
-  box-shadow:
-    0 2px 12px var(--fs-brand-glow),
-    inset 0 1px 0 hsl(0 0% 100% / 0.05);
-}
-
-/* Left cluster: icon + label */
-.fs-section-btn-left {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-}
-
-/* Icon wrap with glowing ring when expanded */
-.fs-section-icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.875rem;
-  height: 1.875rem;
-  border-radius: 0.5rem;
-  background: var(--fs-brand-soft);
-  border: 1px solid hsl(222 80% 58% / 0.2);
-  flex-shrink: 0;
-  transition:
-    background var(--fs-transition),
-    border-color var(--fs-transition),
-    box-shadow var(--fs-transition);
-}
-
-[data-section="fee-structures"] > .fs-section-btn[data-expanded="true"] .fs-section-icon-wrap {
-  background: var(--fs-brand);
-  border-color: var(--fs-brand);
-  box-shadow: 0 0 0 3px var(--fs-brand-glow);
-}
-
-.fs-section-icon-wrap svg {
-  width: 0.9rem;
-  height: 0.9rem;
-  color: var(--fs-brand);
-  transition: color var(--fs-transition);
-}
-
-[data-section="fee-structures"] > .fs-section-btn[data-expanded="true"] .fs-section-icon-wrap svg {
-  color: #fff;
-}
-
-/* Chevron */
-.fs-section-chevron {
-  position: relative;
-  z-index: 1;
-  width: 0.9rem;
-  height: 0.9rem;
-  color: var(--fs-text-muted);
-  transition: transform var(--fs-transition), color var(--fs-transition);
-  flex-shrink: 0;
-}
-
-[data-section="fee-structures"] > .fs-section-btn[data-expanded="true"] .fs-section-chevron {
-  transform: rotate(180deg);
-  color: var(--fs-brand);
-}
-
-/* ── Submenu accordion panel ───────────────────────────────────── */
-.fs-submenu {
-  margin-top: 0.375rem;
-  padding: 0.5rem 0.5rem 0.625rem;
-  border-radius: var(--fs-radius);
-  background: var(--fs-surface);
-  border: 1px solid var(--fs-border);
-  box-shadow:
-    0 4px 16px hsl(0 0% 0% / 0.12),
-    inset 0 1px 0 hsl(0 0% 100% / 0.04);
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  animation: fs-slide-down 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
-
-  /* Subtle top-border accent line */
-  position: relative;
-  overflow: hidden;
-}
-
-.fs-submenu::before {
+.fs-hero::after {
   content: "";
   position: absolute;
-  top: 0; left: 0.75rem; right: 0.75rem;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--fs-brand) 30%,
-    var(--fs-accent) 70%,
-    transparent 100%
-  );
-  opacity: 0.4;
-}
-
-/* ── Individual submenu item ───────────────────────────────────── */
-.fs-submenu-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0.5625rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--fs-text-muted);
-  text-decoration: none;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition:
-    background var(--fs-transition),
-    border-color var(--fs-transition),
-    color var(--fs-transition),
-    box-shadow var(--fs-transition),
-    transform var(--fs-transition);
-  overflow: hidden;
-  animation: fs-scale-in 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* Staggered entrance for each item */
-.fs-submenu-item:nth-child(1) { animation-delay: 0.03s; }
-.fs-submenu-item:nth-child(2) { animation-delay: 0.07s; }
-.fs-submenu-item:nth-child(3) { animation-delay: 0.11s; }
-.fs-submenu-item:nth-child(4) { animation-delay: 0.15s; }
-
-/* Hover state */
-.fs-submenu-item:hover {
-  background: hsl(220 18% 22% / 0.7);
-  border-color: var(--fs-border);
-  color: var(--fs-text);
-  transform: translateX(2px);
-}
-
-/* Active / selected state */
-.fs-submenu-item--active {
-  background: linear-gradient(
-    105deg,
-    hsl(222 80% 58% / 0.18) 0%,
-    hsl(196 80% 52% / 0.1) 100%
-  );
-  border-color: hsl(222 80% 58% / 0.35);
-  color: hsl(222 80% 78%);
-  box-shadow:
-    0 2px 8px hsl(222 80% 58% / 0.15),
-    inset 0 1px 0 hsl(0 0% 100% / 0.06);
-  font-weight: 600;
-}
-
-.fs-submenu-item--active:hover {
-  background: linear-gradient(
-    105deg,
-    hsl(222 80% 58% / 0.24) 0%,
-    hsl(196 80% 52% / 0.14) 100%
-  );
-  transform: translateX(2px);
-}
-
-/* Left active bar */
-.fs-submenu-item--active::before {
-  content: "";
-  position: absolute;
-  left: 0; top: 20%; bottom: 20%;
-  width: 2px;
-  border-radius: 2px;
-  background: linear-gradient(
-    to bottom,
-    var(--fs-brand),
-    var(--fs-accent)
-  );
-  box-shadow: 0 0 6px var(--fs-brand-glow);
-}
-
-/* Dot indicator (replaces icon for tab-based items) */
-.fs-submenu-dot {
-  position: relative;
-  width: 0.4375rem;
-  height: 0.4375rem;
+  top: -80px;
+  right: -60px;
+  width: 300px;
+  height: 300px;
   border-radius: 50%;
-  background: currentColor;
-  flex-shrink: 0;
-  opacity: 0.4;
-  transition: opacity var(--fs-transition), background var(--fs-transition), box-shadow var(--fs-transition);
+  background: radial-gradient(
+    circle,
+    hsl(174 72% 56% / 0.18) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
 }
 
-.fs-submenu-item:hover .fs-submenu-dot {
-  opacity: 0.7;
+.fs-hero-glow {
+  position: absolute;
+  bottom: -50px;
+  left: -30px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    hsl(196 85% 55% / 0.12) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
 }
 
-.fs-submenu-item--active .fs-submenu-dot {
-  opacity: 1;
-  background: var(--fs-brand);
-  box-shadow: 0 0 0 3px var(--fs-brand-glow);
-  animation: fs-pulse-dot 2.4s ease-in-out infinite;
-}
-
-/* Item label */
-.fs-submenu-label {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  letter-spacing: -0.005em;
-}
-
-/* Optional right badge (e.g. "New") */
-.fs-submenu-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.1rem 0.45rem;
-  border-radius: 2rem;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  background: var(--fs-brand);
-  color: #fff;
-  flex-shrink: 0;
-  line-height: 1.4;
-}
-
-/* ================================================================
-   FEE STRUCTURES PAGE — HERO BANNER
-   Uses .md-hero--fee override defined here so master-data.css
-   is never modified.
-   ================================================================ */
-.md-hero--fee {
-  background: linear-gradient(
-    130deg,
-    hsl(222 72% 20%) 0%,
-    hsl(218 60% 24%) 38%,
-    hsl(210 52% 28%) 72%,
-    hsl(196 50% 30%) 100%
-  ) !important;
-}
-
-.md-hero--fee .md-hero-icon-wrap {
-  background: hsl(0 0% 100% / 0.12) !important;
-  border-color: hsl(196 80% 70% / 0.25) !important;
-}
-
-.md-hero--fee .md-hero-icon-wrap svg {
-  color: hsl(196 80% 80%) !important;
-}
-
-.md-hero--fee .md-hero-badge {
-  background: hsl(196 80% 52% / 0.15) !important;
-  border-color: hsl(196 80% 52% / 0.3) !important;
-  color: hsl(196 80% 80%) !important;
-}
-
-/* ================================================================
-   FEE STRUCTURES PAGE — PANEL CARD
-   ================================================================ */
-.md-fee-panel {
-  border-radius: 1rem;
-  border: 1px solid hsl(var(--border));
-  background: hsl(var(--card));
-  overflow: hidden;
-  box-shadow:
-    0 1px 3px hsl(0 0% 0% / 0.05),
-    0 4px 20px hsl(0 0% 0% / 0.04);
-  animation: fs-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
-  transition:
-    box-shadow 0.2s ease,
-    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.md-fee-panel:hover {
-  box-shadow:
-    0 2px 8px hsl(0 0% 0% / 0.07),
-    0 10px 32px hsl(0 0% 0% / 0.06);
-}
-
-.md-fee-panel-header {
+.fs-hero-inner {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.125rem 1.375rem;
+  flex-wrap: wrap;
+}
+
+.fs-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.fs-hero-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background: hsl(0 0% 100% / 0.12);
+  border: 1px solid hsl(0 0% 100% / 0.18);
+  flex-shrink: 0;
+}
+.fs-hero-icon-wrap svg {
+  width: 1.375rem;
+  height: 1.375rem;
+  color: hsl(0 0% 100% / 0.9);
+}
+
+.fs-hero-text { min-width: 0; }
+.fs-hero-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: hsl(0 0% 98%);
+  letter-spacing: -0.018em;
+  margin: 0 0 0.2rem;
+  line-height: 1.25;
+}
+.fs-hero-sub {
+  font-size: 0.8rem;
+  color: hsl(0 0% 100% / 0.52);
+  margin: 0;
+}
+
+.fs-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 2rem;
+  background: hsl(0 0% 100% / 0.1);
+  border: 1px solid hsl(0 0% 100% / 0.16);
+  color: hsl(0 0% 100% / 0.78);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.fs-hero-badge svg { width: 0.75rem; height: 0.75rem; }
+
+/* ================================================================
+   TABS NAVIGATION
+   ================================================================ */
+.fs-tabs-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: hsl(var(--muted) / 0.45);
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.875rem;
+  height: auto !important;
+}
+
+.fs-tab-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.625rem;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  white-space: nowrap;
+  border: 1px solid transparent;
+  background: transparent;
+}
+.fs-tab-trigger svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+.fs-tab-trigger:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--muted) / 0.5);
+}
+.fs-tab-trigger[data-state="active"] {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+  color: hsl(var(--foreground));
+  box-shadow:
+    0 1px 4px hsl(0 0% 0% / 0.06),
+    0 2px 8px hsl(0 0% 0% / 0.04);
+}
+
+/* ================================================================
+   PANEL CARD — wraps each tab's content
+   ================================================================ */
+.fs-panel {
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.04),
+    0 4px 16px hsl(0 0% 0% / 0.04);
+  overflow: hidden;
+  animation: fs-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Panel header — top accent bar + gradient */
+.fs-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.375rem;
   border-bottom: 1px solid hsl(var(--border));
   background: linear-gradient(
     to bottom,
@@ -397,301 +239,533 @@
   );
   position: relative;
 }
-
-/* Left accent bar — fee brand gradient */
-.md-fee-panel-header::before {
+.fs-panel-header::before {
   content: "";
   position: absolute;
-  left: 0; top: 0; bottom: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
   width: 3px;
-  background: linear-gradient(
-    to bottom,
-    hsl(222 80% 58%),
-    hsl(196 80% 52%)
-  );
+  background: hsl(196 72% 42%);
   border-radius: 0 2px 2px 0;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
-.md-card-title {
-  font-size: 0.8125rem;
+.fs-panel-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.fs-panel-subtitle {
+  font-size: 0.72rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0.1rem 0 0;
+}
+
+/* Panel body */
+.fs-panel-body {
+  padding: 1.375rem;
+}
+
+/* ================================================================
+   SECTION LABEL — mirrors tm-section-label
+   ================================================================ */
+.fs-section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: hsl(196 60% 40%);
+  margin-bottom: 1rem;
+}
+.fs-section-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: hsl(196 60% 40% / 0.15);
+}
+
+/* ================================================================
+   FORM FIELDS
+   ================================================================ */
+.fs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.fs-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.01em;
+}
+.fs-field input,
+.fs-field textarea,
+.fs-field [data-radix-select-trigger] {
+  background: hsl(var(--muted) / 0.45);
+  border-color: hsl(var(--border));
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+.fs-field input:focus,
+.fs-field textarea:focus {
+  background: hsl(var(--background));
+  border-color: hsl(196 60% 40% / 0.55);
+  box-shadow: 0 0 0 3px hsl(196 60% 40% / 0.1);
+}
+.fs-field-error {
+  font-size: 0.72rem;
+  color: hsl(var(--destructive));
+}
+.fs-field-hint {
+  font-size: 0.72rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ================================================================
+   FORM GRID LAYOUTS
+   ================================================================ */
+.fs-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.fs-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+/* ================================================================
+   FORM FOOTER
+   ================================================================ */
+.fs-form-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid hsl(var(--border) / 0.6);
+  margin-top: 0.25rem;
+}
+
+/* ================================================================
+   RESPONSE / RESULT CARD
+   ================================================================ */
+.fs-response-card {
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.3);
+  overflow: hidden;
+  animation: fs-fade 0.2s ease both;
+}
+.fs-response-card--error {
+  border-color: hsl(var(--destructive) / 0.35);
+  background: hsl(var(--destructive) / 0.04);
+}
+
+.fs-response-header {
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  background: hsl(var(--muted) / 0.4);
+}
+.fs-response-header--error {
+  background: hsl(var(--destructive) / 0.06);
+}
+.fs-response-title {
+  font-size: 0.78rem;
   font-weight: 700;
   color: hsl(var(--foreground));
-  letter-spacing: -0.015em;
-  margin: 0 0 0.2rem;
-  line-height: 1.3;
+  margin: 0;
+}
+.fs-response-title--error {
+  color: hsl(var(--destructive));
 }
 
-.md-card-subtitle {
+.fs-response-body {
+  padding: 0.875rem 1rem;
+}
+.fs-response-pre {
+  font-size: 0.75rem;
+  line-height: 1.6;
+  overflow: auto;
+  max-height: 16rem;
+  padding: 0.75rem;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border) / 0.5);
+  border-radius: 0.5rem;
+  margin: 0;
+  color: hsl(var(--foreground));
+}
+
+/* ================================================================
+   TABLE CARD — list panel
+   ================================================================ */
+.fs-table-card {
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.04),
+    0 2px 10px hsl(0 0% 0% / 0.03);
+  overflow: hidden;
+}
+
+.fs-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--muted) / 0.5),
+    hsl(var(--muted) / 0.2)
+  );
+  position: relative;
+}
+.fs-table-toolbar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: hsl(196 72% 42%);
+  border-radius: 0 2px 2px 0;
+  opacity: 0.85;
+}
+
+.fs-table-count {
+  font-size: 0.8125rem;
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+}
+
+/* ── Table styling ──────────────────────────────────────────────── */
+.fs-table-wrap { overflow-x: auto; }
+
+.fs-table { width: 100%; }
+
+.fs-table thead tr {
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--muted) / 0.55),
+    hsl(var(--muted) / 0.3)
+  );
+}
+.fs-table thead th {
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground)) !important;
+  padding: 0.7rem 1rem !important;
+  white-space: nowrap;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+}
+
+.fs-table tbody tr {
+  border-bottom: 1px solid hsl(var(--border) / 0.6) !important;
+  transition: background 0.12s;
+}
+.fs-table tbody tr:last-child {
+  border-bottom: none !important;
+}
+.fs-table tbody tr:hover {
+  background: hsl(var(--muted) / 0.38);
+}
+.fs-table tbody td {
+  padding: 0.75rem 1rem !important;
+  font-size: 0.8125rem;
+  vertical-align: middle;
+  color: hsl(var(--foreground));
+}
+
+.fs-id-cell {
+  font-family: ui-monospace, monospace;
   font-size: 0.75rem;
   color: hsl(var(--muted-foreground));
-  margin: 0;
-  line-height: 1.4;
 }
+.fs-amount-cell {
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+  color: hsl(196 60% 38%);
+}
+.fs-desc-cell {
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ================================================================
+   FILTER PANEL
+   ================================================================ */
+.fs-filter-section {
+  padding: 1.375rem;
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.04);
+}
+
+.fs-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid hsl(var(--border) / 0.5);
+  margin-top: 0.25rem;
+}
+
+/* Error banner */
+.fs-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.625rem;
+  border: 1px solid hsl(var(--destructive) / 0.3);
+  background: hsl(var(--destructive) / 0.05);
+  color: hsl(var(--destructive));
+  font-size: 0.8125rem;
+}
+
+/* Results card */
+.fs-results-card {
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  overflow: hidden;
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.04);
+  animation: fs-enter 0.22s ease both;
+}
+
+.fs-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.125rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.4);
+}
+.fs-results-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ================================================================
+   EMPTY STATE
+   ================================================================ */
+.fs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  border: 1.5px dashed hsl(var(--border));
+  border-radius: 0.75rem;
+  background: hsl(var(--muted) / 0.15);
+  margin: 0.5rem;
+}
+.fs-empty-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+.fs-empty-desc {
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+}
+
+/* ================================================================
+   STATS STRIP (optional — shown above list)
+   ================================================================ */
+.fs-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.fs-stat {
+  position: relative;
+  padding: 1rem 1.125rem 1.125rem;
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  overflow: hidden;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s;
+  box-shadow: 0 1px 3px hsl(0 0% 0% / 0.04);
+}
+.fs-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px hsl(0 0% 0% / 0.08);
+}
+.fs-stat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--fs-color);
+  opacity: 0.04;
+  pointer-events: none;
+}
+.fs-stat::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--fs-color);
+  opacity: 0.7;
+  border-radius: 0.875rem 0.875rem 0 0;
+}
+
+.fs-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: var(--fs-color);
+  margin-bottom: 0.75rem;
+}
+.fs-stat-icon svg { width: 0.9rem; height: 0.9rem; color: #fff; }
+
+.fs-stat-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.065em;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.25rem;
+}
+.fs-stat-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: hsl(var(--foreground));
+  line-height: 1;
+}
+
+.fs-stat--teal   { --fs-color: hsl(196 72% 40%); }
+.fs-stat--green  { --fs-color: hsl(142 71% 38%); }
+.fs-stat--amber  { --fs-color: hsl(38 92% 44%); }
+.fs-stat--violet { --fs-color: hsl(263 70% 52%); }
+
+/* ================================================================
+   UPDATE PANEL — auth alert
+   ================================================================ */
+.fs-auth-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--destructive) / 0.3);
+  background: hsl(var(--destructive) / 0.06);
+  animation: fs-fade 0.2s ease;
+}
+.fs-auth-alert svg {
+  flex-shrink: 0;
+  color: hsl(var(--destructive));
+}
+.fs-auth-alert p {
+  font-size: 0.8125rem;
+  color: hsl(var(--destructive));
+  margin: 0;
+}
+
+/* ================================================================
+   FORM SECTION CARD — wraps a logical group inside a panel
+   ================================================================ */
+.fs-form-section {
+  padding: 1.375rem;
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.04),
+    0 4px 14px hsl(0 0% 0% / 0.03);
+}
+
+/* ================================================================
+   SKELETON SHIMMER
+   ================================================================ */
+.fs-skel {
+  border-radius: 0.5rem;
+  background: hsl(var(--muted));
+  position: relative;
+  overflow: hidden;
+  min-height: 1rem;
+}
+.fs-skel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--muted-foreground) / 0.07) 50%,
+    transparent 100%
+  );
+  animation: fs-shimmer 1.5s infinite ease-in-out;
+}
+
+/* ================================================================
+   REFRESH BUTTON — teal accent on hover
+   ================================================================ */
+.fs-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.45rem 0.875rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: all 0.16s;
+}
+.fs-refresh-btn:hover:not(:disabled) {
+  border-color: hsl(196 72% 40% / 0.45);
+  color: hsl(196 72% 38%);
+  background: hsl(196 72% 40% / 0.06);
+}
+.fs-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.fs-refresh-btn svg { width: 0.8rem; height: 0.8rem; }
 
 /* ================================================================
    RESPONSIVE
    ================================================================ */
 @media (max-width: 1024px) {
-  /* Submenu items get slightly more padding touch targets */
-  .fs-submenu-item {
-    padding: 0.625rem 0.75rem;
+  .fs-grid-4 {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .md-fee-panel-header {
-    padding: 1rem 1.125rem;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .md-card-title { font-size: 0.8125rem; }
-
-  .fs-submenu {
-    padding: 0.375rem 0.375rem 0.5rem;
-  }
-
-  .fs-submenu-item {
-    padding: 0.6rem 0.75rem;
-  }
+  .fs-hero { padding: 1.375rem 1.25rem 1.5rem; }
+  .fs-grid-2 { grid-template-columns: 1fr; }
+  .fs-grid-4 { grid-template-columns: 1fr; }
+  .fs-stats { grid-template-columns: 1fr 1fr; }
+  .fs-panel-body { padding: 1rem; }
+  .fs-form-section { padding: 1rem; }
+  .fs-filter-section { padding: 1rem; }
 }
 
 @media (max-width: 480px) {
-  .fs-section-btn-left span {
-    font-size: 0.75rem;
-  }
-
-  .fs-submenu-label {
-    font-size: 0.7rem;
-  }
-}
-
-
-/* =========================================================
-   FEE STRUCTURES PAGE LAYOUT
-========================================================= */
-
-.fs-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding-bottom: 3rem;
-}
-
-/* =========================================================
-   HERO SECTION FIX
-========================================================= */
-
-.md-hero--fee {
-  position: relative;
-  overflow: hidden;
-  border-radius: 1.25rem;
-  padding: 2rem 2.25rem;
-  min-height: 150px;
-
-  background:
-    linear-gradient(
-      135deg,
-      hsl(224 72% 18%) 0%,
-      hsl(222 68% 22%) 35%,
-      hsl(216 62% 26%) 70%,
-      hsl(205 70% 30%) 100%
-    ) !important;
-
-  box-shadow:
-    0 10px 35px hsl(220 80% 8% / 0.35),
-    inset 0 1px 0 hsl(0 0% 100% / 0.06);
-}
-
-/* glowing orb */
-.md-hero--fee::before {
-  content: "";
-  position: absolute;
-  top: -80px;
-  right: -60px;
-  width: 260px;
-  height: 260px;
-  border-radius: 999px;
-
-  background:
-    radial-gradient(
-      circle,
-      hsl(196 100% 70% / 0.22),
-      transparent 70%
-    );
-}
-
-/* grid texture */
-.md-hero--fee::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-
-  background-image:
-    radial-gradient(
-      hsl(0 0% 100% / 0.05) 1px,
-      transparent 1px
-    );
-
-  background-size: 22px 22px;
-  pointer-events: none;
-}
-
-.md-hero--fee .md-hero-inner {
-  position: relative;
-  z-index: 2;
-}
-
-.md-hero--fee .md-hero-title {
-  color: white !important;
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-}
-
-.md-hero--fee .md-hero-sub {
-  color: hsl(0 0% 100% / 0.72) !important;
-  font-size: 0.9rem;
-}
-
-.md-hero--fee .md-hero-icon-wrap {
-  width: 3.4rem;
-  height: 3.4rem;
-  border-radius: 1rem;
-
-  background:
-    hsl(0 0% 100% / 0.12) !important;
-
-  backdrop-filter: blur(10px);
-
-  border:
-    1px solid hsl(0 0% 100% / 0.16) !important;
-
-  box-shadow:
-    0 8px 24px hsl(196 80% 50% / 0.2);
-}
-
-.md-hero--fee .md-hero-icon-wrap svg {
-  width: 1.5rem;
-  height: 1.5rem;
-  color: white !important;
-}
-
-.md-hero--fee .md-hero-badge {
-  background:
-    hsl(0 0% 100% / 0.1) !important;
-
-  color: white !important;
-
-  border:
-    1px solid hsl(0 0% 100% / 0.14) !important;
-
-  backdrop-filter: blur(8px);
-}
-
-/* =========================================================
-   TABS DESIGN
-========================================================= */
-
-.fs-page [role="tablist"] {
-  padding: 0.4rem !important;
-  border-radius: 1rem !important;
-
-  background:
-    linear-gradient(
-      to bottom,
-      hsl(var(--muted) / 0.7),
-      hsl(var(--muted) / 0.4)
-    ) !important;
-
-  border:
-    1px solid hsl(var(--border));
-
-  box-shadow:
-    inset 0 1px 0 hsl(0 0% 100% / 0.04);
-}
-
-.fs-page [role="tab"] {
-  min-height: 46px;
-  border-radius: 0.8rem !important;
-
-  transition:
-    all 0.2s ease;
-}
-
-.fs-page [role="tab"][data-state="active"] {
-  background: white !important;
-
-  box-shadow:
-    0 4px 14px hsl(220 30% 10% / 0.08);
-
-  transform: translateY(-1px);
-}
-
-/* =========================================================
-   CONTENT PANELS
-========================================================= */
-
-.md-fee-panel {
-  border-radius: 1.25rem;
-  overflow: hidden;
-
-  background:
-    linear-gradient(
-      to bottom,
-      hsl(0 0% 100%),
-      hsl(220 20% 99%)
-    );
-
-  border:
-    1px solid hsl(var(--border));
-
-  box-shadow:
-    0 6px 24px hsl(220 30% 10% / 0.05);
-
-  animation:
-    fs-enter 0.35s ease;
-}
-
-.md-fee-panel-header {
-  padding: 1.2rem 1.5rem !important;
-
-  background:
-    linear-gradient(
-      to bottom,
-      hsl(220 30% 99%),
-      hsl(220 20% 97%)
-    );
-}
-
-.md-card-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: hsl(var(--foreground));
-}
-
-.md-card-subtitle {
-  font-size: 0.82rem;
-  color: hsl(var(--muted-foreground));
-}
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 768px) {
-
-  .md-hero--fee {
-    padding: 1.5rem;
-  }
-
-  .md-hero--fee .md-hero-inner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .fs-page [role="tablist"] {
-    grid-template-columns: 1fr 1fr !important;
-  }
+  .fs-hero-badge { display: none; }
+  .fs-tabs-list { grid-template-columns: repeat(2, 1fr); }
 }

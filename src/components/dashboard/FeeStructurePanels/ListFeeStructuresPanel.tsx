@@ -1,7 +1,7 @@
+// src/components/dashboard/FeeStructurePanels/ListFeeStructuresPanel.tsx
+
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -15,63 +15,67 @@ import EmptyState from "@/components/common/EmptyState";
 import { getAllFeeStructures } from "@/lib/api/feeStructures";
 
 export function ListFeeStructuresPanel() {
-  // COMPLETELY ISOLATED QUERY - unique key with timestamp
   const feesQuery = useQuery({
     queryKey: ["list-fee-structures-panel-isolated"],
     queryFn: getAllFeeStructures,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes cache
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
     retry: 2,
   });
 
-  // Safe data extraction
-  const fees = feesQuery.data && Array.isArray(feesQuery.data) ? feesQuery.data : [];
+  const fees =
+    feesQuery.data && Array.isArray(feesQuery.data) ? feesQuery.data : [];
 
   return (
     <div className="space-y-4 w-full">
-      {/* Header Card */}
-      <Card className="p-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">
+      {/* Toolbar */}
+      <div className="fs-table-card">
+        <div className="fs-table-toolbar">
+          <span className="fs-table-count">
             {feesQuery.isSuccess
               ? `Total: ${fees.length} fee structure${fees.length === 1 ? "" : "s"}`
               : feesQuery.isLoading
-              ? "Loading..."
+              ? "Loading…"
               : "Error loading"}
           </span>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => feesQuery.refetch()}
-          disabled={feesQuery.isLoading}
-          className="gap-2"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
-      </Card>
 
-      {/* Table Card */}
-      <Card className="p-4 w-full">
+          <button
+            className="fs-refresh-btn"
+            onClick={() => feesQuery.refetch()}
+            disabled={feesQuery.isLoading}
+          >
+            <RefreshCw />
+            Refresh
+          </button>
+        </div>
+
+        {/* Table */}
         {feesQuery.isLoading ? (
-          <LoadingTable cols={7} />
+          <div className="p-4">
+            <LoadingTable cols={7} />
+          </div>
         ) : feesQuery.isError ? (
-          <div className="text-center py-8">
-            <p className="text-sm text-destructive font-medium">Failed to load fee structures</p>
-            <p className="text-xs text-muted-foreground mt-1">Please try refreshing</p>
+          <div className="text-center py-10 px-4">
+            <p className="text-sm font-medium" style={{ color: "hsl(var(--destructive))" }}>
+              Failed to load fee structures
+            </p>
+            <p className="text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
+              Please try refreshing
+            </p>
           </div>
         ) : !fees || fees.length === 0 ? (
-          <EmptyState
-            title="No fee structures found"
-            description="No fee structures exist yet. Create one from the Create tab."
-          />
+          <div className="p-4">
+            <EmptyState
+              title="No fee structures found"
+              description="No fee structures exist yet. Create one from the Create tab."
+            />
+          </div>
         ) : (
-          <div className="overflow-x-auto w-full">
-            <Table>
+          <div className="fs-table-wrap">
+            <Table className="fs-table">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[80px]">ID</TableHead>
+                  <TableHead>ID</TableHead>
                   <TableHead>Class</TableHead>
                   <TableHead>Academic Year</TableHead>
                   <TableHead>Fee Type</TableHead>
@@ -81,30 +85,34 @@ export function ListFeeStructuresPanel() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {fees && Array.isArray(fees) && fees.length > 0
-                  ? fees.map((fee) => (
-                      <TableRow key={fee?.id || Math.random()}>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          {String(fee?.id || "—").slice(0, 8)}
-                        </TableCell>
-                        <TableCell className="font-medium">{fee?.className || "—"}</TableCell>
-                        <TableCell>{fee?.academicYearName || fee?.academicYearId || "—"}</TableCell>
-                        <TableCell>{fee?.feeType || "—"}</TableCell>
-                        <TableCell>{fee?.frequency || "—"}</TableCell>
-                        <TableCell className="font-mono">
-                          {typeof fee?.amount === "number" ? `₹${fee.amount.toFixed(2)}` : "—"}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {fee?.description || "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  : null}
+                {fees.map((fee) => (
+                  <TableRow key={fee?.id ?? Math.random()}>
+                    <TableCell className="fs-id-cell">
+                      {String(fee?.id ?? "—").slice(0, 8)}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {fee?.className ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      {fee?.academicYearName ?? fee?.academicYearId ?? "—"}
+                    </TableCell>
+                    <TableCell>{fee?.feeType ?? "—"}</TableCell>
+                    <TableCell>{fee?.frequency ?? "—"}</TableCell>
+                    <TableCell className="fs-amount-cell">
+                      {typeof fee?.amount === "number"
+                        ? `₹${fee.amount.toFixed(2)}`
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="fs-desc-cell">
+                      {fee?.description ?? "—"}
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }
