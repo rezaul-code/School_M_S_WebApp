@@ -17,7 +17,7 @@ import { ListFeeStructuresPanel } from "@/components/dashboard/FeeStructurePanel
 import { UpdateFeeStructurePanel } from "@/components/dashboard/FeeStructurePanels/UpdateFeeStructurePanel";
 import { FilteredFeeStructuresPanel } from "@/components/dashboard/FeeStructurePanels/FilteredFeeStructuresPanel";
 
-import "@/styles/master-data.css";
+import "@/styles/fee-structure.css";
 
 type Tab = "list" | "create" | "filtered" | "update";
 
@@ -34,15 +34,22 @@ const TAB_CONFIG: {
   label: string;
   icon: React.ElementType;
 }[] = [
-  { value: "list",     label: "All Structures", icon: List       },
-  { value: "create",   label: "Create New",      icon: Plus       },
-  { value: "filtered", label: "Filtered View",   icon: Filter     },
-  { value: "update",   label: "Update",          icon: RefreshCw  },
+  { value: "list",     label: "All Structures", icon: List      },
+  { value: "create",   label: "Create New",      icon: Plus      },
+  { value: "filtered", label: "Filtered View",   icon: Filter    },
+  { value: "update",   label: "Update",          icon: RefreshCw },
 ];
+
+const TAB_META: Record<Tab, { title: string; subtitle: string }> = {
+  list:     { title: "All Fee Structures",   subtitle: "Complete list of configured fee structures" },
+  create:   { title: "Create Fee Structure", subtitle: "Define a new fee category and amount schedule" },
+  filtered: { title: "Filtered View",        subtitle: "Query fee structures by class, year or category" },
+  update:   { title: "Update Fee Structure", subtitle: "Edit an existing fee structure record" },
+};
 
 export default function FeeStructuresPage() {
   const location = useLocation();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>(getTabFromUrl(location.search));
 
   useEffect(() => {
@@ -53,24 +60,27 @@ export default function FeeStructuresPage() {
     navigate(`/fee-structures?tab=${value}`);
   };
 
+  const meta = TAB_META[activeTab];
+
   return (
-    <div className="md-page">
+    <div className="fs-page">
+
       {/* ── Hero Banner ──────────────────────────────────── */}
-      <div className="md-hero md-hero--fee">
-        <div className="md-hero-glow" />
-        <div className="md-hero-inner">
-          <div className="md-hero-left">
-            <div className="md-hero-icon-wrap">
+      <div className="fs-hero">
+        <div className="fs-hero-glow" />
+        <div className="fs-hero-inner">
+          <div className="fs-hero-left">
+            <div className="fs-hero-icon-wrap">
               <CreditCard />
             </div>
-            <div className="md-hero-text">
-              <h2 className="md-hero-title">Fee Structures</h2>
-              <p className="md-hero-sub">
+            <div className="fs-hero-text">
+              <h2 className="fs-hero-title">Fee Structures</h2>
+              <p className="fs-hero-sub">
                 Manage school fee schedules, categories and amounts
               </p>
             </div>
           </div>
-          <span className="md-hero-badge">
+          <span className="fs-hero-badge">
             <Sparkles />
             Master Data
           </span>
@@ -83,64 +93,76 @@ export default function FeeStructuresPage() {
         onValueChange={handleTabChange}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted/40 border border-border rounded-xl gap-1">
+        <TabsList className="fs-tabs-list">
           {TAB_CONFIG.map(({ value, label, icon: Icon }) => (
             <TabsTrigger
               key={value}
               value={value}
-              className="flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold rounded-lg data-[state=active]:bg-card data-[state=active]:border data-[state=active]:border-border data-[state=active]:shadow-sm transition-all"
+              className="fs-tab-trigger"
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon />
               <span className="hidden sm:inline">{label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
 
+        {/* ── List ─────────────────────────────────────── */}
         <TabsContent value="list" className="mt-4">
-          <div className="md-fee-panel">
-            <div className="md-fee-panel-header">
+          <div className="fs-panel">
+            <div className="fs-panel-header">
               <div>
-                <p className="md-card-title">All Fee Structures</p>
-                <p className="md-card-subtitle">Complete list of configured fee structures</p>
+                <p className="fs-panel-title">{TAB_META.list.title}</p>
+                <p className="fs-panel-subtitle">{TAB_META.list.subtitle}</p>
               </div>
             </div>
-            <ListFeeStructuresPanel />
+            <div className="fs-panel-body">
+              <ListFeeStructuresPanel />
+            </div>
           </div>
         </TabsContent>
 
+        {/* ── Create ───────────────────────────────────── */}
         <TabsContent value="create" className="mt-4">
-          <div className="md-fee-panel">
-            <div className="md-fee-panel-header">
+          <div className="fs-panel">
+            <div className="fs-panel-header">
               <div>
-                <p className="md-card-title">Create Fee Structure</p>
-                <p className="md-card-subtitle">Define a new fee category and amount schedule</p>
+                <p className="fs-panel-title">{TAB_META.create.title}</p>
+                <p className="fs-panel-subtitle">{TAB_META.create.subtitle}</p>
               </div>
             </div>
-            <CreateFeeStructurePanel />
+            <div className="fs-panel-body">
+              <CreateFeeStructurePanel />
+            </div>
           </div>
         </TabsContent>
 
+        {/* ── Filtered ─────────────────────────────────── */}
         <TabsContent value="filtered" className="mt-4">
-          <div className="md-fee-panel">
-            <div className="md-fee-panel-header">
+          <div className="fs-panel">
+            <div className="fs-panel-header">
               <div>
-                <p className="md-card-title">Filtered View</p>
-                <p className="md-card-subtitle">Query fee structures by class, year or category</p>
+                <p className="fs-panel-title">{TAB_META.filtered.title}</p>
+                <p className="fs-panel-subtitle">{TAB_META.filtered.subtitle}</p>
               </div>
             </div>
-            <FilteredFeeStructuresPanel />
+            <div className="fs-panel-body">
+              <FilteredFeeStructuresPanel />
+            </div>
           </div>
         </TabsContent>
 
+        {/* ── Update ───────────────────────────────────── */}
         <TabsContent value="update" className="mt-4">
-          <div className="md-fee-panel">
-            <div className="md-fee-panel-header">
+          <div className="fs-panel">
+            <div className="fs-panel-header">
               <div>
-                <p className="md-card-title">Update Fee Structure</p>
-                <p className="md-card-subtitle">Edit an existing fee structure record</p>
+                <p className="fs-panel-title">{TAB_META.update.title}</p>
+                <p className="fs-panel-subtitle">{TAB_META.update.subtitle}</p>
               </div>
             </div>
-            <UpdateFeeStructurePanel />
+            <div className="fs-panel-body">
+              <UpdateFeeStructurePanel />
+            </div>
           </div>
         </TabsContent>
       </Tabs>
