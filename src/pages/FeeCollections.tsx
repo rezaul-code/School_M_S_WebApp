@@ -645,7 +645,7 @@ export default function FeeCollections() {
             onClick={() => switchTab("CURRENT_MONTH")}
           >
             <CalendarDays />
-            <span>Monthly</span>
+            <span>Current Month</span>
           </button>
           <button
             className={`ac-mode-tab${activeTab === "DATE_RANGE" ? " ac-mode-tab--active" : ""}`}
@@ -656,7 +656,7 @@ export default function FeeCollections() {
           </button>
         </div>
 
-        {/* ── MONTHLY filters: Academic Year + Payment Mode only ── */}
+        {/* ── MONTHLY filters: Academic Year + Payment Mode only ──
         {activeTab === "CURRENT_MONTH" && (
           <div className="ac-filter-panel">
 
@@ -700,7 +700,7 @@ export default function FeeCollections() {
             </div>
 
           </div>
-        )}
+        )} */}
 
         {/* ── DATE RANGE filters: From + To + Payment Mode ── */}
         {activeTab === "DATE_RANGE" && (
