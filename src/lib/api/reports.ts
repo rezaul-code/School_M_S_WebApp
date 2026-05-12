@@ -7,8 +7,8 @@ import type { ApiResponse } from "@/types/api";
    TYPES
 ========================================================= */
 
-export type FeeStatus = "PAID" | "UNPAID" | "OVERDUE" | "PARTIAL";
-export type FeeType   = "TUITION" | "TRANSPORT" | "EXAM" | "LIBRARY" | "SPORTS" | "OTHER";
+export type FeeStatus = "PAID" | "PENDING" | "OVERDUE" | "PARTIAL" | "WAIVED";
+export type FeeType   = "TUITION" | "ADMISSION" | "EXAM" | "ADHOC" | "SPORTS" | "OTHER";
 
 export interface FeeReportRow {
   ledgerId:         number;
