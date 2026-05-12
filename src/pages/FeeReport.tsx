@@ -58,19 +58,20 @@ import "@/styles/report.css";
 const PAGE_SIZE = 10;
 
 const STATUS_OPTIONS: { value: FeeStatus; label: string }[] = [
-  { value: "PAID",    label: "Paid"    },
-  { value: "UNPAID",  label: "Unpaid"  },
-  { value: "OVERDUE", label: "Overdue" },
+  { value: "PENDING", label: "Pending" },
+  { value: "PAID",    label: "Paid" },
   { value: "PARTIAL", label: "Partial" },
+  { value: "OVERDUE", label: "Overdue" },
+  { value: "WAIVED",  label: "Waived" },
 ];
 
 const FEE_TYPE_OPTIONS: { value: FeeType; label: string }[] = [
+  { value: "ADMISSION", label: "Admission" },
   { value: "TUITION",   label: "Tuition"   },
-  { value: "TRANSPORT", label: "Transport" },
   { value: "EXAM",      label: "Exam"      },
-  { value: "LIBRARY",   label: "Library"   },
   { value: "SPORTS",    label: "Sports"    },
   { value: "OTHER",     label: "Other"     },
+  { value: "ADHOC",     label: "Adhoc"     },
 ];
 
 const INR = (n: number) =>
@@ -85,14 +86,49 @@ const INR = (n: number) =>
 ========================================================= */
 
 function StatusBadge({ status }: { status: FeeStatus }) {
-  const map: Record<FeeStatus, { cls: string; icon: React.ReactNode; label: string }> = {
-    PAID:    { cls: "rpt-badge rpt-badge--paid",    icon: <CheckCircle2 />, label: "Paid"    },
-    UNPAID:  { cls: "rpt-badge rpt-badge--unpaid",  icon: <XCircle />,      label: "Unpaid"  },
-    OVERDUE: { cls: "rpt-badge rpt-badge--overdue", icon: <AlertCircle />,  label: "Overdue" },
-    PARTIAL: { cls: "rpt-badge rpt-badge--partial", icon: <Clock />,        label: "Partial" },
+  const map: Record<
+    FeeStatus,
+    { cls: string; icon: React.ReactNode; label: string }
+  > = {
+    PAID: {
+      cls: "rpt-badge rpt-badge--paid",
+      icon: <CheckCircle2 />,
+      label: "Paid",
+    },
+
+    PENDING: {
+      cls: "rpt-badge rpt-badge--pending",
+      icon: <Clock />,
+      label: "Pending",
+    },
+
+    PARTIAL: {
+      cls: "rpt-badge rpt-badge--partial",
+      icon: <Clock />,
+      label: "Partial",
+    },
+
+    OVERDUE: {
+      cls: "rpt-badge rpt-badge--overdue",
+      icon: <AlertCircle />,
+      label: "Overdue",
+    },
+
+    WAIVED: {
+      cls: "rpt-badge rpt-badge--waived",
+      icon: <Wallet />,
+      label: "Waived",
+    },
   };
-  const cfg = map[status] ?? map.UNPAID;
-  return <span className={cfg.cls}>{cfg.icon}{cfg.label}</span>;
+
+  const cfg = map[status] ?? map.PENDING;
+
+  return (
+    <span className={cfg.cls}>
+      {cfg.icon}
+      {cfg.label}
+    </span>
+  );
 }
 
 /* =========================================================
