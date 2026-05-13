@@ -24,6 +24,7 @@ import {
   ReceiptText,
   Wallet,
   BookMarked,
+  IdCard, // <--- ADDED IDCARD IMPORT HERE
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -44,6 +45,7 @@ export const navItems = [
 export const studentItems = [
   { to: "/students",       label: "Student List",  icon: GraduationCap, exact: true  },
   { to: "/students/admit", label: "Admit Student", icon: UserPlus,      exact: false },
+  { to: "/id-cards",       label: "ID Cards",      icon: IdCard,        exact: false }, // <--- ADDED ID CARDS LINK HERE
 ];
 
 export const teacherItems = [

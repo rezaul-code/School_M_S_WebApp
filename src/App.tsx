@@ -16,6 +16,7 @@ import StudentsPage from "@/pages/Students";
 import AdmissionWizardPage from "@/pages/AdmissionWizard";
 import StudentDetailsPage from "@/pages/StudentDetails";
 import StudentFeeSummaryPage from "@/pages/StudentFeeSummary";
+import IdCardManagement from "@/pages/IdCardManagement"; // <-- ADDED IMPORT
 
 // Teachers
 import RegisterTeacherPage from "@/pages/RegisterTeacher";
@@ -76,8 +77,9 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard />} />
 
               {/* STUDENTS — static routes before dynamic :studentId */}
-              <Route path="/students"       element={<StudentsPage />} />
+              <Route path="/students"         element={<StudentsPage />} />
               <Route path="/students/admit" element={<AdmissionWizardPage />} />
+              <Route path="/id-cards"       element={<IdCardManagement />} /> {/* <-- ADDED ROUTE HERE */}
               <Route path="/students/:studentId"             element={<StudentDetailsPage />} />
               <Route path="/students/:studentId/fee-summary" element={<StudentFeeSummaryPage />} />
 
