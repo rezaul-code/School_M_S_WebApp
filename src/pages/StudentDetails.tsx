@@ -23,6 +23,7 @@ import {
 
 import { getStudent } from "@/lib/api/students";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { PrintSingleIdCardButton } from "@/components/students/PrintSingleIdCardButton"; // <-- ADDED IMPORT
 
 import "@/styles/student-pages.css";
 
@@ -213,12 +214,18 @@ export default function StudentDetailsPage() {
             </div>
           </div>
 
-          {s.admissionDate && (
-            <div className="sp-hero-badge">
-              <CheckCircle2 />
-              Admitted
-            </div>
-          )}
+          {/* Wrapper for the print button and admission badge */}
+          <div className="flex items-center gap-3">
+            {/* <-- ADDED PRINT BUTTON HERE --> */}
+            <PrintSingleIdCardButton studentId={s.id} />
+            
+            {s.admissionDate && (
+              <div className="sp-hero-badge">
+                <CheckCircle2 size={16} />
+                Admitted
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
