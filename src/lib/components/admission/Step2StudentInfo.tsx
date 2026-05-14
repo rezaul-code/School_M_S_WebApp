@@ -18,18 +18,21 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-gray-200">
-        {label} {required && <span className="text-red-400">*</span>}
+      <label className="text-sm font-medium text-gray-700">
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
     </div>
   );
 }
 
+// ⬇️ THIS IS THE MAGIC LINE THAT FORCES LIGHT MODE ON ALL INPUTS ⬇️
+// ⬇️ THIS IS THE MAGIC LINE THAT FORCES LIGHT MODE ON ALL INPUTS (AND BEATS BROWSER AUTOFILL) ⬇️
 const inputClass =
-  'w-full bg-gray-800 border border-gray-700 text-gray-100 rounded-lg px-3 py-2.5 text-sm ' +
-  'placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent';
-
+  'w-full bg-white border border-gray-300 text-gray-900 rounded-lg px-3 py-2.5 text-sm ' +
+  'placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 shadow-sm transition-shadow ' +
+  '[&:-webkit-autofill]:bg-white [&:-webkit-autofill]:[-webkit-text-fill-color:#111827] [&:-webkit-autofill]:[transition:background-color_5000s_ease-in-out_0s]';
+  
 export default function Step2StudentInfo({ state, setState }: Step2StudentInfoProps) {
   const update = (key: StudentInfoKey, value: string) => {
     setState((prev) => ({
@@ -39,12 +42,13 @@ export default function Step2StudentInfo({ state, setState }: Step2StudentInfoPr
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xs font-semibold tracking-widest text-gray-400 uppercase">
-        Student Details
-      </h2>
+    <div className="space-y-8">
+      <div className="space-y-1 border-b border-gray-200 pb-4">
+        <h2 className="text-lg font-bold text-gray-900">Student Details</h2>
+        <p className="text-sm text-gray-500">Enter the primary information for the new student.</p>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <Field label="First name" required>
           <input
             className={inputClass}
@@ -139,8 +143,8 @@ export default function Step2StudentInfo({ state, setState }: Step2StudentInfoPr
         />
       </Field>
 
-      <p className="text-xs text-gray-500">
-        <span className="text-red-400">*</span> First name, last name, email, and password are required to continue.
+      <p className="text-xs text-gray-500 font-medium">
+        <span className="text-red-500">*</span> Required fields to proceed.
       </p>
     </div>
   );

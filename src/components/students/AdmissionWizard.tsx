@@ -1,533 +1,412 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useToast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { getFormOptions, admitStudent } from '@/lib/api/students';
-import type { AcademicYear, ClassSection } from '@/types/api';
+import { useState } from 'react';
+import Step1Setup from '@/lib/components/admission/Step1Setup';
+import Step2StudentInfo from '@/lib/components/admission/Step2StudentInfo';
+import Step3FeesCheckout from '@/lib/components/admission/Step3FeesCheckout';
+import Step4Review from '@/lib/components/admission/Step4Review';
+import ProgressBar from '@/lib/components/admission/ProgressBar';
+import BottomNavigation from '@/lib/components/admission/BottomNavigation';
+import { admitStudent } from '@/lib/api/students';
+import { Printer, Scissors, CheckCircle2, ArrowLeft } from 'lucide-react';
 
-interface SetupData {
-  academicYearId: string | null;
-  classSectionId: string | null;
-  academicYearName: string;
-  classSectionName: string;
-}
+export type PaymentRow = {
+  feeType: string;
+  amountPaid: number;
+  monthsToPay?: number;
+  [key: string]: unknown;
+};
 
-interface StudentInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  rollNumber: string;
-  phone: string;
-  dateOfBirth: string;
-  address: string;
-  guardianName: string;
-  guardianPhone: string;
-}
-
-interface Payment {
-  name: string;
-  amount: number;
-}
-
-interface State {
+export type WizardState = {
   activeStep: 1 | 2 | 3 | 4;
-  setupData: SetupData;
-  studentInfo: StudentInfo;
-  initialPayments: Payment[];
+  setupData: {
+    academicYearId: number | null;
+    classLevelId: number | null;
+    classSectionId: number | null;
+    academicYearName?: string;
+    classLevelName?: string;
+    classSectionName?: string;
+  };
+  studentInfo: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    rollNumber: string;
+    phone: string;
+    dateOfBirth: string;
+    address: string;
+    guardianName: string;
+    guardianPhone: string;
+  };
+  initialPayments: PaymentRow[];
+};
+
+export type SuccessState = {
+  rollNumber: string;
+  feeLedgerRowsGenerated: number;
+};
+
+const INITIAL_STATE: WizardState = {
+  activeStep: 1,
+  setupData: { 
+    academicYearId: null,
+    classLevelId: null,
+    classSectionId: null,
+  },
+  studentInfo: {
+    firstName: '', lastName: '', email: '', password: '',
+    rollNumber: '', phone: '', dateOfBirth: '',
+    address: '', guardianName: '', guardianPhone: '',
+  },
+  initialPayments: [],
+};
+
+// --- Receipt Formatting Helpers ---
+function fmtINR(val: number) {
+  return new Intl.NumberFormat('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(val);
 }
 
-interface FormOptions {
-  academicYears: AcademicYear[];
-  classSections: ClassSection[];
-}
+const today = new Date().toLocaleDateString('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+}).toUpperCase();
 
-const STEPS = ['1. Setup', '2. Student Info', '3. Fees & Checkout', '4. Review'] as const;
-
-const AdmissionWizard: React.FC = () => {
-  const { toast } = useToast();
-
-  const [state, setState] = useState<State>({
-    activeStep: 1,
-    setupData: {
-      academicYearId: null,
-      classSectionId: null,
-      academicYearName: '',
-      classSectionName: '',
-    },
-    studentInfo: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      password: '',
-      rollNumber: '',
-      phone: '',
-      dateOfBirth: '',
-      address: '',
-      guardianName: '',
-      guardianPhone: '',
-    },
-    initialPayments: [],
-  });
-
-const formOptionsQuery = useQuery<FormOptions>({
-    queryKey: ['form-options'],
-    queryFn: () => getFormOptions() as unknown as Promise<FormOptions>,
-  });
-
-  const academicYears = formOptionsQuery.data?.academicYears ?? [];
-  const classSections = formOptionsQuery.data?.classSections ?? [];
-
-  const filteredClassSections = React.useMemo(() => 
-    classSections.filter(s => !state.setupData.academicYearId || s.academicYearId === state.setupData.academicYearId),
-  [classSections, state.setupData.academicYearId]);
-
-  const updateSetupData = useCallback((updates: Partial<SetupData>) => {
-    setState(prev => ({
-      ...prev,
-      setupData: { ...prev.setupData, ...updates },
-    }));
-  }, []);
-
-  const updateStudentInfo = useCallback((updates: Partial<StudentInfo>) => {
-    setState(prev => ({
-      ...prev,
-      studentInfo: { ...prev.studentInfo, ...updates },
-    }));
-  }, []);
-
-  const handleStudentInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    updateStudentInfo({ [name as keyof StudentInfo]: value } as Partial<StudentInfo>);
-  }, [updateStudentInfo]);
-
-  const isStepValid = useCallback((step: State['activeStep']): boolean => {
-    switch (step) {
-      case 1:
-        return !!(state.setupData.academicYearId && state.setupData.classSectionId);
-      case 2:
-        return !!(
-          state.studentInfo.firstName &&
-          state.studentInfo.lastName &&
-          state.studentInfo.email &&
-          state.studentInfo.password &&
-          state.studentInfo.rollNumber
-        );
-      case 3:
-      case 4:
-        return true;
-      default:
-        return false;
-    }
-  }, [state]);
-
-  const goNext = () => {
-    if (isStepValid(state.activeStep)) {
-      setState(prev => ({ ...prev, activeStep: (prev.activeStep + 1) as 2 | 3 | 4 }));
-    }
-  };
-
-  const goBack = () => {
-    if (state.activeStep > 1) {
-      setState(prev => ({ ...prev, activeStep: (prev.activeStep - 1) as 1 | 2 | 3 }));
-    }
-  };
-
-  const totalPayments = state.initialPayments.reduce((sum, p) => sum + p.amount, 0);
-
-  useEffect(() => {
-    if (state.activeStep === 3 && state.initialPayments.length === 0 && state.setupData.classSectionId) {
-      // Mock payments - replace with real fee structures API later
-      setState(prev => ({
-        ...prev,
-        initialPayments: [
-          { name: `Admission Fee - ${state.setupData.classSectionName}`, amount: 10000 },
-          { name: 'First Term Tuition', amount: 25000 },
-          { name: 'Books & Uniforms', amount: 5000 },
-        ],
-      }));
-    }
-  }, [state.activeStep, state.setupData.classSectionId, state.setupData.classSectionName, state.initialPayments.length]);
-
-  const handleConfirm = async () => {
-    if (!state.setupData.classSectionId) return;
-
-    const payload = {
-      ...state.studentInfo,
-      classSectionId: state.setupData.classSectionId,
-    };
-
-    try {
-      await admitStudent(payload);
-      toast({
-        title: 'Success!',
-        description: 'Student admission confirmed and payment processed.',
-      });
-      // Reset form or emit event to parent
-      setState({
-        activeStep: 1,
-        setupData: { academicYearId: null, classSectionId: null, academicYearName: '', classSectionName: '' },
-        studentInfo: { firstName: '', lastName: '', email: '', password: '', rollNumber: '', phone: '', dateOfBirth: '', address: '', guardianName: '', guardianPhone: '' },
-        initialPayments: [],
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to confirm admission.',
-      });
-    }
-  };
-
-  const renderStepContent = () => {
-    if (formOptionsQuery.isLoading) {
-      return (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-lg">Loading form options...</div>
-        </div>
-      );
-    }
-
-    switch (state.activeStep) {
-      case 1:
-        return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="academicYear">Academic Year *</Label>
-              <Select
-                value={state.setupData.academicYearId || ''}
-                onValueChange={(value) => {
-                  const year = academicYears.find((y) => y.id === value);
-                  updateSetupData({
-                    academicYearId: value,
-                    classSectionId: null,
-                    academicYearName: year?.name || '',
-                    classSectionName: '',
-                  });
-                }}
-              >
-                <SelectTrigger id="academicYear">
-                  <SelectValue placeholder="Select academic year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {academicYears.map((year) => (
-                    <SelectItem key={year.id} value={year.id}>
-                      {year.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="classSection">Class Section *</Label>
-              <Select
-                value={state.setupData.classSectionId || ''}
-                onValueChange={(value) => {
-                  const section = filteredClassSections.find((s) => s.id === value);
-                  let sectionName = '';
-                  if (section) {
-                    sectionName = `${section.className?.replace(/_/g, ' ') || ''} - ${section.sectionName}`;
-                  }
-                  updateSetupData({
-                    classSectionId: value,
-                    classSectionName: sectionName,
-                  });
-                }}
-                disabled={!state.setupData.academicYearId || filteredClassSections.length === 0}
-              >
-                <SelectTrigger id="classSection">
-                  <SelectValue placeholder={state.setupData.academicYearId ? 'Select class section' : 'First select year'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredClassSections.map((section) => {
-                    const displayName = `${section.className?.replace(/_/g, ' ') || ''} - ${section.sectionName}`;
-                    return (
-                      <SelectItem key={section.id} value={section.id}>
-                        {displayName}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        );
-
-      case 2:
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
-              <Input
-                id="firstName"
-                name="firstName"
-                value={state.studentInfo.firstName}
-                onChange={handleStudentInputChange}
-                placeholder="John"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name *</Label>
-              <Input
-                id="lastName"
-                name="lastName"
-                value={state.studentInfo.lastName}
-                onChange={handleStudentInputChange}
-                placeholder="Doe"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={state.studentInfo.email}
-                onChange={handleStudentInputChange}
-                placeholder="john@example.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password *</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={state.studentInfo.password}
-                onChange={handleStudentInputChange}
-                placeholder="••••••••"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="rollNumber">Roll Number *</Label>
-              <Input
-                id="rollNumber"
-                name="rollNumber"
-                value={state.studentInfo.rollNumber}
-                onChange={handleStudentInputChange}
-                placeholder="001"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                name="phone"
-                value={state.studentInfo.phone}
-                onChange={handleStudentInputChange}
-                placeholder="+1 (555) 000-0000"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dateOfBirth">Date of Birth</Label>
-              <Input
-                id="dateOfBirth"
-                name="dateOfBirth"
-                type="date"
-                value={state.studentInfo.dateOfBirth}
-                onChange={handleStudentInputChange}
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="address">Address</Label>
-              <Textarea
-                id="address"
-                name="address"
-                value={state.studentInfo.address}
-                onChange={handleStudentInputChange}
-                placeholder="123 Main St, City"
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="guardianName">Guardian Name</Label>
-              <Input
-                id="guardianName"
-                name="guardianName"
-                value={state.studentInfo.guardianName}
-                onChange={handleStudentInputChange}
-                placeholder="Jane Doe"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="guardianPhone">Guardian Phone</Label>
-              <Input
-                id="guardianPhone"
-                name="guardianPhone"
-                value={state.studentInfo.guardianPhone}
-                onChange={handleStudentInputChange}
-                placeholder="+1 (555) 000-0000"
-              />
-            </div>
-          </div>
-        );
-
-      case 3:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-gray-900">Initial Payments Required</h3>
-            <div className="divide-y divide-gray-200 rounded-xl border">
-              {state.initialPayments.map((payment, index) => (
-                <div key={index} className="flex items-center justify-between p-6">
-                  <div>
-                    <p className="text-lg font-medium">{payment.name}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-gray-900">${payment.amount.toLocaleString()}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="text-right">
-              <div className="inline-flex items-baseline text-3xl font-bold text-green-600">
-                Total: ${totalPayments.toLocaleString()}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-xl font-semibold mb-4 border-b pb-2">1. Setup</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Academic Year:</span>
-                  <p className="font-medium">{state.setupData.academicYearName}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Class Section:</span>
-                  <p className="font-medium">{state.setupData.classSectionName}</p>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold mb-4 border-b pb-2">2. Student Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Name:</span>
-                  <p className="font-medium">{`${state.studentInfo.firstName} ${state.studentInfo.lastName}`}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Email:</span>
-                  <p className="font-medium">{state.studentInfo.email}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <span className="text-gray-500">Roll Number:</span>
-                  <p className="font-medium">{state.studentInfo.rollNumber}</p>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold mb-4 border-b pb-2">3. Payments</h3>
-              <div className="text-right text-2xl font-bold text-green-600">
-                Total: ${totalPayments.toLocaleString()}
-              </div>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
+// --- Receipt Copy Component ---
+function ReceiptCopy({ copyType, state, successData }: { copyType: string, state: WizardState, successData: SuccessState }) {
+  const fullName = `${state.studentInfo.firstName} ${state.studentInfo.lastName}`.trim().toUpperCase();
+  const sectionName = (state.setupData as any).classSectionName ?? `${state.setupData.classSectionName}`;
+  
+  let grandTotalReq = 0;
+  let grandTotalPaid = 0;
+  let grandTotalBal = 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <Card className="shadow-2xl">
-          <CardContent className="p-0">
-            {/* Header */}
-            <div className="p-8 border-b bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-xl">
-              <h1 className="text-3xl font-bold mb-2">Student Admission</h1>
-              <p className="text-blue-100">Complete the steps to admit new student</p>
-            </div>
+    <div className="relative bg-white pt-2 pb-4 px-4 print:px-0 print:pb-0">
+      {/* Top right tag */}
+      <div className="absolute top-0 right-4 print:right-0 text-[10px] font-bold text-slate-400 uppercase tracking-widest border border-slate-200 px-2 py-0.5 rounded-sm">
+        {copyType}
+      </div>
 
-            {/* Progress Bar */}
-            <div className="px-8 pt-8 pb-4">
-              <div className="flex items-center justify-between w-full mb-4">
-                {STEPS.map((label, index) => (
-                  <React.Fragment key={label}>
-                    <div className={`flex flex-col items-center min-w-[100px] ${
-                      index < state.activeStep - 1
-                        ? 'text-green-600'
-                        : index + 1 === state.activeStep
-                        ? 'text-blue-600'
-                        : 'text-gray-500'
-                    }`}>
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shadow-md transition-all ${
-                        index < state.activeStep
-                          ? 'bg-green-500 text-white border-4 border-green-400 shadow-green-300'
-                          : index + 1 === state.activeStep
-                          ? 'bg-blue-500 text-white border-4 border-blue-400 shadow-blue-300'
-                          : 'bg-gray-200 text-gray-600 border-4 border-gray-300 shadow-sm'
-                      }`}>
-                        {index < state.activeStep ? '✓' : index + 1}
-                      </div>
-                      <span className="mt-2 text-xs font-medium">{label}</span>
-                    </div>
-                    {index < STEPS.length - 1 && (
-                      <div className={`h-1 flex-1 mx-2 bg-gradient-to-r ${
-                        index < state.activeStep - 1
-                          ? 'bg-green-500 shadow-sm'
-                          : 'bg-gray-300'
-                      }`} />
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6 pt-4">
+        <div className="w-12 h-12 rounded-full bg-slate-50 border-2 border-slate-200 flex items-center justify-center font-bold text-xl text-slate-400 shrink-0">
+          🏫
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wide">SARBAJANIN ACADEMY</h3>
+          <p className="text-[10px] text-slate-500 font-semibold tracking-widest uppercase mt-0.5">Fee Payment Receipt</p>
+        </div>
+        <div className="ml-auto text-right">
+          <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Receipt No.</div>
+          <div className="text-sm font-bold text-slate-900 mt-0.5">RCPT-ADM-{successData.rollNumber}</div>
+        </div>
+      </div>
 
-            {/* Step Content */}
-            <div className="px-8 pb-8 max-h-[calc(100vh-300px)] overflow-y-auto">
-              {renderStepContent()}
-            </div>
+      {/* Info Grid */}
+      <div className="grid grid-cols-2 gap-8 text-xs mb-6">
+        <div className="grid grid-cols-[70px_1fr] gap-y-1.5 gap-x-2">
+           <span className="text-slate-500">Student:</span><span className="font-bold text-slate-900">{fullName}</span>
+           <span className="text-slate-500">Adm No:</span><span className="font-bold text-slate-900">{successData.rollNumber}</span>
+           <span className="text-slate-500">Class:</span><span className="font-bold text-slate-900">{sectionName}</span>
+        </div>
+        <div className="grid grid-cols-[70px_1fr] gap-y-1.5 gap-x-2">
+           <span className="text-slate-500">Date:</span><span className="font-bold text-slate-900">{today}</span>
+           <span className="text-slate-500">Method:</span><span className="font-bold text-slate-900">SYSTEM / ADMISSION</span>
+        </div>
+      </div>
 
-            {/* Navigation */}
-            <div className="px-8 pb-8 pt-4 border-t bg-slate-50/50">
-              <div className="flex items-center justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={goBack}
-                  className={state.activeStep === 1 ? 'opacity-0 pointer-events-none' : ''}
-                  size="lg"
-                >
-                  ← Back
-                </Button>
-                {state.activeStep === 4 ? (
-                  <Button
-                    size="lg"
-                    className="ml-auto px-16 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-lg font-semibold shadow-xl transition-all"
-                    onClick={handleConfirm}
-                  >
-                    Confirm Admission & Pay
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    size="lg"
-                    className="ml-auto px-16 bg-blue-600 hover:bg-blue-700 text-lg font-semibold shadow-lg transition-all"
-                    disabled={!isStepValid(state.activeStep)}
-                    onClick={goNext}
-                  >
-                    Next Step →
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Fee Table */}
+      <table className="w-full text-xs mb-8 border-collapse">
+        <thead>
+          <tr className="border-b-2 border-slate-800 text-slate-600 text-[10px] uppercase tracking-wider">
+            <th className="py-2 px-2 text-left font-bold">Particulars</th>
+            <th className="py-2 px-2 text-right font-bold">Required (₹)</th>
+            <th className="py-2 px-2 text-right font-bold text-emerald-600">Paid Now (₹)</th>
+            <th className="py-2 px-2 text-right font-bold text-red-600">Balance (₹)</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {state.initialPayments.map((p, i) => {
+            const required = (p.totalObligation as number) ?? p.amountPaid;
+            const paid = p.amountPaid;
+            const balance = required - paid;
+
+            grandTotalReq += required;
+            grandTotalPaid += paid;
+            grandTotalBal += balance;
+
+            const label = (p.label as string) ?? p.feeType;
+
+            return (
+              <tr key={i}>
+                <td className="py-2.5 px-2 font-medium text-slate-800">
+                  {label} {p.monthsToPay ? <span className="text-slate-400 text-[10px] font-normal">({p.monthsToPay} mos)</span> : ''}
+                </td>
+                <td className="py-2.5 px-2 text-right font-medium text-slate-600">{fmtINR(required)}</td>
+                <td className="py-2.5 px-2 text-right font-bold text-emerald-600">{fmtINR(paid)}</td>
+                <td className="py-2.5 px-2 text-right font-medium text-red-600">{fmtINR(balance)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-slate-800 bg-slate-50/50 print:bg-transparent">
+            <td className="py-2.5 px-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-800">Grand Total</td>
+            <td className="py-2.5 px-2 text-right font-bold text-slate-800">{fmtINR(grandTotalReq)}</td>
+            <td className="py-2.5 px-2 text-right font-bold text-emerald-600">{fmtINR(grandTotalPaid)}</td>
+            <td className="py-2.5 px-2 text-right font-bold text-red-600">{fmtINR(grandTotalBal)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      {/* Signature */}
+      <div className="flex justify-end mt-8 pb-2">
+        <div className="text-center w-40">
+          <div className="border-b border-slate-400 mb-2 h-6"></div>
+          <div className="text-[9px] uppercase font-bold tracking-widest text-slate-400">Authorized Signatory</div>
+        </div>
       </div>
     </div>
   );
-};
+}
 
-export default AdmissionWizard;
+export default function AdmissionWizard() {
+  const [state, setState] = useState<WizardState>(INITIAL_STATE);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successData, setSuccessData] = useState<SuccessState | null>(null);
 
+  // ── Validation ──────────────────────────────────────────────────────────────
+  const isStep1Valid = () =>
+    state.setupData.academicYearId !== null &&
+    state.setupData.classLevelId !== null &&
+    state.setupData.classSectionId !== null;
+
+  const isStep2Valid = () =>
+    state.studentInfo.firstName.trim() !== '' &&
+    state.studentInfo.lastName.trim() !== '' &&
+    state.studentInfo.email.trim() !== '' &&
+    state.studentInfo.password.trim() !== '';
+
+  const isStep3Valid = () => state.initialPayments.length > 0;
+
+  const isCurrentStepValid = () => {
+    switch (state.activeStep) {
+      case 1: return isStep1Valid();
+      case 2: return isStep2Valid();
+      case 3: return isStep3Valid();
+      case 4: return true;
+    }
+  };
+
+  // ── Navigation ──────────────────────────────────────────────────────────────
+  const handleNext = async () => {
+    if (state.activeStep === 4) {
+      await handleSubmit();
+    } else {
+      setState((prev) => ({ ...prev, activeStep: (prev.activeStep + 1) as 1 | 2 | 3 | 4 }));
+    }
+  };
+
+  const handleBack = () => {
+    if (state.activeStep > 1) {
+      setState((prev) => ({ ...prev, activeStep: (prev.activeStep - 1) as 1 | 2 | 3 | 4 }));
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // ── Submit ───────────────────────────────────────────────────────────────────
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const paymentsPayload = state.initialPayments.map((p) => ({
+        feeType: p.feeType,
+        amountPaid: p.amountPaid,
+        ...(p.monthsToPay !== undefined ? { monthsToPay: p.monthsToPay } : {}),
+      }));
+
+      const result = await admitStudent({
+        email: state.studentInfo.email,
+        password: state.studentInfo.password,
+        firstName: state.studentInfo.firstName,
+        lastName: state.studentInfo.lastName,
+        rollNumber: state.studentInfo.rollNumber,
+        phone: state.studentInfo.phone || undefined,
+        dateOfBirth: state.studentInfo.dateOfBirth || undefined,
+        address: state.studentInfo.address || undefined,
+        guardianName: state.studentInfo.guardianName || undefined,
+        guardianPhone: state.studentInfo.guardianPhone || undefined,
+        classSectionId: String(state.setupData.classSectionId!),
+        // @ts-expect-error - extended payload fields
+        academicYearId: state.setupData.academicYearId,
+        classLevelId: state.setupData.classLevelId,
+        initialPayments: paymentsPayload,
+      });
+
+      setSuccessData({
+        rollNumber: (result as any)?.rollNumber ?? state.studentInfo.rollNumber,
+        feeLedgerRowsGenerated: (result as any)?.feeLedgerRowsGenerated ?? 0,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'An error occurred. Please try again.';
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ── Success / Receipt Screen ─────────────────────────────────────────────────
+  if (successData) {
+    return (
+      <div className="max-w-4xl mx-auto pb-12 pt-6">
+        
+        {/* 🔥 THE MAGIC FIX: Aggressive Print Isolation 🔥 */}
+        <style type="text/css" media="print">
+          {`
+            /* 1. Hide the entire application (sidebar, navbar, backgrounds) */
+            body * {
+              visibility: hidden;
+            }
+            
+            /* 2. Strip browser headers/footers (Date, URL) and force A4 sizing */
+            @page {
+              size: A4 portrait;
+              margin: 0;
+            }
+            
+            /* 3. Extract ONLY the receipt container, make it visible, and pin it top-left */
+            #print-receipt-area, #print-receipt-area * {
+              visibility: visible;
+            }
+            #print-receipt-area {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              height: 100vh;
+              padding: 15mm; /* Physical paper margins */
+              background: white !important;
+              margin: 0;
+            }
+            
+            /* 4. Force Tailwind colors to print properly */
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          `}
+        </style>
+
+        {/* Success Banner (Hidden on print) */}
+        <div className="print:hidden flex flex-col sm:flex-row items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-8 shadow-sm">
+          <div className="flex items-center gap-4 mb-4 sm:mb-0">
+            <CheckCircle2 className="w-10 h-10 text-emerald-600 shrink-0" />
+            <div>
+              <h2 className="text-lg font-bold text-emerald-900">Admission Successful!</h2>
+              <p className="text-sm text-emerald-700">Student account created and initial fees recorded.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => { setSuccessData(null); setState(INITIAL_STATE); }}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-emerald-200 text-emerald-700 font-semibold rounded-lg text-sm hover:bg-emerald-100 transition-colors whitespace-nowrap"
+          >
+            <ArrowLeft className="w-4 h-4" /> Start New Admission
+          </button>
+        </div>
+
+        {/* The Receipt Document Container */}
+        <div className="bg-white border border-slate-300 rounded-xl overflow-hidden shadow-md print:shadow-none print:border-none print:rounded-none print:overflow-visible">
+          
+          {/* Action Bar (Hidden on print) */}
+          <div className="print:hidden bg-emerald-700 px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-white gap-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-emerald-600 p-2 rounded-lg">
+                <Printer className="w-5 h-5 text-emerald-50" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm tracking-wide">Paper Saver Mode Active</h4>
+                <p className="text-emerald-200 text-xs">Printing Office + Parent copies on one sheet.</p>
+              </div>
+            </div>
+            <button 
+              onClick={handlePrint}
+              className="w-full sm:w-auto bg-emerald-50 text-emerald-800 px-6 py-2.5 rounded-lg text-sm font-bold shadow-sm hover:bg-white transition-colors"
+            >
+              Print Receipts
+            </button>
+          </div>
+
+          {/* 🔥 ACTUAL PRINTABLE AREA 🔥 
+              The CSS ID "print-receipt-area" is what saves it from the layout overlap 
+          */}
+          <div id="print-receipt-area" className="p-8 print:p-0">
+             <ReceiptCopy copyType="OFFICE COPY" state={state} successData={successData} />
+
+             {/* Dashed Separator */}
+             <div className="flex items-center my-4 text-slate-300 print:my-6">
+                <div className="flex-1 border-t-2 border-dashed border-slate-300"></div>
+                <div className="mx-4 flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-slate-400">
+                  <Scissors className="w-4 h-4 -rotate-90" /> Detach Here
+                </div>
+                <div className="flex-1 border-t-2 border-dashed border-slate-300"></div>
+             </div>
+
+             <ReceiptCopy copyType="PARENT COPY" state={state} successData={successData} />
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  // ── Main Wizard ──────────────────────────────────────────────────────────────
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto pb-12">
+      <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+        {/* Header & Progress */}
+        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-6 sm:px-8 sm:py-8">
+          <h1 className="text-2xl font-bold text-slate-900">Admit Student</h1>
+          <p className="text-slate-500 mt-1 text-sm">Create a student account and enrol them in a class.</p>
+          
+          <div className="mt-8">
+            <ProgressBar activeStep={state.activeStep} />
+          </div>
+        </div>
+
+        {/* Step Content */}
+        <div className="px-6 py-8 sm:px-8 sm:py-10 min-h-[400px]">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium">
+              {error}
+            </div>
+          )}
+
+          {state.activeStep === 1 && <Step1Setup state={state} setState={setState} />}
+          {state.activeStep === 2 && <Step2StudentInfo state={state} setState={setState} />}
+          {state.activeStep === 3 && <Step3FeesCheckout state={state} setState={setState} />}
+          {state.activeStep === 4 && <Step4Review state={state} />}
+        </div>
+
+        {/* Footer Navigation */}
+        <div className="border-t border-slate-100 bg-slate-50 px-6 py-5 sm:px-8">
+          <BottomNavigation
+            activeStep={state.activeStep}
+            onBack={handleBack}
+            onNext={handleNext}
+            isNextDisabled={!isCurrentStepValid()}
+            isLoading={isLoading}
+            isLastStep={state.activeStep === 4}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
