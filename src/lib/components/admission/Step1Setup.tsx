@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { WizardState } from '@/components/students/AdmissionWizard';
+import type { WizardState } from '@/components/students/AdmissionWizard'; // adjust import if needed
 import type { AcademicYear, ClassLevel, ClassSection } from '@/types/api';
 import { getFormOptions } from '@/lib/api/students';
  
@@ -37,15 +37,28 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
         <p className="text-sm text-slate-500">Select the academic year and class assignment for the new student.</p>
       </div>
 
-
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        
+        {/* ACADEMIC YEAR */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-slate-700">Academic year <span className="text-red-500">*</span></label>
           <select
             value={state.setupData.academicYearId ?? ''}
             onChange={(e) => {
               const id = e.target.value ? Number(e.target.value) : null;
-              setState((prev) => ({ ...prev, setupData: { academicYearId: id, classLevelId: null, classSectionId: null } }));
+              const selectedYear = academicYears.find(y => y.id === id);
+              
+              setState((prev) => ({ 
+                ...prev, 
+                setupData: { 
+                  academicYearId: id, 
+                  academicYearName: selectedYear?.name,
+                  classLevelId: null, 
+                  classLevelName: undefined,
+                  classSectionId: null,
+                  classSectionName: undefined
+                } 
+              }));
             }}
             className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-sm appearance-none cursor-pointer transition-shadow"
           >
@@ -54,6 +67,7 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
           </select>
         </div>
 
+        {/* CLASS LEVEL */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-slate-700">Class <span className="text-red-500">*</span></label>
           <select
@@ -61,7 +75,18 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
             disabled={!state.setupData.academicYearId}
             onChange={(e) => {
               const id = e.target.value ? Number(e.target.value) : null;
-              setState((prev) => ({ ...prev, setupData: { ...prev.setupData, classLevelId: id, classSectionId: null } }));
+              const selectedClass = classLevels.find(c => c.id === id);
+              
+              setState((prev) => ({ 
+                ...prev, 
+                setupData: { 
+                  ...prev.setupData, 
+                  classLevelId: id, 
+                  classLevelName: selectedClass?.displayName || selectedClass?.name,
+                  classSectionId: null,
+                  classSectionName: undefined
+                } 
+              }));
             }}
             className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-sm appearance-none cursor-pointer disabled:opacity-50 disabled:bg-slate-50 transition-shadow"
           >
@@ -70,6 +95,7 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
           </select>
         </div>
 
+        {/* CLASS SECTION */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-slate-700">Section <span className="text-red-500">*</span></label>
           <select
@@ -77,7 +103,21 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
             disabled={!state.setupData.classLevelId || filteredSections.length === 0}
             onChange={(e) => {
               const id = e.target.value ? Number(e.target.value) : null;
-              setState((prev) => ({ ...prev, setupData: { ...prev.setupData, classSectionId: id } }));
+              const selectedSection = filteredSections.find(s => s.id === id);
+              
+              // Combine Class + Section for a beautiful receipt output (e.g. "Class One - Section A")
+              const combinedName = state.setupData.classLevelName && selectedSection?.sectionName
+                ? `${state.setupData.classLevelName} - ${selectedSection.sectionName}`
+                : selectedSection?.sectionName;
+
+              setState((prev) => ({ 
+                ...prev, 
+                setupData: { 
+                  ...prev.setupData, 
+                  classSectionId: id,
+                  classSectionName: combinedName
+                } 
+              }));
             }}
             className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-sm appearance-none cursor-pointer disabled:opacity-50 disabled:bg-slate-50 transition-shadow"
           >

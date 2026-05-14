@@ -6,6 +6,7 @@ import Step4Review from '@/lib/components/admission/Step4Review';
 import ProgressBar from '@/lib/components/admission/ProgressBar';
 import BottomNavigation from '@/lib/components/admission/BottomNavigation';
 import { admitStudent } from '@/lib/api/students';
+import { Printer, Scissors, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 export type PaymentRow = {
   feeType: string;
@@ -59,6 +60,119 @@ const INITIAL_STATE: WizardState = {
   initialPayments: [],
 };
 
+// --- Receipt Formatting Helpers ---
+function fmtINR(val: number) {
+  return new Intl.NumberFormat('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(val);
+}
+
+const today = new Date().toLocaleDateString('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+}).toUpperCase();
+
+// --- Receipt Copy Component ---
+function ReceiptCopy({ copyType, state, successData }: { copyType: string, state: WizardState, successData: SuccessState }) {
+  const fullName = `${state.studentInfo.firstName} ${state.studentInfo.lastName}`.trim().toUpperCase();
+  const sectionName = (state.setupData as any).classSectionName ?? `${state.setupData.classSectionName}`;
+  
+  let grandTotalReq = 0;
+  let grandTotalPaid = 0;
+  let grandTotalBal = 0;
+
+  return (
+    <div className="relative bg-white pt-2 pb-4 px-4 print:px-0 print:pb-0">
+      {/* Top right tag */}
+      <div className="absolute top-0 right-4 print:right-0 text-[10px] font-bold text-slate-400 uppercase tracking-widest border border-slate-200 px-2 py-0.5 rounded-sm">
+        {copyType}
+      </div>
+
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6 pt-4">
+        <div className="w-12 h-12 rounded-full bg-slate-50 border-2 border-slate-200 flex items-center justify-center font-bold text-xl text-slate-400 shrink-0">
+          🏫
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wide">SARBAJANIN ACADEMY</h3>
+          <p className="text-[10px] text-slate-500 font-semibold tracking-widest uppercase mt-0.5">Fee Payment Receipt</p>
+        </div>
+        <div className="ml-auto text-right">
+          <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Receipt No.</div>
+          <div className="text-sm font-bold text-slate-900 mt-0.5">RCPT-ADM-{successData.rollNumber}</div>
+        </div>
+      </div>
+
+      {/* Info Grid */}
+      <div className="grid grid-cols-2 gap-8 text-xs mb-6">
+        <div className="grid grid-cols-[70px_1fr] gap-y-1.5 gap-x-2">
+           <span className="text-slate-500">Student:</span><span className="font-bold text-slate-900">{fullName}</span>
+           <span className="text-slate-500">Adm No:</span><span className="font-bold text-slate-900">{successData.rollNumber}</span>
+           <span className="text-slate-500">Class:</span><span className="font-bold text-slate-900">{sectionName}</span>
+        </div>
+        <div className="grid grid-cols-[70px_1fr] gap-y-1.5 gap-x-2">
+           <span className="text-slate-500">Date:</span><span className="font-bold text-slate-900">{today}</span>
+           <span className="text-slate-500">Method:</span><span className="font-bold text-slate-900">SYSTEM / ADMISSION</span>
+        </div>
+      </div>
+
+      {/* Fee Table */}
+      <table className="w-full text-xs mb-8 border-collapse">
+        <thead>
+          <tr className="border-b-2 border-slate-800 text-slate-600 text-[10px] uppercase tracking-wider">
+            <th className="py-2 px-2 text-left font-bold">Particulars</th>
+            <th className="py-2 px-2 text-right font-bold">Required (₹)</th>
+            <th className="py-2 px-2 text-right font-bold text-emerald-600">Paid Now (₹)</th>
+            <th className="py-2 px-2 text-right font-bold text-red-600">Balance (₹)</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {state.initialPayments.map((p, i) => {
+            const required = (p.totalObligation as number) ?? p.amountPaid;
+            const paid = p.amountPaid;
+            const balance = required - paid;
+
+            grandTotalReq += required;
+            grandTotalPaid += paid;
+            grandTotalBal += balance;
+
+            const label = (p.label as string) ?? p.feeType;
+
+            return (
+              <tr key={i}>
+                <td className="py-2.5 px-2 font-medium text-slate-800">
+                  {label} {p.monthsToPay ? <span className="text-slate-400 text-[10px] font-normal">({p.monthsToPay} mos)</span> : ''}
+                </td>
+                <td className="py-2.5 px-2 text-right font-medium text-slate-600">{fmtINR(required)}</td>
+                <td className="py-2.5 px-2 text-right font-bold text-emerald-600">{fmtINR(paid)}</td>
+                <td className="py-2.5 px-2 text-right font-medium text-red-600">{fmtINR(balance)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-slate-800 bg-slate-50/50 print:bg-transparent">
+            <td className="py-2.5 px-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-800">Grand Total</td>
+            <td className="py-2.5 px-2 text-right font-bold text-slate-800">{fmtINR(grandTotalReq)}</td>
+            <td className="py-2.5 px-2 text-right font-bold text-emerald-600">{fmtINR(grandTotalPaid)}</td>
+            <td className="py-2.5 px-2 text-right font-bold text-red-600">{fmtINR(grandTotalBal)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      {/* Signature */}
+      <div className="flex justify-end mt-8 pb-2">
+        <div className="text-center w-40">
+          <div className="border-b border-slate-400 mb-2 h-6"></div>
+          <div className="text-[9px] uppercase font-bold tracking-widest text-slate-400">Authorized Signatory</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdmissionWizard() {
   const [state, setState] = useState<WizardState>(INITIAL_STATE);
   const [isLoading, setIsLoading] = useState(false);
@@ -103,6 +217,10 @@ export default function AdmissionWizard() {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   // ── Submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -145,38 +263,105 @@ export default function AdmissionWizard() {
     }
   };
 
-  // ── Success Screen ───────────────────────────────────────────────────────────
+  // ── Success / Receipt Screen ─────────────────────────────────────────────────
   if (successData) {
     return (
-      <div className="flex items-center justify-center p-6 min-h-[80vh]">
-        <div className="bg-white border border-slate-200 rounded-2xl p-10 sm:p-12 text-center max-w-md w-full shadow-lg">
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-green-50 border border-green-200 rounded-full flex items-center justify-center">
-              <svg className="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
+      <div className="max-w-4xl mx-auto pb-12 pt-6">
+        
+        {/* 🔥 THE MAGIC FIX: Aggressive Print Isolation 🔥 */}
+        <style type="text/css" media="print">
+          {`
+            /* 1. Hide the entire application (sidebar, navbar, backgrounds) */
+            body * {
+              visibility: hidden;
+            }
+            
+            /* 2. Strip browser headers/footers (Date, URL) and force A4 sizing */
+            @page {
+              size: A4 portrait;
+              margin: 0;
+            }
+            
+            /* 3. Extract ONLY the receipt container, make it visible, and pin it top-left */
+            #print-receipt-area, #print-receipt-area * {
+              visibility: visible;
+            }
+            #print-receipt-area {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              height: 100vh;
+              padding: 15mm; /* Physical paper margins */
+              background: white !important;
+              margin: 0;
+            }
+            
+            /* 4. Force Tailwind colors to print properly */
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          `}
+        </style>
+
+        {/* Success Banner (Hidden on print) */}
+        <div className="print:hidden flex flex-col sm:flex-row items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-8 shadow-sm">
+          <div className="flex items-center gap-4 mb-4 sm:mb-0">
+            <CheckCircle2 className="w-10 h-10 text-emerald-600 shrink-0" />
+            <div>
+              <h2 className="text-lg font-bold text-emerald-900">Admission Successful!</h2>
+              <p className="text-sm text-emerald-700">Student account created and initial fees recorded.</p>
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Student Admitted Successfully!</h2>
-          <p className="text-slate-500 mb-8 text-sm">The student has been registered in the system.</p>
-
-          <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 mb-8 space-y-4 text-left">
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Roll Number</p>
-              <p className="text-lg font-bold text-slate-900 mt-0.5">{successData.rollNumber}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Fee Ledger Rows Created</p>
-              <p className="text-lg font-bold text-slate-900 mt-0.5">{successData.feeLedgerRowsGenerated}</p>
-            </div>
-          </div>
-
           <button
             onClick={() => { setSuccessData(null); setState(INITIAL_STATE); }}
-            className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-xl font-bold transition-all text-sm shadow-md hover:shadow-lg"
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-emerald-200 text-emerald-700 font-semibold rounded-lg text-sm hover:bg-emerald-100 transition-colors whitespace-nowrap"
           >
-            Start New Admission
+            <ArrowLeft className="w-4 h-4" /> Start New Admission
           </button>
+        </div>
+
+        {/* The Receipt Document Container */}
+        <div className="bg-white border border-slate-300 rounded-xl overflow-hidden shadow-md print:shadow-none print:border-none print:rounded-none print:overflow-visible">
+          
+          {/* Action Bar (Hidden on print) */}
+          <div className="print:hidden bg-emerald-700 px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-white gap-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-emerald-600 p-2 rounded-lg">
+                <Printer className="w-5 h-5 text-emerald-50" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm tracking-wide">Paper Saver Mode Active</h4>
+                <p className="text-emerald-200 text-xs">Printing Office + Parent copies on one sheet.</p>
+              </div>
+            </div>
+            <button 
+              onClick={handlePrint}
+              className="w-full sm:w-auto bg-emerald-50 text-emerald-800 px-6 py-2.5 rounded-lg text-sm font-bold shadow-sm hover:bg-white transition-colors"
+            >
+              Print Receipts
+            </button>
+          </div>
+
+          {/* 🔥 ACTUAL PRINTABLE AREA 🔥 
+              The CSS ID "print-receipt-area" is what saves it from the layout overlap 
+          */}
+          <div id="print-receipt-area" className="p-8 print:p-0">
+             <ReceiptCopy copyType="OFFICE COPY" state={state} successData={successData} />
+
+             {/* Dashed Separator */}
+             <div className="flex items-center my-4 text-slate-300 print:my-6">
+                <div className="flex-1 border-t-2 border-dashed border-slate-300"></div>
+                <div className="mx-4 flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-slate-400">
+                  <Scissors className="w-4 h-4 -rotate-90" /> Detach Here
+                </div>
+                <div className="flex-1 border-t-2 border-dashed border-slate-300"></div>
+             </div>
+
+             <ReceiptCopy copyType="PARENT COPY" state={state} successData={successData} />
+          </div>
+
         </div>
       </div>
     );
