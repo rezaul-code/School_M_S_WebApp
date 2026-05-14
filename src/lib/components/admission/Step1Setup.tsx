@@ -33,8 +33,8 @@ export default function Step1Setup({ state, setState }: Step1SetupProps) {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="space-y-1 border-b border-slate-100 pb-4">
-        <h2 className="text-lg font-bold text-slate-900">Admission Setup ZZZ</h2>
-        <p className="text-sm text-slate-500">zzz Select the academic year and class assignment for the new student.</p>
+        <h2 className="text-lg font-bold text-slate-900">Admission Setup</h2>
+        <p className="text-sm text-slate-500">Select the academic year and class assignment for the new student.</p>
       </div>
 
 

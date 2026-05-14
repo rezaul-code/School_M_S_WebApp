@@ -18,11 +18,10 @@ export type WizardState = {
   activeStep: 1 | 2 | 3 | 4;
   setupData: {
     academicYearId: number | null;
-    classLevelId: number | null;           // ← NEW: Required for fee filtering
+    classLevelId: number | null;
     classSectionId: number | null;
-    // Display names for review screen
     academicYearName?: string;
-    classLevelName?: string;               // ← NEW: For displaying selected class
+    classLevelName?: string;
     classSectionName?: string;
   };
   studentInfo: {
@@ -49,7 +48,7 @@ const INITIAL_STATE: WizardState = {
   activeStep: 1,
   setupData: { 
     academicYearId: null,
-    classLevelId: null,                    // ← NEW: Initialize
+    classLevelId: null,
     classSectionId: null,
   },
   studentInfo: {
@@ -69,7 +68,7 @@ export default function AdmissionWizard() {
   // ── Validation ──────────────────────────────────────────────────────────────
   const isStep1Valid = () =>
     state.setupData.academicYearId !== null &&
-    state.setupData.classLevelId !== null &&          // ← NEW: Require class level
+    state.setupData.classLevelId !== null &&
     state.setupData.classSectionId !== null;
 
   const isStep2Valid = () =>
@@ -130,7 +129,7 @@ export default function AdmissionWizard() {
         classSectionId: String(state.setupData.classSectionId!),
         // @ts-expect-error - extended payload fields
         academicYearId: state.setupData.academicYearId,
-        classLevelId: state.setupData.classLevelId,    // ← NEW: Pass class level
+        classLevelId: state.setupData.classLevelId,
         initialPayments: paymentsPayload,
       });
 
@@ -149,33 +148,32 @@ export default function AdmissionWizard() {
   // ── Success Screen ───────────────────────────────────────────────────────────
   if (successData) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-6">
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-12 text-center max-w-md w-full shadow-2xl">
+      <div className="flex items-center justify-center p-6 min-h-[80vh]">
+        <div className="bg-white border border-slate-200 rounded-2xl p-10 sm:p-12 text-center max-w-md w-full shadow-lg">
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-green-900/40 border border-green-700 rounded-full flex items-center justify-center">
-              <svg className="w-9 h-9 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <div className="w-20 h-20 bg-green-50 border border-green-200 rounded-full flex items-center justify-center">
+              <svg className="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </svg>
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-100 mb-2">Student Admitted Successfully!</h2>
-          <p className="text-gray-400 mb-8 text-sm">The student has been registered in the system.</p>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Student Admitted Successfully!</h2>
+          <p className="text-slate-500 mb-8 text-sm">The student has been registered in the system.</p>
 
-          <div className="bg-gray-800 rounded-xl p-5 mb-8 space-y-4 text-left">
+          <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 mb-8 space-y-4 text-left">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Roll Number</p>
-              <p className="text-lg font-semibold text-gray-100 mt-0.5">{successData.rollNumber}</p>
+              <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Roll Number</p>
+              <p className="text-lg font-bold text-slate-900 mt-0.5">{successData.rollNumber}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Fee Ledger Rows Created</p>
-              <p className="text-lg font-semibold text-gray-100 mt-0.5">{successData.feeLedgerRowsGenerated}</p>
+              <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Fee Ledger Rows Created</p>
+              <p className="text-lg font-bold text-slate-900 mt-0.5">{successData.feeLedgerRowsGenerated}</p>
             </div>
           </div>
 
           <button
             onClick={() => { setSuccessData(null); setState(INITIAL_STATE); }}
-            className="w-full bg-violet-600 hover:bg-violet-700 text-white py-2.5 rounded-xl font-medium
-              transition-colors text-sm"
+            className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-xl font-bold transition-all text-sm shadow-md hover:shadow-lg"
           >
             Start New Admission
           </button>
@@ -186,27 +184,22 @@ export default function AdmissionWizard() {
 
   // ── Main Wizard ──────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col text-gray-100">
-      {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900">
-        <div className="max-w-4xl mx-auto px-6 py-7">
-          <h1 className="text-xl font-bold text-gray-100">Admit student</h1>
-          <p className="text-gray-400 mt-1 text-sm">Create a student account and enrol them in a class.</p>
+    <div className="space-y-6 max-w-4xl mx-auto pb-12">
+      <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+        {/* Header & Progress */}
+        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-6 sm:px-8 sm:py-8">
+          <h1 className="text-2xl font-bold text-slate-900">Admit Student</h1>
+          <p className="text-slate-500 mt-1 text-sm">Create a student account and enrol them in a class.</p>
+          
+          <div className="mt-8">
+            <ProgressBar activeStep={state.activeStep} />
+          </div>
         </div>
-      </div>
 
-      {/* Progress bar */}
-      <div className="border-b border-gray-800 bg-gray-900">
-        <div className="max-w-4xl mx-auto px-6 py-5">
-          <ProgressBar activeStep={state.activeStep} />
-        </div>
-      </div>
-
-      {/* Step content */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* Step Content */}
+        <div className="px-6 py-8 sm:px-8 sm:py-10 min-h-[400px]">
           {error && (
-            <div className="mb-6 p-4 bg-red-950/60 border border-red-700 rounded-xl text-red-300 text-sm">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium">
               {error}
             </div>
           )}
@@ -216,11 +209,9 @@ export default function AdmissionWizard() {
           {state.activeStep === 3 && <Step3FeesCheckout state={state} setState={setState} />}
           {state.activeStep === 4 && <Step4Review state={state} />}
         </div>
-      </div>
 
-      {/* Bottom nav */}
-      <div className="border-t border-gray-800 bg-gray-900 sticky bottom-0">
-        <div className="max-w-4xl mx-auto px-6 py-5">
+        {/* Footer Navigation */}
+        <div className="border-t border-slate-100 bg-slate-50 px-6 py-5 sm:px-8">
           <BottomNavigation
             activeStep={state.activeStep}
             onBack={handleBack}
