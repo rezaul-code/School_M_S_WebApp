@@ -7,13 +7,9 @@ const STEPS = [
   { label: 'Review' },
 ] as const;
 
-interface ProgressBarProps {
-  activeStep: 1 | 2 | 3 | 4;
-}
-
-export default function ProgressBar({ activeStep }: ProgressBarProps) {
+export default function ProgressBar({ activeStep }: { activeStep: 1 | 2 | 3 | 4 }) {
   return (
-    <div className="flex items-center w-full">
+    <div className="flex items-center w-full px-2">
       {STEPS.map((step, index) => {
         const stepNum = index + 1;
         const isCompleted = stepNum < activeStep;
@@ -21,34 +17,22 @@ export default function ProgressBar({ activeStep }: ProgressBarProps) {
 
         return (
           <div key={step.label} className="flex items-center flex-1 last:flex-none">
-            {/* Step circle + label */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition-all
-                  ${isCompleted
-                    ? 'bg-violet-600 text-white'
-                    : isActive
-                    ? 'bg-violet-600 text-white ring-4 ring-violet-600/20'
-                    : 'bg-transparent border border-gray-600 text-gray-400'
-                  }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-all duration-300
+                  ${isCompleted ? 'bg-violet-600 text-white shadow-md' : 
+                    isActive ? 'bg-violet-600 text-white ring-4 ring-violet-100 shadow-md' : 
+                    'bg-white border-2 border-slate-200 text-slate-400'}`}
               >
-                {isCompleted ? <Check className="w-4 h-4" /> : stepNum}
+                {isCompleted ? <Check className="w-4 h-4" strokeWidth={3} /> : stepNum}
               </div>
-              <span
-                className={`text-sm font-medium whitespace-nowrap
-                  ${isActive ? 'text-violet-400' : isCompleted ? 'text-gray-300' : 'text-gray-500'}`}
-              >
+              <span className={`text-sm font-semibold whitespace-nowrap hidden sm:block ${isActive ? 'text-violet-700' : isCompleted ? 'text-slate-800' : 'text-slate-400'}`}>
                 {step.label}
               </span>
             </div>
-
-            {/* Connector line */}
             {index < STEPS.length - 1 && (
-              <div className="flex-1 mx-3 h-px bg-gray-700 relative">
-                <div
-                  className="absolute inset-0 bg-violet-600 transition-all duration-500"
-                  style={{ width: isCompleted ? '100%' : '0%' }}
-                />
+              <div className="flex-1 mx-4 h-[2px] bg-slate-100 relative rounded-full overflow-hidden">
+                <div className="absolute inset-y-0 left-0 bg-violet-600 transition-all duration-500 ease-out" style={{ width: isCompleted ? '100%' : '0%' }} />
               </div>
             )}
           </div>

@@ -13,7 +13,7 @@ import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import StudentsPage from "@/pages/Students";
-import AdmissionWizardPage from "@/pages/AdmissionWizard";
+import AdmissionWizardPage from "@/components/students/AdmissionWizard"; // <-- ADDED IMPORT
 import StudentDetailsPage from "@/pages/StudentDetails";
 import StudentFeeSummaryPage from "@/pages/StudentFeeSummary";
 import IdCardManagement from "@/pages/IdCardManagement"; // <-- ADDED IMPORT

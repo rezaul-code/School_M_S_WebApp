@@ -23,63 +23,60 @@ export default function Step4Review({ state }: Step4ReviewProps) {
   const fullName = `${state.studentInfo.firstName} ${state.studentInfo.lastName}`.trim();
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xs font-semibold tracking-widest text-gray-400 uppercase">
-        Review & Confirm
-      </h2>
+    <div className="space-y-8">
+      
+      <div className="space-y-1 border-b border-gray-200 pb-4">
+        <h2 className="text-lg font-bold text-gray-900">Review & Confirm</h2>
+        <p className="text-sm text-gray-500">Please verify all information before finalizing the admission.</p>
+      </div>
 
-      {/* Student + Class section cards */}
+      {/* Student + Class section cards (NOW WHITE/LIGHT GRAY) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 space-y-1">
-          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Student</p>
-          <p className="text-base font-bold text-gray-100">{fullName || '—'}</p>
-          <p className="text-sm text-gray-400">{state.studentInfo.email || '—'}</p>
+        <div className="bg-slate-50 border border-gray-200 rounded-xl p-5 space-y-1 shadow-sm">
+          <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Student Profile</p>
+          <p className="text-base font-bold text-gray-900 pt-1">{fullName || '—'}</p>
+          <p className="text-sm text-gray-600">{state.studentInfo.email || '—'}</p>
         </div>
 
-        <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 space-y-1">
-          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Class section</p>
-          <p className="text-base font-bold text-gray-100">{sectionName}</p>
-          <p className="text-sm text-gray-400">Academic year {yearName}</p>
+        <div className="bg-slate-50 border border-gray-200 rounded-xl p-5 space-y-1 shadow-sm">
+          <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Class Assignment</p>
+          <p className="text-base font-bold text-gray-900 pt-1">{sectionName}</p>
+          <p className="text-sm text-gray-600">Academic year {yearName}</p>
         </div>
       </div>
 
-      {/* Payment breakdown */}
-      <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-700">
-          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase">
-            Payment Breakdown
-          </p>
+      {/* Payment breakdown (NOW WHITE) */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-gray-200 bg-slate-50">
+          <p className="text-xs font-semibold tracking-wider text-gray-600 uppercase">Payment Breakdown</p>
         </div>
 
-        <div className="divide-y divide-gray-700/60">
+        <div className="divide-y divide-gray-100">
           {payments.map((p, idx) => {
             const isTuition = p.feeType === 'TUITION';
             const label = p.label ?? p.feeType;
             const months = p.monthsToPay;
 
             return (
-              <div key={idx} className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-sm text-gray-300">
+              <div key={idx} className="flex items-center justify-between px-5 py-4">
+                <span className="text-sm text-gray-700 font-medium">
                   {label}
-                  {isTuition && months ? ` (${months} month${months > 1 ? 's' : ''})` : ''}
+                  {isTuition && months ? <span className="text-gray-500 font-normal ml-1">({months} months)</span> : ''}
                 </span>
-                <span className="text-sm font-medium text-gray-100">{fmtINR(p.amountPaid ?? 0)}</span>
+                <span className="text-sm font-bold text-gray-900">{fmtINR(p.amountPaid ?? 0)}</span>
               </div>
             );
           })}
         </div>
 
-        {/* Total */}
-        <div className="flex items-center justify-between px-5 py-4 border-t border-gray-600 bg-gray-800/80">
-          <span className="text-sm font-bold text-gray-100">Total paying now</span>
-          <span className="text-base font-bold text-violet-300">{fmtINR(total)}</span>
+        <div className="flex items-center justify-between px-5 py-5 border-t border-gray-200 bg-violet-50/50">
+          <span className="text-sm font-bold text-gray-900">Total paying now</span>
+          <span className="text-lg font-bold text-violet-700">{fmtINR(total)}</span>
         </div>
       </div>
 
-      {/* Disclaimer */}
-      <p className="text-xs text-gray-500 leading-relaxed">
-        Clicking "Confirm &amp; admit" will create the student account, generate the fee ledger, and
-        record the initial payment.
+      <p className="text-xs text-gray-500 leading-relaxed text-center">
+        Clicking <span className="font-semibold text-gray-700">"Confirm & admit"</span> will immediately create the student account, generate the entire fee ledger, and record this initial payment.
       </p>
     </div>
   );
