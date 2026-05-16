@@ -45,6 +45,7 @@ export type WizardState = {
 export type SuccessState = {
   rollNumber: string;
   feeLedgerRowsGenerated: number;
+  masterReceiptNo?: string;
 };
 
 const INITIAL_STATE: WizardState = {
@@ -80,6 +81,7 @@ const today = new Date().toLocaleDateString('en-GB', {
 function ReceiptCopy({ copyType, state, successData }: { copyType: string, state: WizardState, successData: SuccessState }) {
   const fullName = `${state.studentInfo.firstName} ${state.studentInfo.lastName}`.trim().toUpperCase();
   const sectionName = (state.setupData as any).classSectionName ?? `${state.setupData.classSectionName}`;
+  const displayReceiptNo = successData.masterReceiptNo || `PENDING`;
   
   let grandTotalReq = 0;
   let grandTotalPaid = 0;
@@ -103,7 +105,7 @@ function ReceiptCopy({ copyType, state, successData }: { copyType: string, state
         </div>
         <div className="ml-auto text-right">
           <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Receipt No.</div>
-          <div className="text-sm font-bold text-slate-900 mt-0.5">RCPT-ADM-{successData.rollNumber}</div>
+          <div className="text-sm font-bold text-slate-900 mt-0.5">{displayReceiptNo}</div>
         </div>
       </div>
 
@@ -256,6 +258,7 @@ export default function AdmissionWizard() {
       setSuccessData({
         rollNumber: (result as any)?.rollNumber ?? state.studentInfo.rollNumber,
         feeLedgerRowsGenerated: (result as any)?.feeLedgerRowsGenerated ?? 0,
+        masterReceiptNo: (result as any)?.masterReceiptNo,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'An error occurred. Please try again.';
