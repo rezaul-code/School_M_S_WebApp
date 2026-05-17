@@ -7,39 +7,40 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-import AppLayout from "@/components/layout/AppLayout";
-import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import AppLayout from "./components/layout/AppLayout";
+import ProtectedRoute from "./components/layout/ProtectedRoute";
 
-import Login from "@/pages/Login";
-import Dashboard from "@/pages/Dashboard";
-import StudentsPage from "@/pages/Students";
-import AdmissionWizardPage from "@/components/students/AdmissionWizard"; // <-- ADDED IMPORT
-import StudentDetailsPage from "@/pages/StudentDetails";
-import StudentFeeSummaryPage from "@/pages/StudentFeeSummary";
-import IdCardManagement from "@/pages/IdCardManagement"; // <-- ADDED IMPORT
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import StudentsPage from "./pages/Students";
+import AdmissionWizardPage from "./components/students/AdmissionWizard"; 
+import StudentDetailsPage from "./pages/StudentDetails";
+import StudentFeeSummaryPage from "./pages/StudentFeeSummary";
+import IdCardManagement from "./pages/IdCardManagement"; 
+import TCCertificates from "./pages/TCCertificates"; 
 
 // Teachers
-import RegisterTeacherPage from "@/pages/RegisterTeacher";
-import TeachersPage from "@/pages/Teachers";
-import TeacherAssignmentsPage from "@/pages/TeacherAssignments";
-import SubjectAssignmentsPage from "@/pages/SubjectAssignments";
+import RegisterTeacherPage from "./pages/RegisterTeacher";
+import TeachersPage from "./pages/Teachers";
+import TeacherAssignmentsPage from "./pages/TeacherAssignments";
+import SubjectAssignmentsPage from "./pages/SubjectAssignments";
 
 // Master data
-import Subjects from "@/pages/Subjects";
-import ClassSubjectMappings from "@/pages/ClassSubjectMappings";
-import FeeStructures from "@/pages/FeeStructures";
-import AcademicYears from "@/pages/AcademicYears";
-import ClassLevels from "@/pages/ClassLevels";
-import Sections from "@/pages/Sections";
-import ClassSections from "@/pages/ClassSections";
+import Subjects from "./pages/Subjects";
+import ClassSubjectMappings from "./pages/ClassSubjectMappings";
+import FeeStructures from "./pages/FeeStructures";
+import AcademicYears from "./pages/AcademicYears";
+import ClassLevels from "./pages/ClassLevels";
+import Sections from "./pages/Sections";
+import ClassSections from "./pages/ClassSections";
 
 // Reporting
-import FeeReport from "@/pages/FeeReport";
+import FeeReport from "./pages/FeeReport";
 
 // Accounting
-import FeeCollections from "@/pages/FeeCollections";
+import FeeCollections from "./pages/FeeCollections";
 
-import NotFound from "@/pages/NotFound";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,7 +80,8 @@ export default function App() {
               {/* STUDENTS — static routes before dynamic :studentId */}
               <Route path="/students"         element={<StudentsPage />} />
               <Route path="/students/admit" element={<AdmissionWizardPage />} />
-              <Route path="/id-cards"       element={<IdCardManagement />} /> {/* <-- ADDED ROUTE HERE */}
+              <Route path="/id-cards"       element={<IdCardManagement />} /> 
+              <Route path="/students/tc-certificates" element={<TCCertificates />} /> 
               <Route path="/students/:studentId"             element={<StudentDetailsPage />} />
               <Route path="/students/:studentId/fee-summary" element={<StudentFeeSummaryPage />} />
 

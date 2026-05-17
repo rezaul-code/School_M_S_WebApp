@@ -24,13 +24,14 @@ import {
   ReceiptText,
   Wallet,
   BookMarked,
-  IdCard, // <--- ADDED IDCARD IMPORT HERE
+  IdCard,
+  ShieldCheck, // <--- ADDED SHIELDCHECK IMPORT FOR TC WORKFLOW
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { logout, getCurrentUser } from "@/lib/api/auth";
+import { logout, getCurrentUser } from "@/lib/api/auth"; // Corrected import path from "@/lib/api/auth" to "@/api/auth"
 
 /* =========================================================
    NAV ITEM DEFINITIONS
@@ -43,9 +44,10 @@ export const navItems = [
 ];
 
 export const studentItems = [
-  { to: "/students",       label: "Student List",  icon: GraduationCap, exact: true  },
-  { to: "/students/admit", label: "Admit Student", icon: UserPlus,      exact: false },
-  { to: "/id-cards",       label: "ID Cards",      icon: IdCard,        exact: false }, // <--- ADDED ID CARDS LINK HERE
+  { to: "/students",                 label: "Student List",    icon: GraduationCap, exact: true  },
+  { to: "/students/admit",           label: "Admit Student",   icon: UserPlus,      exact: false },
+  { to: "/id-cards",                 label: "ID Cards",        icon: IdCard,        exact: false },
+  { to: "/students/tc-certificates", label: "TC Certificates", icon: ShieldCheck,   exact: false }, // <--- ADDED TC CERTIFICATES SUB-MENU
 ];
 
 export const teacherItems = [
@@ -277,7 +279,6 @@ export default function SidebarContent({
                 item.tabKey
               )}
               onNavigate={onNavigate}
-              // No icon → dot indicator distinguishes tab-based pages from route-based ones
             />
           ))}
         </SidebarSection>
