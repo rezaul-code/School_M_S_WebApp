@@ -25,7 +25,8 @@ import {
   Wallet,
   BookMarked,
   IdCard,
-  ShieldCheck, // <--- ADDED SHIELDCHECK IMPORT FOR TC WORKFLOW
+  ShieldCheck,
+  Award, 
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -55,6 +56,15 @@ export const teacherItems = [
   { to: "/teachers",                     label: "Teacher List",        icon: Users,         exact: true  },
   { to: "/teachers/assignments",         label: "Teacher Assignments", icon: ClipboardList, exact: false },
   { to: "/teachers/subject-assignments", label: "Subject Assignments", icon: BookOpen,      exact: false },
+];
+
+export const examManagementItems = [
+  { to: "/exam-types",           label: "Create Exam Types",     icon: Award,         exact: true  },
+  { to: "/exam-blueprints",      label: "Exam Blueprint",        icon: CalendarDays,  exact: false },
+  { to: "/subject-wise-setup",   label: "Subject Wise Setup",    icon: BookOpen,      exact: false },
+  { to: "/grade-rule-engine",    label: "Grade & Rule Engine",   icon: ShieldCheck,   exact: false },
+  { to: "/consolidated-setup",   label: "Consolidated Annual",   icon: Network,       exact: false },
+  { to: "/independent-results",  label: "Independent Results",   icon: ClipboardList, exact: false },
 ];
 
 export const masterDataItems = [
@@ -136,6 +146,7 @@ export default function SidebarContent({
     if (anyActive(studentItems, p))    return "students";
     if (anyActive(teacherItems, p))    return "teachers";
     if (anyActive(masterDataItems, p)) return "master-data";   // ONLY master-data routes
+    if (anyActive(examManagementItems, p)) return "exam-management";
     if (p === "/fee-structures")       return "fee-structures"; // ONLY fee route
     if (anyActive(reportingItems, p))  return "reporting";
     if (anyActive(accountingItems, p)) return "accounting";
@@ -239,6 +250,26 @@ export default function SidebarContent({
             />
           ))}
         </SidebarSection>
+
+        {/* 3.5. Exam Management ─────────────────────────────── */}
+          <SidebarSection
+            title="Exam Management"
+            icon={Award}
+            sectionKey="exam-management"
+            expanded={expandedSection === "exam-management"}
+            onToggle={toggle}
+          >
+            {examManagementItems.map((item) => (
+              <SidebarSubItem
+                key={item.to}
+                to={item.to}
+                label={item.label}
+                icon={item.icon}
+                active={isRouteActive(location.pathname, item.to, item.exact)}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </SidebarSection>
 
         {/* 4. Master Data Setup ─────────────────────────── */}
         <SidebarSection
