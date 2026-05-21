@@ -1,5 +1,7 @@
 // src/App.tsx
 import ExamTypes from "@/pages/ExamTypes";
+import ExamSetupWizard from "./pages/ExamSetupWizard";
+import ExamBlueprints from "@/pages/ExamBlueprints";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
@@ -91,7 +93,13 @@ export default function App() {
               <Route path="/teachers/assignments"         element={<TeacherAssignmentsPage />} />
               <Route path="/teachers/subject-assignments" element={<SubjectAssignmentsPage />} />
 
+             {/* EXAM MANAGEMENT */}
               <Route path="/exam-types" element={<ExamTypes />} />
+              <Route path="/exam-blueprints" element={<ExamBlueprints />} />
+
+              {/* The Unified Wizard handles both the initial creation and the configuration */}
+              <Route path="/exam-blueprints/setup" element={<ExamSetupWizard />} />
+              <Route path="/exam-blueprints/setup/:examId" element={<ExamSetupWizard />} />
 
               {/* MASTER DATA */}
               <Route path="/academic-years"         element={<AcademicYears />} />
