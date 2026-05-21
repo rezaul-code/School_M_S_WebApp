@@ -2,6 +2,7 @@
 import ExamTypes from "@/pages/ExamTypes";
 import ExamSetupWizard from "./pages/ExamSetupWizard";
 import ExamBlueprints from "@/pages/ExamBlueprints";
+import ExamDetails from "./pages/ExamDetails";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
@@ -96,6 +97,7 @@ export default function App() {
              {/* EXAM MANAGEMENT */}
               <Route path="/exam-types" element={<ExamTypes />} />
               <Route path="/exam-blueprints" element={<ExamBlueprints />} />
+              <Route path="/exam-blueprints/details/:examId" element={<ExamDetails />} />
 
               {/* The Unified Wizard handles both the initial creation and the configuration */}
               <Route path="/exam-blueprints/setup" element={<ExamSetupWizard />} />

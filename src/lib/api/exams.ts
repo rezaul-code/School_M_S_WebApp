@@ -180,3 +180,9 @@ export async function updateExamHeader(
   const response = await api.patch<{ data: ScheduledExam }>(`/api/v1/exams/${examId}`, request);
   return response.data.data;
 }
+
+// Add this to src/lib/api/exams.ts
+export async function getExamDetails(examId: number): Promise<any> {
+  const response = await api.get(`/api/v1/exams/${examId}/details`);
+  return response.data.data;
+}
