@@ -3,13 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Loader2, FileText, Calendar, BookOpen,
-  CheckCircle2, Clock, AlertCircle, Edit3, Lock
+  CheckCircle2, Clock, AlertCircle, Edit3, Lock, Printer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getExamDetails, publishExam, unpublishExam, markCompleted, startEvaluation } from "@/lib/api/exams";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { toast } from "sonner";
+import { openExamTimetablePrint } from "@/lib/examTimetablePrint";
 
 export default function ExamDetails() {
   const { examId } = useParams();
@@ -57,6 +58,33 @@ export default function ExamDetails() {
     },
     onError: (err) => toast.error(getApiErrorMessage(err))
   });
+
+  // ── Print handler ──────────────────────────────────────────────────────────
+  const handlePrint = () => {
+    if (!exam) return;
+    openExamTimetablePrint({
+      name: exam.name,
+      academicYearName: exam.academicYearName,
+      classLevelName: exam.classLevelName,
+      startDate: exam.startDate,
+      endDate: exam.endDate,
+      status: exam.status,
+      subjects: exam.subjects?.map((s: any) => ({
+        subjectName: s.subjectName,
+        subjectCode: s.subjectCode,
+        components: s.components?.map((c: any) => ({
+          componentName: c.componentName,
+          examDate: c.examDate,
+          examStartTime: c.examStartTime,
+          examEndTime: c.examEndTime,
+          durationMinutes: c.durationMinutes ?? null,
+          maxMarks: c.maxMarks,
+          passMarks: c.passMarks,
+        })) ?? [],
+      })) ?? [],
+    });
+  };
+  // ──────────────────────────────────────────────────────────────────────────
 
   if (isLoading) {
     return <div className="flex justify-center p-12"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
@@ -134,25 +162,36 @@ export default function ExamDetails() {
             <BookOpen className="h-5 w-5 text-primary" />
             Exam Blueprint
           </h3>
-          {canEdit && (
-            <Button
-              onClick={() => navigate(`/exam-blueprints/setup/${exam.id}`)}
-              variant="outline"
-              size="sm"
-            >
-              <Edit3 className="h-4 w-4 mr-2" />
-              Edit Configuration
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Print button — visible whenever there are subjects */}
+            {exam.subjects?.length > 0 && (
+              <Button onClick={handlePrint} variant="outline" size="sm" className="gap-2">
+                <Printer className="h-4 w-4" />
+                Print Timetable
+              </Button>
+            )}
+            {canEdit && (
+              <Button
+                onClick={() => navigate(`/exam-blueprints/setup/${exam.id}`)}
+                variant="outline"
+                size="sm"
+              >
+                <Edit3 className="h-4 w-4 mr-2" />
+                Edit Configuration
+              </Button>
+            )}
+          </div>
         </div>
-        
+
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Subject</TableHead>
               <TableHead>Component</TableHead>
               <TableHead>Exam Date</TableHead>
-              <TableHead>Time</TableHead>
+              <TableHead>Start Time</TableHead>
+              <TableHead>End Time</TableHead>
+              <TableHead className="text-center">Duration</TableHead>
               <TableHead className="text-center">Max Marks</TableHead>
               <TableHead className="text-center">Pass Marks</TableHead>
             </TableRow>
@@ -160,7 +199,7 @@ export default function ExamDetails() {
           <TableBody>
             {exam.subjects?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No subjects configured yet
                 </TableCell>
               </TableRow>
@@ -175,7 +214,13 @@ export default function ExamDetails() {
                     )}
                     <TableCell>{comp.componentName}</TableCell>
                     <TableCell>{comp.examDate || "—"}</TableCell>
-                    <TableCell>{comp.examTime || "—"}</TableCell>
+                    <TableCell>{comp.examStartTime || "—"}</TableCell>
+                    <TableCell>{comp.examEndTime || "—"}</TableCell>
+                    <TableCell className="text-center">
+                      {comp.durationMinutes
+                        ? <span className="text-sm">{comp.durationMinutes} min</span>
+                        : "—"}
+                    </TableCell>
                     <TableCell className="text-center">{comp.maxMarks}</TableCell>
                     <TableCell className="text-center">{comp.passMarks}</TableCell>
                   </TableRow>
@@ -190,7 +235,7 @@ export default function ExamDetails() {
       {exam.status === "DRAFT" && (
         <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
           <p className="text-sm text-amber-600">
-            <span className="font-semibold">Draft Mode:</span> This exam is private and only visible to administrators. 
+            <span className="font-semibold">Draft Mode:</span> This exam is private and only visible to administrators.
             Once you've configured all subjects and components, publish it to make it visible to teachers and students.
           </p>
         </div>
@@ -199,7 +244,7 @@ export default function ExamDetails() {
       {exam.status === "SCHEDULED" && (
         <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
           <p className="text-sm text-blue-600">
-            <span className="font-semibold">Published:</span> This exam is now visible. 
+            <span className="font-semibold">Published:</span> This exam is now visible.
             It will automatically transition to "Ongoing" on {exam.startDate}.
           </p>
         </div>
@@ -208,7 +253,7 @@ export default function ExamDetails() {
       {exam.status === "ONGOING" && (
         <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
           <p className="text-sm text-purple-600">
-            <span className="font-semibold">Active:</span> The exam is currently in progress. 
+            <span className="font-semibold">Active:</span> The exam is currently in progress.
             Teachers can view real-time participation and timing.
           </p>
         </div>
@@ -217,7 +262,7 @@ export default function ExamDetails() {
       {exam.status === "EVALUATION" && (
         <div className="mt-6 p-4 bg-teal-500/10 border border-teal-500/20 rounded-lg">
           <p className="text-sm text-teal-600">
-            <span className="font-semibold">Evaluation Phase:</span> The exam has concluded. 
+            <span className="font-semibold">Evaluation Phase:</span> The exam has concluded.
             Teachers can now enter and submit marks for administrative approval.
           </p>
         </div>
@@ -226,7 +271,7 @@ export default function ExamDetails() {
       {exam.status === "COMPLETED" && (
         <div className="mt-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
           <p className="text-sm text-green-600">
-            <span className="font-semibold">Archived:</span> This exam is complete and locked. 
+            <span className="font-semibold">Archived:</span> This exam is complete and locked.
             You can view reports and historical data.
           </p>
         </div>

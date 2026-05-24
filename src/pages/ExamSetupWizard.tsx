@@ -27,13 +27,25 @@ import { getClassLevelOptions } from "@/lib/api/master";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { useActiveAcademicYear } from "@/hooks/useActiveAcademicYear";
 
+// examStartTime and examEndTime are user-selected
+// durationMinutes is derived by the backend — shown read-only in the UI
 type ComponentScheduleState = {
   examDate: string;
-  examTime: string;
-  durationMinutes: number;
+  examStartTime: string; // renamed from examTime
+  examEndTime: string;   // new — user selects this
   maxMarks: number;
   passMarks: number;
 };
+
+// Calculates duration in minutes from two HH:mm strings — for display only
+function calcDuration(start: string, end: string): number | null {
+  if (!start || !end) return null;
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return null;
+  const diff = (eh * 60 + em) - (sh * 60 + sm);
+  return diff > 0 ? diff : null; // return null if end <= start, so user sees — as a hint
+}
 
 export default function ExamSetupWizard() {
   const { examId } = useParams();
@@ -101,11 +113,11 @@ export default function ExamSetupWizard() {
           if (comp.maxMarks && comp.maxMarks > 0) {
             newSelected.add(comp.subjectComponentId);
             newScheduleData[comp.subjectComponentId] = {
-              examDate: comp.examDate || "",
-              examTime: comp.examTime ? comp.examTime.substring(0, 5) : "09:00",
-              durationMinutes: comp.durationMinutes || 120,
-              maxMarks: comp.maxMarks,
-              passMarks: comp.passMarks || 0,
+              examDate:      comp.examDate      || "",
+              examStartTime: comp.examStartTime ? comp.examStartTime.substring(0, 5) : "09:00",
+              examEndTime:   comp.examEndTime   ? comp.examEndTime.substring(0, 5)   : "10:00",
+              maxMarks:      comp.maxMarks,
+              passMarks:     comp.passMarks || 0,
             };
           }
         });
@@ -150,11 +162,7 @@ export default function ExamSetupWizard() {
       if (!name) throw new Error("Exam Description Name is required.");
       if (!startDate || !endDate) throw new Error("Start and End dates are required.");
 
-      return updateExamHeader(Number(examId), {
-        name,
-        startDate,
-        endDate
-      });
+      return updateExamHeader(Number(examId), { name, startDate, endDate });
     },
     onSuccess: () => { 
       queryClient.invalidateQueries({ queryKey: ["scheduledExams"] });
@@ -182,11 +190,11 @@ export default function ExamSetupWizard() {
         setScheduleData(curr => ({
           ...curr,
           [compId]: curr[compId] || {
-            examDate: startDate || "", 
-            examTime: "09:00",
-            durationMinutes: 120,
-            maxMarks: defaultMaxMarks,
-            passMarks: defaultPassMarks
+            examDate:      startDate || "",
+            examStartTime: "09:00",
+            examEndTime:   "11:00",
+            maxMarks:      defaultMaxMarks,
+            passMarks:     defaultPassMarks,
           }
         }));
       }
@@ -201,25 +209,31 @@ export default function ExamSetupWizard() {
   const { mutate: handleBulkSave, isPending: isSavingSchedule } = useMutation({
     mutationFn: () => {
       if (!matrix) throw new Error("No data loaded");
+
       const payloadSubjects = matrix.subjects.map(subject => {
         const activeComponents = subject.components.filter(c => selectedComponents.has(c.subjectComponentId));
         if (activeComponents.length === 0) return null;
+
         return {
           classSubjectId: subject.classSubjectId,
-          passMarks: 0, 
+          passMarks: 0,
           components: activeComponents.map(c => {
             const data = scheduleData[c.subjectComponentId];
+            // Ensure HH:mm:ss format for backend LocalTime parsing
+            const toTimeString = (t: string) =>
+              t ? (t.length === 5 ? t + ":00" : t) : "";
             return {
               subjectComponentId: c.subjectComponentId,
-              maxMarks: data.maxMarks,
-              passMarks: data.passMarks,
-              examDate: data.examDate,
-              examTime: data.examTime.length === 5 ? data.examTime + ":00" : data.examTime,
-              durationMinutes: data.durationMinutes
+              maxMarks:      data.maxMarks,
+              passMarks:     data.passMarks,
+              examDate:      data.examDate,
+              examStartTime: toTimeString(data.examStartTime),
+              examEndTime:   toTimeString(data.examEndTime),
+              // durationMinutes NOT sent — backend calculates it
             };
           })
         };
-      }).filter(Boolean); 
+      }).filter(Boolean);
 
       return bulkSaveExamSchedule(Number(examId), { subjects: payloadSubjects as any });
     },
@@ -275,6 +289,7 @@ export default function ExamSetupWizard() {
           <StepIcon step={3} current={currentStep} label="Timetable Layout" />
         </div>
 
+        {/* ── Step 1 ── */}
         {currentStep === 1 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 w-full">
             <div className="flex items-center gap-2 text-primary font-medium">
@@ -327,6 +342,7 @@ export default function ExamSetupWizard() {
           </div>
         )}
 
+        {/* ── Step 2 ── */}
         {currentStep === 2 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 w-full">
             <div className="flex items-center justify-between">
@@ -370,6 +386,7 @@ export default function ExamSetupWizard() {
           </div>
         )}
 
+        {/* ── Step 3 ── */}
         {currentStep === 3 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 w-full">
             <div className="flex items-center justify-between">
@@ -384,32 +401,114 @@ export default function ExamSetupWizard() {
                   <TableRow>
                     <TableHead className="py-4">Subject Component</TableHead>
                     <TableHead>Exam Date</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead className="w-28 text-center">Duration</TableHead>
+                    <TableHead>Start Time</TableHead>
+                    <TableHead>End Time</TableHead>
+                    {/* Duration — read-only, derived from start/end */}
+                    <TableHead className="w-28 text-center">Duration (min)</TableHead>
                     <TableHead className="w-28 text-center">Max Marks</TableHead>
                     <TableHead className="w-28 text-center">Pass Marks</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {matrix?.subjects.map(subject => subject.components.filter(c => selectedComponents.has(c.subjectComponentId)).map(comp => (
-                        <TableRow key={comp.subjectComponentId} className="hover:bg-transparent">
-                          <TableCell className="py-3">
-                            <div className="font-medium text-sm text-foreground">{subject.subjectName}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5">{comp.componentName}</div>
-                          </TableCell>
-                          <TableCell><Input type="date" className="h-9 text-sm w-[140px]" value={scheduleData[comp.subjectComponentId]?.examDate || ""} onChange={e => handleGridChange(comp.subjectComponentId, 'examDate', e.target.value)} /></TableCell>
-                          <TableCell><Input type="time" className="h-9 text-sm w-[120px]" value={scheduleData[comp.subjectComponentId]?.examTime || ""} onChange={e => handleGridChange(comp.subjectComponentId, 'examTime', e.target.value)} /></TableCell>
-                          <TableCell><Input type="number" className="h-9 text-sm text-center" value={scheduleData[comp.subjectComponentId]?.durationMinutes || ""} onChange={e => handleGridChange(comp.subjectComponentId, 'durationMinutes', Number(e.target.value))} /></TableCell>
-                          <TableCell><Input type="number" className="h-9 text-sm text-center" value={scheduleData[comp.subjectComponentId]?.maxMarks || ""} onChange={e => handleGridChange(comp.subjectComponentId, 'maxMarks', Number(e.target.value))} /></TableCell>
-                          <TableCell><Input type="number" className="h-9 text-sm text-center" value={scheduleData[comp.subjectComponentId]?.passMarks || ""} onChange={e => handleGridChange(comp.subjectComponentId, 'passMarks', Number(e.target.value))} /></TableCell>
-                        </TableRow>
-                  )))}
+                  {matrix?.subjects.map(subject =>
+                    subject.components
+                      .filter(c => selectedComponents.has(c.subjectComponentId))
+                      .map(comp => {
+                        const data = scheduleData[comp.subjectComponentId];
+                        const duration = data
+                          ? calcDuration(data.examStartTime, data.examEndTime)
+                          : null;
+
+                        return (
+                          <TableRow key={comp.subjectComponentId} className="hover:bg-transparent">
+                            <TableCell className="py-3">
+                              <div className="font-medium text-sm text-foreground">{subject.subjectName}</div>
+                              <div className="text-xs text-muted-foreground mt-0.5">{comp.componentName}</div>
+                            </TableCell>
+
+                            {/* Exam Date */}
+                            <TableCell>
+                              <Input
+                                type="date"
+                                className="h-9 text-sm w-[140px]"
+                                value={data?.examDate || ""}
+                                onChange={e => handleGridChange(comp.subjectComponentId, 'examDate', e.target.value)}
+                              />
+                            </TableCell>
+
+                            {/* Start Time — user editable */}
+                            <TableCell>
+                              <Input
+                                type="time"
+                                className="h-9 text-sm w-[120px]"
+                                value={data?.examStartTime || ""}
+                                onChange={e => handleGridChange(comp.subjectComponentId, 'examStartTime', e.target.value)}
+                              />
+                            </TableCell>
+
+                            {/* End Time — user editable */}
+                            <TableCell>
+                              <Input
+                                type="time"
+                                className="h-9 text-sm w-[120px]"
+                                value={data?.examEndTime || ""}
+                                onChange={e => handleGridChange(comp.subjectComponentId, 'examEndTime', e.target.value)}
+                              />
+                            </TableCell>
+
+                            {/* Duration — read-only, calculated from start/end */}
+                            {/* Duration — read-only, calculated from start/end */}
+                            <TableCell className="text-center">
+                              {data?.examStartTime && data?.examEndTime && !duration ? (
+                                // End time is before or equal to start time
+                                <div className="h-9 flex items-center justify-center text-xs rounded-md px-2 bg-red-500/10 text-red-500 border border-red-500/20">
+                                  End &lt; Start
+                                </div>
+                              ) : (
+                                <div className={`h-9 flex items-center justify-center text-sm rounded-md px-3 border ${
+                                  duration !== null
+                                    ? "bg-muted text-foreground border-border"
+                                    : "bg-muted/40 text-muted-foreground border-dashed border-border"
+                                }`}>
+                                  {duration !== null ? `${duration} min` : "—"}
+                                </div>
+                              )}
+                            </TableCell>
+
+                            {/* Max Marks */}
+                            <TableCell>
+                              <Input
+                                type="number"
+                                className="h-9 text-sm text-center"
+                                value={data?.maxMarks || ""}
+                                onChange={e => handleGridChange(comp.subjectComponentId, 'maxMarks', Number(e.target.value))}
+                              />
+                            </TableCell>
+
+                            {/* Pass Marks */}
+                            <TableCell>
+                              <Input
+                                type="number"
+                                className="h-9 text-sm text-center"
+                                value={data?.passMarks || ""}
+                                onChange={e => handleGridChange(comp.subjectComponentId, 'passMarks', Number(e.target.value))}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                  )}
                 </TableBody>
               </Table>
             </div>
             <div className="flex justify-between pt-8 border-t border-border mt-8">
-              <Button variant="outline" onClick={() => setCurrentStep(2)} className="h-10 px-6"><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
-              <Button onClick={() => handleBulkSave()} disabled={isSavingSchedule} className="h-10 px-8">{isSavingSchedule ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />} Publish</Button>
+              <Button variant="outline" onClick={() => setCurrentStep(2)} className="h-10 px-6">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back
+              </Button>
+              <Button onClick={() => handleBulkSave()} disabled={isSavingSchedule} className="h-10 px-8">
+                {isSavingSchedule ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
+                Publish
+              </Button>
             </div>
           </div>
         )}

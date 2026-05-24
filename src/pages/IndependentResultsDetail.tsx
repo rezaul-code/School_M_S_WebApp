@@ -9,6 +9,7 @@ import {
   CheckCheck, Lock, Edit3, Clock, RefreshCw,
 } from "lucide-react";
 
+import { ReportCardButton } from "@/components/print/ReportCardPreview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -37,7 +38,6 @@ import {
 import { getCurrentUser } from "@/lib/api/auth";
 
 // ─── Status config ────────────────────────────────────────────────────────────
-// Change this type to a wider string map, or add COMPLETED:
 const STATUS_META: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
   DRAFT:     { label: "Draft",     cls: "bg-amber-500/10 text-amber-600 border-amber-500/20",   icon: <Edit3 className="h-3 w-3" /> },
   SUBMITTED: { label: "Submitted", cls: "bg-blue-500/10 text-blue-600 border-blue-500/20",      icon: <Clock className="h-3 w-3" /> },
@@ -47,14 +47,13 @@ const STATUS_META: Record<string, { label: string; cls: string; icon: React.Reac
   COMPLETED: { label: "Completed", cls: "bg-teal-500/10 text-teal-600 border-teal-500/20",      icon: <CheckCheck className="h-3 w-3" /> },
 };
 
-// Priority for worst-case roll-up (lower = worse)
 const STATUS_PRIORITY: Record<MarkStatus, number> = {
   REJECTED: 0, DRAFT: 1, SUBMITTED: 2, APPROVED: 3, LOCKED: 4,
 };
 
 function StatusBadge({ status }: { status: string }) {
   const m = STATUS_META[status];
-  if (!m) return null; // unknown status — render nothing rather than crash
+  if (!m) return null;
   return (
     <span className={cn(
       "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold border",
@@ -157,28 +156,24 @@ export default function IndependentResultsDetail() {
   // ─── Derived data ──────────────────────────────────────────────────────────
   const studentRows = useMemo(() => groupMarksByStudent(rawMarks), [rawMarks]);
 
-  // All unique subject names from exam — used for dynamic columns
   const subjectNames = useMemo(() => {
     const names = new Set<string>();
     rawMarks.forEach((m) => names.add(m.subjectName));
     return Array.from(names).sort();
   }, [rawMarks]);
 
-  // All sections
   const sections = useMemo(() => {
     const s = new Set<string>();
     studentRows.forEach((r) => s.add(r.sectionName));
     return Array.from(s).sort();
   }, [studentRows]);
 
-  // Ranked rows
   const ranked = useMemo(() => {
     return [...studentRows]
       .sort((a, b) => b.totalObtained - a.totalObtained)
       .map((r, i) => ({ ...r, rank: i + 1 }));
   }, [studentRows]);
 
-  // Filtered + sorted
   const displayRows = useMemo(() => {
     let rows = ranked;
     if (search)
@@ -196,7 +191,6 @@ export default function IndependentResultsDetail() {
     return rows;
   }, [ranked, search, sectionFilter, statusFilter, sortBy]);
 
-  // Stats
   const stats = useMemo(() => {
     if (!ranked.length) return null;
     const totals = ranked.map((r) => r.totalObtained);
@@ -303,10 +297,10 @@ export default function IndependentResultsDetail() {
       {examDetail && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
           {[
-            { label: "Exam", value: examDetail.name },
-            { label: "Class",  value: examDetail.classLevelName },
-            { label: "Year",   value: examDetail.academicYearName },
-            { label: "Dates",  value: `${new Date(examDetail.startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${new Date(examDetail.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}` },
+            { label: "Exam",     value: examDetail.name },
+            { label: "Class",    value: examDetail.classLevelName },
+            { label: "Year",     value: examDetail.academicYearName },
+            { label: "Dates",    value: `${new Date(examDetail.startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${new Date(examDetail.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}` },
             { label: "Subjects", value: `${examDetail.subjects?.length ?? "—"} subjects` },
           ].map((m) => (
             <div key={m.label} className="bg-muted/50 rounded-lg px-3 py-2.5">
@@ -327,11 +321,11 @@ export default function IndependentResultsDetail() {
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
           {[
-            { label: "Total students", value: stats.total, sub: examDetail?.classLevelName },
-            { label: "Marks approved",  value: stats.approved, sub: `${stats.pending} pending` },
-            { label: "Class average",   value: `${stats.avg}%`, sub: `out of ${displayRows[0]?.totalMax ?? "—"}` },
-            { label: "Highest",         value: stats.highest, sub: "marks" },
-            { label: "Lowest",          value: stats.lowest,  sub: "marks" },
+            { label: "Total students", value: stats.total,    sub: examDetail?.classLevelName },
+            { label: "Marks approved", value: stats.approved, sub: `${stats.pending} pending` },
+            { label: "Class average",  value: `${stats.avg}%`, sub: `out of ${displayRows[0]?.totalMax ?? "—"}` },
+            { label: "Highest",        value: stats.highest,  sub: "marks" },
+            { label: "Lowest",         value: stats.lowest,   sub: "marks" },
           ].map((s) => (
             <div key={s.label} className="bg-muted/40 rounded-lg px-3 py-2.5">
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">{s.label}</div>
@@ -438,7 +432,7 @@ export default function IndependentResultsDetail() {
                 <TableHead className="text-center w-24">Total</TableHead>
                 <TableHead className="text-center w-14">Rank</TableHead>
                 <TableHead className="text-center w-28">Status</TableHead>
-                <TableHead className="text-center w-28">Actions</TableHead>
+                <TableHead className="text-center w-32">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -448,7 +442,6 @@ export default function IndependentResultsDetail() {
                   ? ((row.totalObtained / row.totalMax) * 100).toFixed(1)
                   : "0";
 
-                // Collect all subject marks in display order for action column
                 const allSubjectMarks = subjectNames
                   .map((n) => row.subjects[n])
                   .filter(Boolean);
@@ -458,6 +451,7 @@ export default function IndependentResultsDetail() {
                 return (
                   <>
                     <TableRow key={row.enrollmentId} className="group">
+
                       {/* Expand toggle */}
                       <TableCell className="px-2">
                         <button
@@ -492,10 +486,14 @@ export default function IndependentResultsDetail() {
                         <span className="md-badge md-badge--outline text-xs">{row.sectionName}</span>
                       </TableCell>
 
-                      {/* Subject marks — one cell per subject */}
+                      {/* Subject marks */}
                       {subjectNames.map((name) => {
                         const mark = row.subjects[name];
-                        if (!mark) return <TableCell key={name} className="text-center"><span className="text-xs text-muted-foreground">—</span></TableCell>;
+                        if (!mark) return (
+                          <TableCell key={name} className="text-center">
+                            <span className="text-xs text-muted-foreground">—</span>
+                          </TableCell>
+                        );
                         if (mark.isAbsent) return (
                           <TableCell key={name} className="text-center">
                             <span className="text-xs text-muted-foreground italic">Absent</span>
@@ -522,39 +520,56 @@ export default function IndependentResultsDetail() {
                         <StatusBadge status={row.overallStatus} />
                       </TableCell>
 
-                      {/* Actions — only show for SUBMITTED marks */}
+                      {/* Actions */}
                       <TableCell className="text-center">
-                        {hasSubmitted ? (
-                          <div className="flex items-center justify-center gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              disabled={approving}
-                              onClick={() => {
-                                const submitted = allSubjectMarks.filter((m) => m.status === "SUBMITTED");
-                                submitted.forEach((m) => doApprove(m.id));
-                              }}
-                              className="h-7 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
-                              title="Approve all submitted"
-                            >
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                const submitted = allSubjectMarks.find((m) => m.status === "SUBMITTED");
-                                if (submitted) setRejectMarkId(submitted.id);
-                              }}
-                              className="h-7 px-2 text-red-500 hover:text-red-600 hover:bg-red-50"
-                              title="Reject"
-                            >
-                              <XCircle className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-[11px] text-muted-foreground">—</span>
-                        )}
+                        <div className="flex items-center justify-center gap-1">
+                          {/* Report card print button — always visible */}
+                          {examDetail && (
+                            <ReportCardButton
+                              row={row}
+                              examDetail={examDetail}
+                              subjectNames={subjectNames}
+                              rank={(row as any).rank}
+                              totalStudents={ranked.length}
+                            />
+                          )}
+
+                          {/* Approve / Reject — only for SUBMITTED marks */}
+                          {hasSubmitted ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                disabled={approving}
+                                onClick={() => {
+                                  const submitted = allSubjectMarks.filter((m) => m.status === "SUBMITTED");
+                                  submitted.forEach((m) => doApprove(m.id));
+                                }}
+                                className="h-7 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                title="Approve all submitted"
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  const submitted = allSubjectMarks.find((m) => m.status === "SUBMITTED");
+                                  if (submitted) setRejectMarkId(submitted.id);
+                                }}
+                                className="h-7 px-2 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                title="Reject"
+                              >
+                                <XCircle className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          ) : (
+                            // Show a dash only if there's also no print button (examDetail not loaded)
+                            !examDetail && (
+                              <span className="text-[11px] text-muted-foreground">—</span>
+                            )
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
 
