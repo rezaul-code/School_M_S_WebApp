@@ -16,6 +16,7 @@ export interface ListStudentsParams {
   search?: string;
   classSectionId?: string;
   academicYearId?: string;
+  classLevelId?: string | number;
 }
 
 export async function listStudents(params: ListStudentsParams) {

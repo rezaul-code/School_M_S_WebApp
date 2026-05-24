@@ -1,25 +1,35 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { 
   Plus, CalendarDays, Search, Sparkles, 
   ShieldAlert, CheckCircle2, ArrowRight, 
-  Clock, PlayCircle, Archive, FileEdit
+  Clock, PlayCircle, Archive, FileEdit,
+  Send, Eye, ArrowLeft, Activity, CheckCircle, FileText, Edit3
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Pagination from "@/components/common/Pagination";
-import { getAllScheduledExams } from "@/lib/api/exams";
+import { 
+  getAllScheduledExams, 
+  publishExam, 
+  unpublishExam, 
+  markCompleted,
+  startEvaluation 
+} from "@/lib/api/exams";
 import { useActiveAcademicYear } from "@/hooks/useActiveAcademicYear";
 
 const ITEMS_PER_PAGE = 10;
 
-type TabType = "DRAFT" | "SCHEDULED" | "ONGOING" | "COMPLETED";
+type TabType = "DRAFT" | "SCHEDULED" | "ONGOING" | "EVALUATION" | "COMPLETED";
 
 export default function ExamBlueprints() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<TabType>("DRAFT");
@@ -32,11 +42,45 @@ export default function ExamBlueprints() {
     queryFn: () => getAllScheduledExams(currentYearId),
   });
 
+  // ─── MUTATIONS FOR IN-LINE ACTIONS ─────────────────────────────
+  const { mutate: handlePublish } = useMutation({
+    mutationFn: (id: number) => publishExam(id),
+    onSuccess: () => {
+      toast.success("Exam published successfully.");
+      queryClient.invalidateQueries({ queryKey: ["scheduledExams"] });
+    }
+  });
+
+  const { mutate: handleUnpublish } = useMutation({
+    mutationFn: (id: number) => unpublishExam(id),
+    onSuccess: () => {
+      toast.success("Exam reverted to draft.");
+      queryClient.invalidateQueries({ queryKey: ["scheduledExams"] });
+    }
+  });
+
+  const { mutate: handleStartEvaluation } = useMutation({
+    mutationFn: (id: number) => startEvaluation(id),
+    onSuccess: () => {
+      toast.success("Evaluation phase started. Marks entry open.");
+      queryClient.invalidateQueries({ queryKey: ["scheduledExams"] });
+    }
+  });
+
+  const { mutate: handleMarkCompleted } = useMutation({
+    mutationFn: (id: number) => markCompleted(id),
+    onSuccess: () => {
+      toast.success("Exam marked as completed.");
+      queryClient.invalidateQueries({ queryKey: ["scheduledExams"] });
+    }
+  });
+
   // Calculate counts for tabs
   const counts = {
     DRAFT: scheduledExams.filter(e => e.status === "DRAFT").length,
     SCHEDULED: scheduledExams.filter(e => e.status === "SCHEDULED").length,
     ONGOING: scheduledExams.filter(e => e.status === "ONGOING").length,
+    EVALUATION: scheduledExams.filter(e => e.status === "EVALUATION").length,
     COMPLETED: scheduledExams.filter(e => e.status === "COMPLETED").length,
   };
 
@@ -119,6 +163,7 @@ export default function ExamBlueprints() {
         <TabButton value="DRAFT" icon={<FileEdit className="h-4 w-4"/>} label="Drafts" count={counts.DRAFT} />
         <TabButton value="SCHEDULED" icon={<Clock className="h-4 w-4"/>} label="Upcoming" count={counts.SCHEDULED} />
         <TabButton value="ONGOING" icon={<PlayCircle className="h-4 w-4"/>} label="Active" count={counts.ONGOING} />
+        <TabButton value="EVALUATION" icon={<Edit3 className="h-4 w-4"/>} label="Evaluation" count={counts.EVALUATION} />
         <TabButton value="COMPLETED" icon={<Archive className="h-4 w-4"/>} label="History" count={counts.COMPLETED} />
       </div>
 
@@ -131,7 +176,6 @@ export default function ExamBlueprints() {
                 <TableHead className="w-[60px]">#</TableHead>
                 <TableHead className="w-[260px]">Target Session Stream Track</TableHead>
                 <TableHead>Class Tier</TableHead>
-                <TableHead>Blueprint Base Mapping</TableHead>
                 <TableHead>Testing Windows</TableHead>
                 <TableHead>Process Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -141,14 +185,14 @@ export default function ExamBlueprints() {
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <TableRow key={i}>
-                    {[40, 240, 90, 140, 180, 80, 100].map((w, j) => (
+                    {[40, 240, 90, 140, 180, 100].map((w, j) => (
                       <TableCell key={j}><div className="md-skel" style={{ height: "14px", width: `${w}px` }} /></TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : paginatedItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7}>
+                  <TableCell colSpan={6}>
                     <div className="md-empty">
                       <CalendarDays className="md-empty-icon" />
                       <p className="md-empty-title">No scheduled assessment tracking streams located</p>
@@ -161,7 +205,6 @@ export default function ExamBlueprints() {
                     <TableCell className="md-cell-index">{startIdx + idx + 1}</TableCell>
                     <TableCell className="font-medium text-sm text-sidebar-foreground">{exam.name}</TableCell>
                     <TableCell><span className="md-badge md-badge--outline">{exam.classLevelName}</span></TableCell>
-                    <TableCell><span className="md-badge md-badge--code font-mono text-[11px]">{exam.examTypeCode}</span></TableCell>
                     <TableCell className="text-xs font-medium text-muted-foreground">
                       {formatDate(exam.startDate)} — {formatDate(exam.endDate)}
                     </TableCell>
@@ -170,24 +213,104 @@ export default function ExamBlueprints() {
                         exam.status === 'DRAFT' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
                         exam.status === 'SCHEDULED' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' : 
                         exam.status === 'ONGOING' ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20' : 
+                        exam.status === 'EVALUATION' ? 'bg-teal-500/10 text-teal-600 border border-teal-500/20' : 
                         'bg-green-500/10 text-green-500 border border-green-500/20'
                       }`}>
                         {exam.status === 'DRAFT' && <ShieldAlert className="h-3 w-3" />}
                         {exam.status === 'SCHEDULED' && <Clock className="h-3 w-3" />}
                         {exam.status === 'ONGOING' && <PlayCircle className="h-3 w-3" />}
+                        {exam.status === 'EVALUATION' && <Edit3 className="h-3 w-3" />}
                         {exam.status === 'COMPLETED' && <CheckCircle2 className="h-3 w-3" />}
                         {exam.status}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
                       {exam.status === 'DRAFT' && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => navigate(`/exam-blueprints/setup/${exam.id}`)}
-                          className="h-8 text-xs text-primary hover:text-primary hover:bg-primary/10"
+                        <div className="flex gap-2 justify-end">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => navigate(`/exam-blueprints/setup/${exam.id}`)}
+                          >
+                            Resume Setup <ArrowRight className="ml-1.5 h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handlePublish(exam.id)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            Publish <Send className="ml-1.5 h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {exam.status === 'SCHEDULED' && (
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/exam-blueprints/details/${exam.id}`)}
+                          >
+                            View Details <Eye className="ml-1.5 h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleUnpublish(exam.id)}
+                            className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                          >
+                            Unpublish <ArrowLeft className="ml-1.5 h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {exam.status === 'ONGOING' && (
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/exam-blueprints/details/${exam.id}`)}
+                          >
+                            Monitor <Activity className="ml-1.5 h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleStartEvaluation(exam.id)}
+                            className="bg-purple-600 text-white hover:bg-purple-700"
+                          >
+                            Start Evaluation <Edit3 className="ml-1.5 h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+
+                      {exam.status === 'EVALUATION' && (
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/exam-blueprints/marks/${exam.id}`)}
+                            className="text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                          >
+                            Enter Marks <FileEdit className="ml-1.5 h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleMarkCompleted(exam.id)}
+                            className="bg-green-600 text-white hover:bg-green-700"
+                          >
+                            Publish Results <CheckCircle className="ml-1.5 h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {exam.status === 'COMPLETED' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/exam-blueprints/details/${exam.id}`)}
                         >
-                          Resume Setup <ArrowRight className="ml-1.5 h-3 w-3" />
+                          View Report <FileText className="ml-1.5 h-3 w-3" />
                         </Button>
                       )}
                     </TableCell>

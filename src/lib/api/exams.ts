@@ -32,7 +32,7 @@ export interface ScheduledExam {
   startDate: string;
   endDate: string;
   // UPDATED: Now matches the Java Enum values exactly
-  status: "DRAFT" | "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED"; 
+  status: "DRAFT" | "SCHEDULED" | "ONGOING" | "EVALUATION" | "COMPLETED" | "CANCELLED";
   classLevelExam: boolean;
 }
 
@@ -184,5 +184,40 @@ export async function updateExamHeader(
 // Add this to src/lib/api/exams.ts
 export async function getExamDetails(examId: number): Promise<any> {
   const response = await api.get(`/api/v1/exams/${examId}/details`);
+  return response.data.data;
+}
+
+// Add these functions to src/lib/api/exams.ts
+
+export async function publishExam(examId: number): Promise<ScheduledExam> {
+  const response = await api.post<{ data: ScheduledExam }>(
+    `/api/v1/exams/${examId}/publish`
+  );
+  return response.data.data;
+}
+
+export async function unpublishExam(examId: number): Promise<ScheduledExam> {
+  const response = await api.post<{ data: ScheduledExam }>(
+    `/api/v1/exams/${examId}/unpublish`
+  );
+  return response.data.data;
+}
+
+export async function markCompleted(examId: number): Promise<ScheduledExam> {
+  const response = await api.post<{ data: ScheduledExam }>(
+    `/api/v1/exams/${examId}/mark-completed`
+  );
+  return response.data.data;
+}
+
+export async function cancelExam(examId: number): Promise<void> {
+  await api.post(`/api/v1/exams/${examId}/cancel`);
+}
+
+// Add this new transition function
+export async function startEvaluation(examId: number): Promise<ScheduledExam> {
+  const response = await api.post<{ data: ScheduledExam }>(
+    `/api/v1/exams/${examId}/start-evaluation` // Ensure you add this matching endpoint in your Spring Boot ExamController!
+  );
   return response.data.data;
 }

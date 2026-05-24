@@ -3,6 +3,9 @@ import ExamTypes from "@/pages/ExamTypes";
 import ExamSetupWizard from "./pages/ExamSetupWizard";
 import ExamBlueprints from "@/pages/ExamBlueprints";
 import ExamDetails from "./pages/ExamDetails";
+import ExamMarksEntry from "./pages/ExamMarksEntry";
+import IndependentResults       from "./pages/IndependentResults";
+import IndependentResultsDetail from "./pages/IndependentResultsDetail";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
@@ -98,10 +101,15 @@ export default function App() {
               <Route path="/exam-types" element={<ExamTypes />} />
               <Route path="/exam-blueprints" element={<ExamBlueprints />} />
               <Route path="/exam-blueprints/details/:examId" element={<ExamDetails />} />
+              <Route path="/exam-blueprints/marks/:examId" element={<ExamMarksEntry />} />
 
               {/* The Unified Wizard handles both the initial creation and the configuration */}
               <Route path="/exam-blueprints/setup" element={<ExamSetupWizard />} />
               <Route path="/exam-blueprints/setup/:examId" element={<ExamSetupWizard />} />
+
+              {/* INDEPENDENT RESULTS */}
+              <Route path="/independent-results"        element={<IndependentResults />} />
+              <Route path="/independent-results/:examId" element={<IndependentResultsDetail />} />
 
               {/* MASTER DATA */}
               <Route path="/academic-years"         element={<AcademicYears />} />
