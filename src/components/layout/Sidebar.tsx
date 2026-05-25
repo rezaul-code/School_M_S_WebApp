@@ -212,7 +212,7 @@ export default function SidebarContent({
       </div>
 
       {/* ── Nav ──────────────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto">
+      <nav className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
 
         {/* 1. Dashboard */}
         {navItems.map((item) => {
