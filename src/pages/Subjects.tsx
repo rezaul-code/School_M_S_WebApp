@@ -1,7 +1,5 @@
-// src/pages/Subjects.tsx
-
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +13,8 @@ import {
   Sparkles,
   Hash,
   ListFilter,
+  Layers,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,7 @@ import {
   deleteSubject,
   getSubject,
   listSubjects,
+  type CreateSubjectPayload,
 } from "@/lib/api/subjects";
 import { getApiErrorMessage } from "@/lib/api/client";
 
@@ -62,12 +63,25 @@ import "@/styles/master-data.css";
 
 const ITEMS_PER_PAGE = 10;
 
+// Upgraded Zod validation to fully handle components
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   code: z
     .string()
     .min(1, "Code is required")
     .transform((v) => v.toUpperCase()),
+  components: z
+    .array(
+      z.object({
+        name: z.string().min(1, "Component name is required"),
+        code: z
+          .string()
+          .min(1, "Component code is required")
+          .transform((v) => v.toUpperCase()),
+        displayOrder: z.number().int().min(1),
+      })
+    )
+    .min(1, "At least one evaluation component is required"),
 });
 type Values = z.infer<typeof schema>;
 
@@ -81,18 +95,33 @@ export default function Subjects() {
 
   const subjectsQ = useQuery({ queryKey: ["subjects"], queryFn: listSubjects });
 
+  // Instantiating react-hook-form with default structural values
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", code: "" },
+    defaultValues: {
+      name: "",
+      code: "",
+      components: [{ name: "Theory", code: "THEORY", displayOrder: 1 }],
+    },
+  });
+
+  // field-array engine manages dynamic additions and subtractions of inputs
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "components",
   });
 
   const createMutation = useMutation({
     mutationFn: createSubject,
     onSuccess: () => {
-      toast.success("Subject created");
+      toast.success("Subject created successfully.");
       qc.invalidateQueries({ queryKey: ["subjects"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
-      form.reset();
+      form.reset({
+        name: "",
+        code: "",
+        components: [{ name: "Theory", code: "THEORY", displayOrder: 1 }],
+      });
       setCreateOpen(false);
     },
     onError: (err) =>
@@ -102,7 +131,7 @@ export default function Subjects() {
   const deleteMutation = useMutation({
     mutationFn: deleteSubject,
     onSuccess: () => {
-      toast.success("Subject deleted");
+      toast.success("Subject deleted successfully.");
       qc.invalidateQueries({ queryKey: ["subjects"] });
       setDeleteId(null);
     },
@@ -238,6 +267,7 @@ export default function Subjects() {
                 <TableHead>#</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Code</TableHead>
+                <TableHead>Components Blueprint</TableHead>
                 <TableHead style={{ textAlign: "right" }}>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -245,7 +275,7 @@ export default function Subjects() {
               {subjectsQ.isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    {[40, 160, 80, 80].map((w, j) => (
+                    {[40, 160, 80, 120, 80].map((w, j) => (
                       <TableCell key={j}>
                         <div
                           className="md-skel"
@@ -257,7 +287,7 @@ export default function Subjects() {
                 ))
               ) : paginatedItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4}>
+                  <TableCell colSpan={5}>
                     <div className="md-empty">
                       <BookOpen className="md-empty-icon" />
                       <p className="md-empty-title">
@@ -280,6 +310,23 @@ export default function Subjects() {
                     <TableCell className="md-cell-name">{s.name}</TableCell>
                     <TableCell>
                       <span className="md-badge md-badge--code">{s.code}</span>
+                    </TableCell>
+                    {/* Render standard evaluation bubbles inside data row */}
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1.5">
+                        {s.components?.map((c: any) => (
+                          <span
+                            key={c.id}
+                            className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground border border-border"
+                          >
+                            {c.name} ({c.code})
+                          </span>
+                        )) || (
+                          <span className="text-xs text-muted-foreground italic">
+                            No components defined
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="md-row-actions">
@@ -316,25 +363,36 @@ export default function Subjects() {
       </div>
 
       {/* ── Create Subject Dialog ─────────────────────────── */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          setCreateOpen(open);
+          if (!open) {
+            form.reset({
+              name: "",
+              code: "",
+              components: [{ name: "Theory", code: "THEORY", displayOrder: 1 }],
+            });
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create Subject</DialogTitle>
             <DialogDescription>
-              Add a subject to the curriculum.
+              Add a subject to the curriculum with its evaluation breakdown.
             </DialogDescription>
           </DialogHeader>
-          <form
-            className="space-y-4"
-            onSubmit={form.handleSubmit((v) =>
-              createMutation.mutate(
-                v as Parameters<typeof createSubject>[0]
-              )
-            )}
-          >
+         <form
+  className="space-y-4"
+  onSubmit={form.handleSubmit((v) => {
+    // Cast directly to the payload format
+    createMutation.mutate(v as CreateSubjectPayload);
+  })}
+>
             <div className="space-y-1.5">
               <Label>Name</Label>
-              <Input placeholder="Mathematics" {...form.register("name")} />
+              <Input placeholder="Chemistry" {...form.register("name")} />
               {form.formState.errors.name && (
                 <p className="text-xs text-destructive">
                   {form.formState.errors.name.message}
@@ -344,7 +402,7 @@ export default function Subjects() {
             <div className="space-y-1.5">
               <Label>Code</Label>
               <Input
-                placeholder="MATH"
+                placeholder="CHEM101"
                 {...form.register("code")}
                 onChange={(e) =>
                   form.setValue("code", e.target.value.toUpperCase(), {
@@ -359,7 +417,95 @@ export default function Subjects() {
                 </p>
               )}
             </div>
-            <DialogFooter>
+
+            {/* Sub-Layout: Dynamic Component Builder Section */}
+            <div className="space-y-3 pt-2 border-t border-border">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Layers className="h-3.5 w-3.5" />
+                  Structure Components
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  onClick={() =>
+                    append({
+                      name: "",
+                      code: "",
+                      displayOrder: fields.length + 1,
+                    })
+                  }
+                >
+                  <Plus className="h-3 w-3" />
+                  Add Row
+                </Button>
+              </div>
+
+              {form.formState.errors.components?.message && (
+                <p className="text-xs text-destructive">
+                  {form.formState.errors.components.message}
+                </p>
+              )}
+
+              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                {fields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="flex items-start gap-2 bg-muted/40 p-2.5 rounded-lg border border-border relative group"
+                  >
+                    <div className="grid grid-cols-2 gap-2 flex-1">
+                      <div className="space-y-1">
+                        <Input
+                          placeholder="e.g. Practical Lab"
+                          className="h-8 text-xs"
+                          {...form.register(`components.${index}.name` as const)}
+                        />
+                        {form.formState.errors.components?.[index]?.name && (
+                          <p className="text-[10px] text-destructive">
+                            {form.formState.errors.components[index]?.name?.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <Input
+                          placeholder="e.g. LAB"
+                          className="h-8 text-xs"
+                          {...form.register(`components.${index}.code` as const)}
+                          onChange={(e) =>
+                            form.setValue(
+                              `components.${index}.code` as const,
+                              e.target.value.toUpperCase(),
+                              { shouldValidate: true }
+                            )
+                          }
+                        />
+                        {form.formState.errors.components?.[index]?.code && (
+                          <p className="text-[10px] text-destructive">
+                            {form.formState.errors.components[index]?.code?.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                        onClick={() => remove(index)}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <DialogFooter className="pt-2">
               <Button
                 type="button"
                 variant="outline"
@@ -377,7 +523,7 @@ export default function Subjects() {
 
       {/* ── View Subject Dialog ───────────────────────────── */}
       <Dialog open={!!viewId} onOpenChange={(o) => !o && setViewId(null)}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Subject Details</DialogTitle>
           </DialogHeader>
@@ -385,28 +531,72 @@ export default function Subjects() {
             <div className="space-y-2">
               <Skeleton className="h-6 w-2/3" />
               <Skeleton className="h-6 w-1/3" />
+              <Skeleton className="h-20 w-full" />
             </div>
           ) : viewQ.data ? (
-            <div className="space-y-3 text-sm">
-              <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">
-                  Name
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">
+                    Name
+                  </div>
+                  <div className="font-medium text-base text-foreground">
+                    {viewQ.data.name}
+                  </div>
                 </div>
-                <div className="font-medium">{viewQ.data.name}</div>
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">
+                    Code
+                  </div>
+                  <div>
+                    <span className="md-badge md-badge--code text-sm">
+                      {viewQ.data.code}
+                    </span>
+                  </div>
+                </div>
               </div>
+
               <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">
-                  Code
+                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                  Evaluation Blueprint Components
                 </div>
-                <span className="md-badge md-badge--code">
-                  {viewQ.data.code}
-                </span>
+                <div className="bg-muted/30 border border-border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-muted/50">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="h-8 text-xs py-1">Order</TableHead>
+                        <TableHead className="h-8 text-xs py-1">Component</TableHead>
+                        <TableHead className="h-8 text-xs py-1">Code</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {viewQ.data.components?.map((c: any, index: number) => (
+                        <TableRow key={c.id} className="hover:bg-transparent">
+                          <TableCell className="py-1.5 font-mono text-xs">
+                            {c.displayOrder ?? index + 1}
+                          </TableCell>
+                          <TableCell className="py-1.5 font-medium text-xs">
+                            {c.name}
+                          </TableCell>
+                          <TableCell className="py-1.5.5">
+                            <span className="px-1.5 py-0.5 font-mono rounded text-[10px] bg-secondary text-secondary-foreground border border-border">
+                              {c.code}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
-              <div>
+
+              <div className="pt-2 border-t border-border">
                 <div className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">
-                  ID
+                  Internal System Reference Key
                 </div>
-                <div className="md-cell-mono break-all">{viewQ.data.id}</div>
+                <div className="md-cell-mono text-xs text-muted-foreground break-all bg-muted/40 p-2 rounded border border-border">
+                  {viewQ.data.id}
+                </div>
               </div>
             </div>
           ) : null}
@@ -422,8 +612,8 @@ export default function Subjects() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this subject?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. The subject will be permanently
-              removed.
+              This action cannot be undone. The subject and all associated
+              blueprint evaluation rows will be permanently destroyed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

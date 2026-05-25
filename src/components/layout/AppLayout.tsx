@@ -1,5 +1,3 @@
-// src/components/layout/AppLayout.tsx
-
 import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Menu } from "lucide-react";
@@ -37,6 +35,10 @@ function getActiveNav(pathname: string): NavItem {
     ...reportingItems,
     ...accountingItems,
   ];
+
+  // Specific overrides for sub-routes
+  if (pathname === "/students/admit") return { to: "/students/admit", label: "Admit Student" };
+  if (pathname === "/students/id-cards") return { to: "/students/id-cards", label: "ID Cards" };
 
   return (
     allItems.find(

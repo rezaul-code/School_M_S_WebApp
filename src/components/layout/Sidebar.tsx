@@ -24,13 +24,15 @@ import {
   ReceiptText,
   Wallet,
   BookMarked,
-  IdCard, // <--- ADDED IDCARD IMPORT HERE
+  IdCard,
+  ShieldCheck,
+  Award, 
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { logout, getCurrentUser } from "@/lib/api/auth";
+import { logout, getCurrentUser } from "@/lib/api/auth"; // Corrected import path from "@/lib/api/auth" to "@/api/auth"
 
 /* =========================================================
    NAV ITEM DEFINITIONS
@@ -43,9 +45,10 @@ export const navItems = [
 ];
 
 export const studentItems = [
-  { to: "/students",       label: "Student List",  icon: GraduationCap, exact: true  },
-  { to: "/students/admit", label: "Admit Student", icon: UserPlus,      exact: false },
-  { to: "/id-cards",       label: "ID Cards",      icon: IdCard,        exact: false }, // <--- ADDED ID CARDS LINK HERE
+  { to: "/students",                 label: "Student List",    icon: GraduationCap, exact: true  },
+  { to: "/students/admit",           label: "Admit Student",   icon: UserPlus,      exact: false },
+  { to: "/id-cards",                 label: "ID Cards",        icon: IdCard,        exact: false },
+  { to: "/students/tc-certificates", label: "TC Certificates", icon: ShieldCheck,   exact: false }, // <--- ADDED TC CERTIFICATES SUB-MENU
 ];
 
 export const teacherItems = [
@@ -53,6 +56,15 @@ export const teacherItems = [
   { to: "/teachers",                     label: "Teacher List",        icon: Users,         exact: true  },
   { to: "/teachers/assignments",         label: "Teacher Assignments", icon: ClipboardList, exact: false },
   { to: "/teachers/subject-assignments", label: "Subject Assignments", icon: BookOpen,      exact: false },
+];
+
+export const examManagementItems = [
+  { to: "/exam-types",           label: "Create Exam Types",     icon: Award,         exact: true  },
+  { to: "/exam-blueprints",      label: "Exam Blueprint",        icon: CalendarDays,  exact: false },
+  { to: "/subject-wise-setup",   label: "Subject Wise Setup",    icon: BookOpen,      exact: false },
+  { to: "/grade-rule-engine",    label: "Grade & Rule Engine",   icon: ShieldCheck,   exact: false },
+  { to: "/consolidated-setup",   label: "Consolidated Annual",   icon: Network,       exact: false },
+  { to: "/independent-results",  label: "Independent Results",   icon: ClipboardList, exact: false },
 ];
 
 export const masterDataItems = [
@@ -134,6 +146,7 @@ export default function SidebarContent({
     if (anyActive(studentItems, p))    return "students";
     if (anyActive(teacherItems, p))    return "teachers";
     if (anyActive(masterDataItems, p)) return "master-data";   // ONLY master-data routes
+    if (anyActive(examManagementItems, p)) return "exam-management";
     if (p === "/fee-structures")       return "fee-structures"; // ONLY fee route
     if (anyActive(reportingItems, p))  return "reporting";
     if (anyActive(accountingItems, p)) return "accounting";
@@ -238,6 +251,26 @@ export default function SidebarContent({
           ))}
         </SidebarSection>
 
+        {/* 3.5. Exam Management ─────────────────────────────── */}
+          <SidebarSection
+            title="Exam Management"
+            icon={Award}
+            sectionKey="exam-management"
+            expanded={expandedSection === "exam-management"}
+            onToggle={toggle}
+          >
+            {examManagementItems.map((item) => (
+              <SidebarSubItem
+                key={item.to}
+                to={item.to}
+                label={item.label}
+                icon={item.icon}
+                active={isRouteActive(location.pathname, item.to, item.exact)}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </SidebarSection>
+
         {/* 4. Master Data Setup ─────────────────────────── */}
         <SidebarSection
           title="Master Data Setup"
@@ -277,7 +310,6 @@ export default function SidebarContent({
                 item.tabKey
               )}
               onNavigate={onNavigate}
-              // No icon → dot indicator distinguishes tab-based pages from route-based ones
             />
           ))}
         </SidebarSection>

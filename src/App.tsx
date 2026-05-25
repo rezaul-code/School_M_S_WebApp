@@ -1,5 +1,11 @@
 // src/App.tsx
-
+import ExamTypes from "@/pages/ExamTypes";
+import ExamSetupWizard from "./pages/ExamSetupWizard";
+import ExamBlueprints from "@/pages/ExamBlueprints";
+import ExamDetails from "./pages/ExamDetails";
+import ExamMarksEntry from "./pages/ExamMarksEntry";
+import IndependentResults       from "./pages/IndependentResults";
+import IndependentResultsDetail from "./pages/IndependentResultsDetail";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
@@ -7,39 +13,40 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-import AppLayout from "@/components/layout/AppLayout";
-import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import AppLayout from "./components/layout/AppLayout";
+import ProtectedRoute from "./components/layout/ProtectedRoute";
 
-import Login from "@/pages/Login";
-import Dashboard from "@/pages/Dashboard";
-import StudentsPage from "@/pages/Students";
-import AdmissionWizardPage from "@/components/students/AdmissionWizard"; // <-- ADDED IMPORT
-import StudentDetailsPage from "@/pages/StudentDetails";
-import StudentFeeSummaryPage from "@/pages/StudentFeeSummary";
-import IdCardManagement from "@/pages/IdCardManagement"; // <-- ADDED IMPORT
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import StudentsPage from "./pages/Students";
+import AdmissionWizardPage from "./components/students/AdmissionWizard"; 
+import StudentDetailsPage from "./pages/StudentDetails";
+import StudentFeeSummaryPage from "./pages/StudentFeeSummary";
+import IdCardManagement from "./pages/IdCardManagement"; 
+import TCCertificates from "./pages/TCCertificates"; 
 
 // Teachers
-import RegisterTeacherPage from "@/pages/RegisterTeacher";
-import TeachersPage from "@/pages/Teachers";
-import TeacherAssignmentsPage from "@/pages/TeacherAssignments";
-import SubjectAssignmentsPage from "@/pages/SubjectAssignments";
+import RegisterTeacherPage from "./pages/RegisterTeacher";
+import TeachersPage from "./pages/Teachers";
+import TeacherAssignmentsPage from "./pages/TeacherAssignments";
+import SubjectAssignmentsPage from "./pages/SubjectAssignments";
 
 // Master data
-import Subjects from "@/pages/Subjects";
-import ClassSubjectMappings from "@/pages/ClassSubjectMappings";
-import FeeStructures from "@/pages/FeeStructures";
-import AcademicYears from "@/pages/AcademicYears";
-import ClassLevels from "@/pages/ClassLevels";
-import Sections from "@/pages/Sections";
-import ClassSections from "@/pages/ClassSections";
+import Subjects from "./pages/Subjects";
+import ClassSubjectMappings from "./pages/ClassSubjectMappings";
+import FeeStructures from "./pages/FeeStructures";
+import AcademicYears from "./pages/AcademicYears";
+import ClassLevels from "./pages/ClassLevels";
+import Sections from "./pages/Sections";
+import ClassSections from "./pages/ClassSections";
 
 // Reporting
-import FeeReport from "@/pages/FeeReport";
+import FeeReport from "./pages/FeeReport";
 
 // Accounting
-import FeeCollections from "@/pages/FeeCollections";
+import FeeCollections from "./pages/FeeCollections";
 
-import NotFound from "@/pages/NotFound";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,7 +86,8 @@ export default function App() {
               {/* STUDENTS — static routes before dynamic :studentId */}
               <Route path="/students"         element={<StudentsPage />} />
               <Route path="/students/admit" element={<AdmissionWizardPage />} />
-              <Route path="/id-cards"       element={<IdCardManagement />} /> {/* <-- ADDED ROUTE HERE */}
+              <Route path="/id-cards"       element={<IdCardManagement />} /> 
+              <Route path="/students/tc-certificates" element={<TCCertificates />} /> 
               <Route path="/students/:studentId"             element={<StudentDetailsPage />} />
               <Route path="/students/:studentId/fee-summary" element={<StudentFeeSummaryPage />} />
 
@@ -88,6 +96,20 @@ export default function App() {
               <Route path="/teachers"                     element={<TeachersPage />} />
               <Route path="/teachers/assignments"         element={<TeacherAssignmentsPage />} />
               <Route path="/teachers/subject-assignments" element={<SubjectAssignmentsPage />} />
+
+             {/* EXAM MANAGEMENT */}
+              <Route path="/exam-types" element={<ExamTypes />} />
+              <Route path="/exam-blueprints" element={<ExamBlueprints />} />
+              <Route path="/exam-blueprints/details/:examId" element={<ExamDetails />} />
+              <Route path="/exam-blueprints/marks/:examId" element={<ExamMarksEntry />} />
+
+              {/* The Unified Wizard handles both the initial creation and the configuration */}
+              <Route path="/exam-blueprints/setup" element={<ExamSetupWizard />} />
+              <Route path="/exam-blueprints/setup/:examId" element={<ExamSetupWizard />} />
+
+              {/* INDEPENDENT RESULTS */}
+              <Route path="/independent-results"        element={<IndependentResults />} />
+              <Route path="/independent-results/:examId" element={<IndependentResultsDetail />} />
 
               {/* MASTER DATA */}
               <Route path="/academic-years"         element={<AcademicYears />} />

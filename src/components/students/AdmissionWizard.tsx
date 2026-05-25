@@ -6,7 +6,9 @@ import Step4Review from '@/lib/components/admission/Step4Review';
 import ProgressBar from '@/lib/components/admission/ProgressBar';
 import BottomNavigation from '@/lib/components/admission/BottomNavigation';
 import { admitStudent } from '@/lib/api/students';
-import { Printer, Scissors, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Printer, Scissors, CheckCircle2, ArrowLeft, UserPlus } from 'lucide-react';
+
+import "@/styles/student-pages.css";
 
 export type PaymentRow = {
   feeType: string;
@@ -43,6 +45,7 @@ export type WizardState = {
 export type SuccessState = {
   rollNumber: string;
   feeLedgerRowsGenerated: number;
+  masterReceiptNo?: string;
 };
 
 const INITIAL_STATE: WizardState = {
@@ -78,6 +81,7 @@ const today = new Date().toLocaleDateString('en-GB', {
 function ReceiptCopy({ copyType, state, successData }: { copyType: string, state: WizardState, successData: SuccessState }) {
   const fullName = `${state.studentInfo.firstName} ${state.studentInfo.lastName}`.trim().toUpperCase();
   const sectionName = (state.setupData as any).classSectionName ?? `${state.setupData.classSectionName}`;
+  const displayReceiptNo = successData.masterReceiptNo || `PENDING`;
   
   let grandTotalReq = 0;
   let grandTotalPaid = 0;
@@ -101,7 +105,7 @@ function ReceiptCopy({ copyType, state, successData }: { copyType: string, state
         </div>
         <div className="ml-auto text-right">
           <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Receipt No.</div>
-          <div className="text-sm font-bold text-slate-900 mt-0.5">RCPT-ADM-{successData.rollNumber}</div>
+          <div className="text-sm font-bold text-slate-900 mt-0.5">{displayReceiptNo}</div>
         </div>
       </div>
 
@@ -254,6 +258,7 @@ export default function AdmissionWizard() {
       setSuccessData({
         rollNumber: (result as any)?.rollNumber ?? state.studentInfo.rollNumber,
         feeLedgerRowsGenerated: (result as any)?.feeLedgerRowsGenerated ?? 0,
+        masterReceiptNo: (result as any)?.masterReceiptNo,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'An error occurred. Please try again.';
@@ -344,9 +349,6 @@ export default function AdmissionWizard() {
             </button>
           </div>
 
-          {/* 🔥 ACTUAL PRINTABLE AREA 🔥 
-              The CSS ID "print-receipt-area" is what saves it from the layout overlap 
-          */}
           <div id="print-receipt-area" className="p-8 print:p-0">
              <ReceiptCopy copyType="OFFICE COPY" state={state} successData={successData} />
 
@@ -369,14 +371,26 @@ export default function AdmissionWizard() {
 
   // ── Main Wizard ──────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-12">
+    <div className="sl-page space-y-6 max-w-4xl mx-auto pb-12">
+      {/* ── Page header banner added to match ID cards style ── */}
+      <div className="sl-header">
+        <div className="sl-header-left">
+          <div className="sl-header-icon">
+            <UserPlus />
+          </div>
+          <div>
+            <h1 className="sl-header-title">Admit Student</h1>
+            <p className="sl-header-sub">
+              Create a student account and enrol them in a class.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
         {/* Header & Progress */}
         <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-6 sm:px-8 sm:py-8">
-          <h1 className="text-2xl font-bold text-slate-900">Admit Student</h1>
-          <p className="text-slate-500 mt-1 text-sm">Create a student account and enrol them in a class.</p>
-          
-          <div className="mt-8">
+          <div className="mt-2">
             <ProgressBar activeStep={state.activeStep} />
           </div>
         </div>

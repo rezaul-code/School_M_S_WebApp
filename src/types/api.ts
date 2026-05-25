@@ -68,12 +68,19 @@ export interface Section {
   displayName: string;
 }
 
+export interface SubjectComponent {
+  id: number;
+  name: string;
+  code: string;
+  displayOrder: number;
+}
+
 export interface Subject {
   id: number | string;
   name: string;
   code: string;
-
   createdAt?: string;
+  components?: SubjectComponent[]; // Safe optional field for registry reads
 }
 
 export interface ClassSection {
