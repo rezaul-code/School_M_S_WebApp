@@ -2,6 +2,7 @@
 import ExamTypes from "@/pages/ExamTypes";
 import ExamSetupWizard from "./pages/ExamSetupWizard";
 import ExamBlueprints from "@/pages/ExamBlueprints";
+import GradingSchemes from "./pages/GradingSchemes";
 import ExamDetails from "./pages/ExamDetails";
 import ExamMarksEntry from "./pages/ExamMarksEntry";
 import IndependentResults       from "./pages/IndependentResults";
@@ -106,7 +107,7 @@ export default function App() {
               {/* The Unified Wizard handles both the initial creation and the configuration */}
               <Route path="/exam-blueprints/setup" element={<ExamSetupWizard />} />
               <Route path="/exam-blueprints/setup/:examId" element={<ExamSetupWizard />} />
-
+              <Route path="/grade-rule-engine/schemes" element={<GradingSchemes />} />
               {/* INDEPENDENT RESULTS */}
               <Route path="/independent-results"        element={<IndependentResults />} />
               <Route path="/independent-results/:examId" element={<IndependentResultsDetail />} />
