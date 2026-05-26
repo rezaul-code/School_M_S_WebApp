@@ -27,8 +27,7 @@ import {
 } from "@/components/ui/table";
 
 import Pagination from "@/components/common/Pagination";
-import StudentDetailDrawer from "@/components/students/StudentDetailDrawer";
-import FeeSummaryDrawer from "@/components/students/FeeSummaryDrawer";
+import { useNavigate } from "react-router-dom";
 
 import {
   DropdownMenu,
@@ -46,15 +45,8 @@ export default function Students() {
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+  const navigate = useNavigate();
 
-  const [selectedStudent, setSelectedStudent] =
-    useState<Student | null>(null);
-
-  const [feeSummaryStudentId, setFeeSummaryStudentId] =
-    useState<string | null>(null);
-
-  const [openFeeSummary, setOpenFeeSummary] =
-    useState(false);
 
   // ✅ Active Academic Year Logic Preserved
   const { data: activeYear, isLoading: yearLoading } =
@@ -221,19 +213,14 @@ export default function Students() {
 
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onSelect={() =>
-                              setSelectedStudent(student)
-                            }
+                            onSelect={() => navigate(`/students/${student.id}`)}
                           >
                             View Details
                           </DropdownMenuItem>
 
                           <DropdownMenuItem
                             disabled={!activeYear?.id}
-                            onSelect={() => {
-                              setFeeSummaryStudentId(student.id);
-                              setOpenFeeSummary(true);
-                            }}
+                            onSelect={() => navigate(`/students/${student.id}/fee-summary`)}
                           >
                             Fee Summary
                           </DropdownMenuItem>
@@ -265,22 +252,7 @@ export default function Students() {
         )}
       </div>
 
-      {/* ✅ All Drawers Preserved */}
-      <StudentDetailDrawer
-        studentId={selectedStudent?.id ?? ""}
-        open={!!selectedStudent}
-        onOpenChange={() => setSelectedStudent(null)}
-      />
-
-      <FeeSummaryDrawer
-        studentId={feeSummaryStudentId}
-        open={openFeeSummary}
-        onOpenChange={(v) => {
-          setOpenFeeSummary(v);
-          if (!v) setFeeSummaryStudentId(null);
-        }}
-        academicYearId={activeYear.id}
-      />
+      
     </div>
   );
 }
