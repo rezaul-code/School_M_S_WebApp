@@ -86,23 +86,8 @@ export default function TeachersPage() {
   return (
     <div className="tm-page">
       {/* HERO */}
-      <div className="tm-hero">
-        <div className="tm-hero-glow" />
-        <div className="tm-hero-inner">
-          <div className="tm-hero-left">
-            <div className="tm-hero-icon-wrap">
-              <Users />
-            </div>
-            <div className="tm-hero-text">
-              <h2 className="tm-hero-title">Teacher List</h2>
-              <p className="tm-hero-sub">Manage all registered teachers</p>
-            </div>
-          </div>
-          <span className="tm-hero-badge">
-            {teachersQuery.data?.totalElements ?? "—"} Total
-          </span>
-        </div>
-      </div>
+      
+     
 
       {/* STATS */}
       {!teachersQuery.isLoading && (

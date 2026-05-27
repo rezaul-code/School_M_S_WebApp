@@ -86,21 +86,7 @@ export default function RegisterTeacherPage() {
   return (
     <div className="tm-page">
       {/* HERO */}
-      <div className="tm-hero">
-        <div className="tm-hero-glow" />
-        <div className="tm-hero-inner">
-          <div className="tm-hero-left">
-            <div className="tm-hero-icon-wrap">
-              <UserPlus />
-            </div>
-            <div className="tm-hero-text">
-              <h2 className="tm-hero-title">Register Teacher</h2>
-              <p className="tm-hero-sub">Create and register a new teacher profile</p>
-            </div>
-          </div>
-          <span className="tm-hero-badge">New Profile</span>
-        </div>
-      </div>
+      
 
       {/* FORM CARD — wide, two-column on desktop */}
       <div className="tm-form-card tm-form-card--wide">

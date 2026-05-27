@@ -66,21 +66,7 @@ export default function TeacherAssignmentsPage() {
   return (
     <div className="tm-page">
       {/* HERO */}
-      <div className="tm-hero">
-        <div className="tm-hero-glow" />
-        <div className="tm-hero-inner">
-          <div className="tm-hero-left">
-            <div className="tm-hero-icon-wrap">
-              <ClipboardList />
-            </div>
-            <div className="tm-hero-text">
-              <h2 className="tm-hero-title">Teacher Assignments</h2>
-              <p className="tm-hero-sub">View all subject assignments across teachers</p>
-            </div>
-          </div>
-          <span className="tm-hero-badge">{assignments.length} Assignments</span>
-        </div>
-      </div>
+      
 
       {/* TOOLBAR */}
       <div className="tm-toolbar">
