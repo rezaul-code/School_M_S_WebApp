@@ -57,7 +57,7 @@ export default function AppLayout() {
   const active = getActiveNav(location.pathname);
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex min-h-screen w-full" style={{ background: "hsl(220 14% 88%)" }}>
       {/* Desktop Sidebar */}
       <aside
         className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-sidebar-border bg-sidebar lg:block"
@@ -108,11 +108,11 @@ export default function AppLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <div className="mx-auto w-full max-w-[1600px]">
-            <Outlet />
-          </div>
-        </main>
+        <main className="flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-[1600px]">
+          <Outlet />
+        </div>
+      </main>
       </div>
     </div>
   );

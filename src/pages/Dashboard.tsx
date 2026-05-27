@@ -122,66 +122,37 @@ export default function Dashboard() {
   return (
     <div className="db-page">
 
-      {/* Hero */}
-      <div className="db-hero">
-        <div className="db-hero-glow" />
-        <div className="db-hero-inner">
-          <div className="db-hero-left">
-            <div className="db-hero-icon-wrap">
-              <LayoutDashboard />
-            </div>
-            <div className="db-hero-text">
-              <h1 className="db-hero-title">School Admin Dashboard</h1>
-              <p className="db-hero-sub">Overview of your institution's key metrics and activity</p>
-            </div>
-          </div>
-          <div className="db-hero-meta">
-            <span className="db-hero-badge">
-              <Zap />
-              Live Data
-            </span>
-            <span className="db-hero-date">
-              <CalendarDays />
-              {today}
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* Stat Cards */}
       <div className="db-stats-grid">
         <StatCard
-          label="Total Students"
-          value={studentsQ.data?.totalElements ?? students.length}
-          icon={GraduationCap}
-          loading={studentsQ.isLoading}
-          accent="primary"
-          sub="Enrolled this year"
-        />
-        <StatCard
-          label="Total Teachers"
-          value={teachersQ.data?.totalElements ?? teachers.length}
-          icon={Users}
-          loading={teachersQ.isLoading}
-          accent="success"
-          sub="On faculty roster"
-        />
-        <StatCard
-          label="Total Subjects"
-          value={subjectsQ.data?.length}
-          icon={BookOpen}
-          loading={subjectsQ.isLoading}
-          accent="warning"
-          sub="Across all classes"
-        />
-        <StatCard
-          label="Class Sections"
-          value={sectionsQ.data?.length}
-          icon={Layers}
-          loading={sectionsQ.isLoading}
-          accent="destructive"
-          sub="Active sections"
-        />
+  label="Total Students"
+  value={studentsQ.data?.totalElements ?? students.length}
+  icon={GraduationCap}
+  loading={studentsQ.isLoading}
+  accent="success"
+
+/>
+<StatCard
+  label="Total Teachers"
+  value={teachersQ.data?.totalElements ?? teachers.length}
+  icon={Users}
+  loading={teachersQ.isLoading}
+  accent="primary"
+/>
+<StatCard
+  label="Total Subjects"
+  value={subjectsQ.data?.length}
+  icon={BookOpen}
+  loading={subjectsQ.isLoading}
+  accent="warning"
+/>
+<StatCard
+  label="Class Sections"
+  value={sectionsQ.data?.length}
+  icon={Layers}
+  loading={sectionsQ.isLoading}
+  accent="destructive"
+/>
       </div>
 
       {/* Charts */}
