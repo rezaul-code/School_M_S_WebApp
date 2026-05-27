@@ -100,19 +100,7 @@ export default function Students() {
   return (
     <div className="sl-page">
       {/* ── DARK HEADER BANNER (Fixes the White Header Issue) ── */}
-      <div className="sl-header">
-        <div className="sl-header-left">
-          <div className="sl-header-icon">
-            <GraduationCap />
-          </div>
-          <div>
-            <h1 className="sl-header-title">Student Directory</h1>
-            <p className="sl-header-sub">
-              Manage student admissions, details and academic records.
-            </p>
-          </div>
-        </div>
-      </div>
+      
 
       {/* ── MAIN CONTENT AREA ── */}
       <div className="sl-card bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
