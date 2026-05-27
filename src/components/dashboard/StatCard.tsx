@@ -1,5 +1,3 @@
-// src/components/dashboard/StatCard.tsx
-
 import type { LucideIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -11,13 +9,14 @@ interface StatCardProps {
   loading?: boolean;
   accent?: "primary" | "success" | "warning" | "destructive";
   sub?: string;
+  customIcon?: React.ReactNode;
 }
 
-const accentClassMap: Record<string, string> = {
-  primary: "db-stat-card--primary",
-  success: "db-stat-card--success",
-  warning: "db-stat-card--warning",
-  destructive: "db-stat-card--violet",
+const accentCircleMap: Record<string, string> = {
+  primary:     "db-stat-circle--primary",
+  success:     "db-stat-circle--success",
+  warning:     "db-stat-circle--warning",
+  destructive: "db-stat-circle--destructive",
 };
 
 export default function StatCard({
@@ -27,23 +26,19 @@ export default function StatCard({
   loading,
   accent = "primary",
   sub,
+  customIcon,
 }: StatCardProps) {
   return (
-    <div className={cn("db-stat-card", accentClassMap[accent])}>
-      <div className="db-stat-glow" />
-
-      <div className="db-stat-top">
-        <div className="db-stat-icon-wrap">
-          <Icon />
-        </div>
+    <div className="db-stat-card-v2">
+      <div className={cn("db-stat-circle", accentCircleMap[accent])}>
+        {customIcon ?? <Icon />}
       </div>
-
       <div className="db-stat-body">
-        <div className="db-stat-label">{label}</div>
+        <div className="db-stat-label-v2">{label}</div>
         {loading ? (
           <Skeleton className="mt-1 h-8 w-20" />
         ) : (
-          <div className="db-stat-value">{value ?? "—"}</div>
+          <div className="db-stat-value-v2">{value ?? "—"}</div>
         )}
         {sub && !loading && (
           <div className="db-stat-sub">{sub}</div>
