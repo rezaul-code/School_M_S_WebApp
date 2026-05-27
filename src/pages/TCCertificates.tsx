@@ -152,13 +152,8 @@ export default function TCCertificates() {
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl flex items-center justify-center bg-indigo-50 text-indigo-600 border border-indigo-100">
-              <ShieldCheck size={24} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">Clearance & TC Portal</h1>
-              <p className="text-slate-500 text-sm">Perform strict financial audits, terminate academic timelines, and print Transfer Certificates.</p>
-            </div>
+           
+           
           </div>
         </div>
 
@@ -374,7 +369,7 @@ export default function TCCertificates() {
                   </div>
                 )}
                 
-                <div className="border-t border-slate-300 pt-4 flex items-center justify-between bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                <div className="border-t border-slate-300 pt-4 flex items-center justify-between bg-white p-5 rounded-xl border shadow-sm">
                   <span className="font-bold text-slate-800 text-lg">Net Settlement Outcome</span>
                   <div className="text-right">
                     {previewData.advanceToRefund > 0 ? (

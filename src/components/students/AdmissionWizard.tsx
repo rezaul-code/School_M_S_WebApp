@@ -373,19 +373,6 @@ export default function AdmissionWizard() {
   return (
     <div className="sl-page space-y-6 max-w-4xl mx-auto pb-12">
       {/* ── Page header banner added to match ID cards style ── */}
-      <div className="sl-header">
-        <div className="sl-header-left">
-          <div className="sl-header-icon">
-            <UserPlus />
-          </div>
-          <div>
-            <h1 className="sl-header-title">Admit Student</h1>
-            <p className="sl-header-sub">
-              Create a student account and enrol them in a class.
-            </p>
-          </div>
-        </div>
-      </div>
 
       <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
         {/* Header & Progress */}

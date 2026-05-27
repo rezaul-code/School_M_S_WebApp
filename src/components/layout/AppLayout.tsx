@@ -102,7 +102,7 @@ export default function AppLayout() {
             <nav className="text-xs text-muted-foreground">
               <span>Home</span>
               <span className="mx-1.5 opacity-50">/</span>
-              <span className="text-foreground">{active.label}</span>
+              <span className="text-foreground" style={{ color: "hsl(38 100% 50%)" }}>{active.label}</span>
             </nav>
           </div>
         </header>

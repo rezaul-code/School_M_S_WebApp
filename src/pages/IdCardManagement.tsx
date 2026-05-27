@@ -67,30 +67,7 @@ export default function IdCardManagement() {
   return (
     <div className="sl-page">
       
-      {/* ── Page header banner ── */}
-      <div className="sl-header">
-        <div className="sl-header-left">
-          <div className="sl-header-icon">
-            <IdCard />
-          </div>
-          <div>
-            <h1 className="sl-header-title">ID Card Generator</h1>
-            <p className="sl-header-sub">
-              Select students and print official identity cards in bulk.
-            </p>
-          </div>
-        </div>
-        <div className="sl-header-actions">
-          <button
-            onClick={handlePrintSelected}
-            disabled={selectedIds.length === 0 || isPrinting}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
-          >
-            <Printer size={16} />
-            {isPrinting ? "Generating..." : `Print Selected (${selectedIds.length})`}
-          </button>
-        </div>
-      </div>
+     
 
       {/* ── Main card ── */}
       <div className="sl-card">
