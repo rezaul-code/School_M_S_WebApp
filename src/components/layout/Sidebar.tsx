@@ -29,6 +29,7 @@ import {
   ShieldCheck,
   Award,
   Menu,
+  X,                       // ← NEW: cross icon for collapsed state
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -37,24 +38,24 @@ import { cn } from "@/lib/utils";
 import { logout, getCurrentUser } from "@/lib/api/auth";
 
 /* =========================================================
-   DESIGN TOKENS  (match screenshot)
+   DESIGN TOKENS
 ========================================================= */
 
 const C = {
-  bg:           "hsl(222, 44%, 22%)",  // outer rows — medium navy matching Image 2
-  innerBg:      "hsl(222, 50%, 13%)",  // expanded sub-item area — noticeably darker
-  headerBg:     "#f5a623",             // orange header bar
-  divider:      "hsl(222, 38%, 28%)",  // separator between rows
-  iconOrange:   "#f5a623",
-  textSection:  "hsl(210, 20%, 72%)",  // section labels — grey-ish, not white
-  textWhite:    "#ffffff",
-  textMuted:    "hsl(210, 18%, 58%)",  // sub-item inactive
-  textActive:   "#f5a623",             // active sub-item = orange
-  chevronDim:   "hsl(210, 18%, 48%)",
+  bg:          "hsl(222, 44%, 22%)",
+  innerBg:     "hsl(222, 50%, 13%)",
+  headerBg:    "#f5a623",
+  divider:     "hsl(222, 38%, 28%)",
+  iconOrange:  "#f5a623",
+  textSection: "hsl(210, 20%, 72%)",
+  textWhite:   "#ffffff",
+  textMuted:   "hsl(210, 18%, 58%)",
+  textActive:  "#f5a623",
+  chevronDim:  "hsl(210, 18%, 48%)",
 };
 
 /* =========================================================
-   NAV ITEM DEFINITIONS  (unchanged)
+   NAV ITEM DEFINITIONS
 ========================================================= */
 
 export const navItems = [
@@ -76,13 +77,13 @@ export const teacherItems = [
 ];
 
 export const examManagementItems = [
-  { to: "/exam-types",           label: "Create Exam Types",   icon: Award,         exact: true  },
-  { to: "/exam-blueprints",      label: "Exam Blueprint",      icon: CalendarDays,  exact: false },
-  { to: "/subject-wise-setup",   label: "Subject Wise Setup",  icon: BookOpen,      exact: false },
-  { to: "/grade-rule-engine/schemes", label: "Grading Schemes", icon: ShieldCheck,   exact: false },
-  { to: "/grade-rule-engine/rules",   label: "Result Rules Mapping", icon: Network,  exact: false },
-  { to: "/consolidated-setup",   label: "Consolidated Annual", icon: Network,       exact: false },
-  { to: "/independent-results",  label: "Independent Results", icon: ClipboardList, exact: false },
+  { to: "/exam-types",                label: "Create Exam Types",    icon: Award,         exact: true  },
+  { to: "/exam-blueprints",           label: "Exam Blueprint",       icon: CalendarDays,  exact: false },
+  { to: "/subject-wise-setup",        label: "Subject Wise Setup",   icon: BookOpen,      exact: false },
+  { to: "/grade-rule-engine/schemes", label: "Grading Schemes",      icon: ShieldCheck,   exact: false },
+  { to: "/grade-rule-engine/rules",   label: "Result Rules Mapping", icon: Network,       exact: false },
+  { to: "/consolidated-setup",        label: "Consolidated Annual",  icon: Network,       exact: false },
+  { to: "/independent-results",       label: "Independent Results",  icon: ClipboardList, exact: false },
 ];
 
 export const masterDataItems = [
@@ -110,7 +111,7 @@ export const accountingItems = [
 ];
 
 /* =========================================================
-   ACTIVE MATCHING  (unchanged)
+   ACTIVE MATCHING
 ========================================================= */
 
 function isRouteActive(pathname: string, to: string, exact: boolean): boolean {
@@ -134,8 +135,12 @@ const anyActive = (
 
 export default function SidebarContent({
   onNavigate,
+  collapsed = false,           // ← NEW prop
+  onToggleCollapse,            // ← NEW prop
 }: {
   onNavigate?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }) {
   const location = useLocation();
   const navigate  = useNavigate();
@@ -175,45 +180,54 @@ export default function SidebarContent({
 
       {/* ── Orange header bar ──────────────────────────── */}
       <div
-        className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+        className={cn(
+          "flex items-center flex-shrink-0 transition-all duration-300",
+          collapsed ? "justify-center px-0 py-3" : "justify-between px-4 py-3"
+        )}
         style={{ background: C.headerBg, minHeight: 64 }}
       >
-        {/* Logo + brand */}
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-10 w-10 items-center justify-center rounded-full flex-shrink-0"
-            style={{ background: "#ffffff" }}
-          >
-            <Logo className="h-5 w-5" style={{ color: C.headerBg }} />
-          </div>
-          <div className="leading-tight">
+        {/* Logo + brand — hidden when collapsed */}
+        {!collapsed && (
+          <div className="flex items-center gap-3 min-w-0">
             <div
-              className="text-base font-extrabold tracking-wide uppercase"
-              style={{ color: "#ffffff", letterSpacing: "0.12em" }}
+              className="flex h-10 w-10 items-center justify-center rounded-full flex-shrink-0"
+              style={{ background: "#ffffff" }}
             >
-              HatSynk
+              <Logo className="h-5 w-5" style={{ color: C.headerBg }} />
             </div>
-            <div
-              className="text-[10px] font-semibold tracking-widest uppercase"
-              style={{ color: "rgba(255,255,255,0.80)", letterSpacing: "0.15em" }}
-            >
-              EduTech
+            <div className="leading-tight overflow-hidden">
+              <div
+                className="text-base font-extrabold tracking-wide uppercase whitespace-nowrap"
+                style={{ color: "#ffffff", letterSpacing: "0.12em" }}
+              >
+                HatSynk
+              </div>
+              <div
+                className="text-[10px] font-semibold tracking-widest uppercase"
+                style={{ color: "rgba(255,255,255,0.80)", letterSpacing: "0.15em" }}
+              >
+                EduTech
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Hamburger */}
+        {/* Toggle button — Menu (≡) when expanded, X when collapsed */}
         <button
-          aria-label="Toggle menu"
-          className="flex items-center justify-center rounded p-1"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          onClick={onToggleCollapse}
+          className="flex items-center justify-center rounded p-1 transition-transform duration-200 hover:scale-110"
           style={{ color: "#ffffff" }}
         >
-          <Menu className="h-6 w-6" />
+          {collapsed
+            ? <X    className="h-6 w-6" />
+            : <Menu className="h-6 w-6" />
+          }
         </button>
       </div>
 
       {/* ── Nav ──────────────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
 
         {/* 1. Dashboard */}
         {navItems.map((item) => {
@@ -224,18 +238,26 @@ export default function SidebarContent({
               <NavLink
                 to={item.to}
                 onClick={onNavigate}
-                className="flex items-center justify-between gap-3 px-5 py-4 text-sm font-medium transition-colors duration-150"
+                title={collapsed ? item.label : undefined}
+                className={cn(
+                  "flex items-center gap-3 text-sm font-medium transition-colors duration-150",
+                  collapsed
+                    ? "justify-center px-0 py-4"
+                    : "justify-between px-5 py-4"
+                )}
                 style={{
                   background: active ? "rgba(245,166,35,0.08)" : "transparent",
-                  color: active ? C.iconOrange : C.textSection,
+                  color:      active ? C.iconOrange : C.textSection,
                   fontWeight: active ? 600 : 400,
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className={cn("flex items-center", !collapsed && "gap-3")}>
                   <Icon className="h-5 w-5 flex-shrink-0" style={{ color: C.iconOrange }} />
-                  <span>{item.label}</span>
+                  {!collapsed && <span>{item.label}</span>}
                 </div>
-                <ChevronRight className="h-4 w-4 flex-shrink-0" style={{ color: C.chevronDim }} />
+                {!collapsed && (
+                  <ChevronRight className="h-4 w-4 flex-shrink-0" style={{ color: C.chevronDim }} />
+                )}
               </NavLink>
             </div>
           );
@@ -248,6 +270,7 @@ export default function SidebarContent({
           sectionKey="students"
           expanded={expandedSection === "students"}
           onToggle={toggle}
+          collapsed={collapsed}
         >
           {studentItems.map((item) => (
             <SidebarSubItem
@@ -267,6 +290,7 @@ export default function SidebarContent({
           sectionKey="teachers"
           expanded={expandedSection === "teachers"}
           onToggle={toggle}
+          collapsed={collapsed}
         >
           {teacherItems.map((item) => (
             <SidebarSubItem
@@ -286,6 +310,7 @@ export default function SidebarContent({
           sectionKey="exam-management"
           expanded={expandedSection === "exam-management"}
           onToggle={toggle}
+          collapsed={collapsed}
         >
           {examManagementItems.map((item) => (
             <SidebarSubItem
@@ -305,6 +330,7 @@ export default function SidebarContent({
           sectionKey="master-data"
           expanded={expandedSection === "master-data"}
           onToggle={toggle}
+          collapsed={collapsed}
         >
           {masterDataItems.map((item) => (
             <SidebarSubItem
@@ -324,6 +350,7 @@ export default function SidebarContent({
           sectionKey="fee-structures"
           expanded={expandedSection === "fee-structures"}
           onToggle={toggle}
+          collapsed={collapsed}
         >
           {feeStructureSubItems.map((item) => (
             <SidebarSubItem
@@ -343,6 +370,7 @@ export default function SidebarContent({
           sectionKey="reporting"
           expanded={expandedSection === "reporting"}
           onToggle={toggle}
+          collapsed={collapsed}
         >
           {reportingItems.map((item) => (
             <SidebarSubItem
@@ -362,6 +390,7 @@ export default function SidebarContent({
           sectionKey="accounting"
           expanded={expandedSection === "accounting"}
           onToggle={toggle}
+          collapsed={collapsed}
         >
           {accountingItems.map((item) => (
             <SidebarSubItem
@@ -378,39 +407,54 @@ export default function SidebarContent({
 
       {/* ── User footer ───────────────────────────────── */}
       <div
-        className="p-3"
+        className="p-3 transition-all duration-300"
         style={{ borderTop: `1px solid ${C.divider}`, background: C.innerBg }}
       >
-        <div className="flex items-center gap-3 px-2 py-2">
-          <Avatar
-            className="h-10 w-10 flex-shrink-0"
-            style={{ border: `1px solid hsl(222, 30%, 26%)` }}
-          >
-            <AvatarFallback className="bg-primary-soft text-primary text-xs font-semibold">
-              {initials.toUpperCase().slice(0, 2)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium" style={{ color: C.textWhite }}>
-              {user?.firstName
-                ? `${user.firstName} ${user.lastName ?? ""}`.trim()
-                : "Administrator"}
-            </div>
-            <div className="truncate text-xs" style={{ color: C.textMuted }}>
-              {user?.email ?? "admin"}
-            </div>
+        {collapsed ? (
+          /* Collapsed: avatar only, centred */
+          <div className="flex justify-center py-2">
+            <Avatar
+              className="h-10 w-10 flex-shrink-0"
+              style={{ border: `1px solid hsl(222, 30%, 26%)` }}
+            >
+              <AvatarFallback className="bg-primary-soft text-primary text-xs font-semibold">
+                {initials.toUpperCase().slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            aria-label="Logout"
-            className="rounded-lg flex-shrink-0"
-            style={{ color: C.textMuted }}
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
+        ) : (
+          /* Expanded: full user row */
+          <div className="flex items-center gap-3 px-2 py-2">
+            <Avatar
+              className="h-10 w-10 flex-shrink-0"
+              style={{ border: `1px solid hsl(222, 30%, 26%)` }}
+            >
+              <AvatarFallback className="bg-primary-soft text-primary text-xs font-semibold">
+                {initials.toUpperCase().slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium" style={{ color: C.textWhite }}>
+                {user?.firstName
+                  ? `${user.firstName} ${user.lastName ?? ""}`.trim()
+                  : "Administrator"}
+              </div>
+              <div className="truncate text-xs" style={{ color: C.textMuted }}>
+                {user?.email ?? "admin"}
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              aria-label="Logout"
+              className="rounded-lg flex-shrink-0"
+              style={{ color: C.textMuted }}
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
     </div>
@@ -419,10 +463,6 @@ export default function SidebarContent({
 
 /* =========================================================
    SECTION COMPONENT
-   - Icon always orange
-   - Title always white (muted when collapsed, white when expanded)
-   - ChevronDown when expanded, ChevronRight when collapsed
-   - Active sub-items make the section header white + full opacity
 ========================================================= */
 
 interface SidebarSectionProps {
@@ -432,6 +472,7 @@ interface SidebarSectionProps {
   expanded: boolean;
   onToggle: (key: string) => void;
   children: React.ReactNode;
+  collapsed?: boolean;        // ← NEW
 }
 
 function SidebarSection({
@@ -441,53 +482,64 @@ function SidebarSection({
   expanded,
   onToggle,
   children,
+  collapsed = false,          // ← NEW
 }: SidebarSectionProps) {
   return (
     <div style={{ borderBottom: `1px solid ${C.divider}` }}>
-      {/* Section header row — always lighter navy (C.bg) */}
       <button
-        onClick={() => onToggle(sectionKey)}
-        className="w-full flex items-center justify-between gap-3 px-5 py-4 text-sm transition-colors duration-150"
+        onClick={collapsed ? undefined : () => onToggle(sectionKey)}
+        title={collapsed ? title : undefined}
+        className={cn(
+          "w-full flex items-center gap-3 text-sm transition-colors duration-150",
+          collapsed
+            ? "justify-center px-0 py-4 cursor-default"
+            : "justify-between px-5 py-4"
+        )}
         style={{
           color:      expanded ? C.textWhite : C.textSection,
           fontWeight: expanded ? 600 : 400,
         }}
       >
-        <div className="flex items-center gap-3">
+        {collapsed ? (
+          /* Collapsed: icon only */
           <Icon className="h-5 w-5 flex-shrink-0" style={{ color: C.iconOrange }} />
-          <span>{title}</span>
-        </div>
-
-        {/* Down when open, Right when closed */}
-        {expanded
-          ? <ChevronDown  className="h-4 w-4 flex-shrink-0" style={{ color: C.iconOrange }} />
-          : <ChevronRight className="h-4 w-4 flex-shrink-0" style={{ color: C.chevronDim }} />
-        }
+        ) : (
+          /* Expanded: icon + label + chevron */
+          <>
+            <div className="flex items-center gap-3">
+              <Icon className="h-5 w-5 flex-shrink-0" style={{ color: C.iconOrange }} />
+              <span>{title}</span>
+            </div>
+            {expanded
+              ? <ChevronDown  className="h-4 w-4 flex-shrink-0" style={{ color: C.iconOrange }} />
+              : <ChevronRight className="h-4 w-4 flex-shrink-0" style={{ color: C.chevronDim }} />
+            }
+          </>
+        )}
       </button>
 
-      {/* Expanded area — darker navy to create depth contrast */}
-      <div
-        className={cn(
-          "grid transition-all duration-300 ease-in-out",
-          expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        )}
-        style={{ background: C.innerBg }}
-      >
-        <div className="overflow-hidden">
-          <div className="pb-2 pt-0">
-            {children}
+      {/* Sub-items: hidden entirely when sidebar is collapsed */}
+      {!collapsed && (
+        <div
+          className={cn(
+            "grid transition-all duration-300 ease-in-out",
+            expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          )}
+          style={{ background: C.innerBg }}
+        >
+          <div className="overflow-hidden">
+            <div className="pb-2 pt-0">
+              {children}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
 /* =========================================================
-   SUB ITEM COMPONENT
-   - Active: bold white text, slightly highlighted bg row
-   - Inactive: muted text
-   - Orange ">" chevron prefix always visible
+   SUB ITEM COMPONENT  (unchanged)
 ========================================================= */
 
 interface SidebarSubItemProps {
