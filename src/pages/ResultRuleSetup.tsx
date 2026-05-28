@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Network, Plus, Trash2, Save, AlertCircle, Copy, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import {
   createResultRule, 
   addRuleComponent, 
   removeRuleComponent,
+  deleteResultRule,
   CreateResultRuleRequest,
   AddRuleComponentRequest
 } from "@/lib/api/resultRules";
@@ -33,7 +34,8 @@ export default function ResultRuleSetup() {
   // Create Form State
   const [createForm, setCreateForm] = useState<Partial<CreateResultRuleRequest>>({
     promotionMinPercent: 33.0,
-    applyGraceMarks: false
+    applyGraceMarks: false,
+    strategyType: "WEIGHTED_AVERAGE" // Default mode
   });
 
   // Component Form State
@@ -47,7 +49,6 @@ export default function ResultRuleSetup() {
     queryFn: async () => {
       try {
         const res = await api.get("/api/options/class-levels");
-        // Robust extraction: handle both direct array or wrapped { data: [...] } responses
         return Array.isArray(res.data) ? res.data : (res.data?.data || []);
       } catch (error) {
         console.error("Failed to fetch class levels:", error);
@@ -77,7 +78,7 @@ export default function ResultRuleSetup() {
   // Fetch Previous Year's Rules (For Cloning)
   const { data: previousRules = [] } = useQuery({
     queryKey: ["previousRules", activeYear?.id],
-    queryFn: () => getRulesByYear(activeYear!.id - 1), // Assuming sequential IDs for prototype. Real app might select year from dropdown.
+    queryFn: () => getRulesByYear(activeYear!.id - 1), 
     enabled: !!activeYear?.id,
   });
 
@@ -94,10 +95,10 @@ export default function ResultRuleSetup() {
     mutationFn: (data: AddRuleComponentRequest) => addRuleComponent(currentRule!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["resultRule"] });
-      toast.success("Exam weightage added.");
+      toast.success("Exam attached to rule.");
       setCompForm({ examTypeId: 0, weightagePercent: 0, mandatoryPass: false });
     },
-    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to add weightage")
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to add exam to rule")
   });
 
   const deleteComponentMutation = useMutation({
@@ -105,6 +106,18 @@ export default function ResultRuleSetup() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["resultRule"] });
       toast.success("Exam removed from rule.");
+    }
+  });
+
+  const deleteRuleMutation = useMutation({
+    mutationFn: deleteResultRule,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["resultRule"] });
+      toast.success("Result configuration deleted successfully.");
+    },
+    onError: (err: any) => {
+      // This catches the Safe Delete guardrail from Java!
+      toast.error(err.response?.data?.message || "Cannot delete configuration.");
     }
   });
 
@@ -117,6 +130,7 @@ export default function ResultRuleSetup() {
       name: `${activeYear?.name} - Class Rule`,
       academicYearId: activeYear!.id,
       classLevelId: parseInt(selectedClassId),
+      strategyType: createForm.strategyType || "WEIGHTED_AVERAGE",
       gradingSchemeId: createForm.gradingSchemeId,
       promotionMinPercent: createForm.promotionMinPercent || 33,
       applyGraceMarks: createForm.applyGraceMarks || false
@@ -127,17 +141,16 @@ export default function ResultRuleSetup() {
     const prevRule = previousRules.find(r => r.classLevelId === parseInt(selectedClassId));
     if (!prevRule) return toast.error("No previous year configuration found for this class.");
 
-    // Create the header first, using the previous rule's settings
     createMutation.mutate({
       name: `${activeYear?.name} - Cloned Rule`,
       academicYearId: activeYear!.id,
       classLevelId: parseInt(selectedClassId),
+      strategyType: prevRule.strategyType, // Clone the strategy type too!
       gradingSchemeId: prevRule.gradingSchemeId,
       promotionMinPercent: prevRule.promotionMinPercent,
       applyGraceMarks: prevRule.applyGraceMarks
     }, {
       onSuccess: async (newRule) => {
-        // Once header is created, loop and add all previous components
         for (const comp of prevRule.components) {
           await addRuleComponent(newRule.id, {
             examTypeId: comp.examTypeId,
@@ -153,9 +166,20 @@ export default function ResultRuleSetup() {
 
   const handleAddComponent = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!compForm.examTypeId || compForm.weightagePercent <= 0) return toast.error("Select an exam and valid weightage.");
-    addComponentMutation.mutate(compForm);
+    const isSummation = currentRule?.strategyType === "SUMMATION";
+    
+    // In summation mode, weightage is ignored, so we bypass the > 0 check
+    if (!compForm.examTypeId || (!isSummation && compForm.weightagePercent <= 0)) {
+      return toast.error("Select an exam and enter a valid weightage.");
+    }
+
+    addComponentMutation.mutate({
+      ...compForm,
+      weightagePercent: isSummation ? 0 : compForm.weightagePercent // force 0 if summation
+    });
   };
+
+  const isSummationMode = currentRule?.strategyType === "SUMMATION";
 
   return (
     <div className="md-page">
@@ -192,7 +216,6 @@ export default function ResultRuleSetup() {
                   <SelectContent>
                     {classes.map((c: any) => (
                      <SelectItem key={c.id} value={c.id.toString()}>
-                        {/* Add c.label as the first option! */}
                         {c.label || c.displayName || c.name || `Class ID: ${c.id}`}
                         </SelectItem>
                     ))}
@@ -204,10 +227,34 @@ export default function ResultRuleSetup() {
 
           {currentRule && (
             <div className="md-card p-5 border border-border bg-primary/5">
-              <h3 className="font-semibold mb-3 text-foreground flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600" /> Active Configuration
-              </h3>
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" /> Active Configuration
+                </h3>
+                
+                {/* ---> NEW DELETE CONFIGURATION BUTTON <--- */}
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7 text-destructive hover:bg-destructive/10 -mt-1 -mr-1"
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to delete this entire class configuration?")) {
+                      deleteRuleMutation.mutate(currentRule.id);
+                    }
+                  }}
+                  disabled={deleteRuleMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+
               <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Mode:</span>
+                  <span className="font-medium truncate ml-2 text-primary">
+                    {isSummationMode ? "Pure Summation" : "Weighted Average"}
+                  </span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Scheme:</span>
                   <span className="font-medium truncate ml-2">{currentRule.gradingSchemeName}</span>
@@ -216,12 +263,14 @@ export default function ResultRuleSetup() {
                   <span className="text-muted-foreground">Pass Mark:</span>
                   <span className="font-medium">{currentRule.promotionMinPercent}%</span>
                 </div>
-                <div className="flex justify-between border-t border-border pt-2 mt-2">
-                  <span className="text-muted-foreground">Total Weight:</span>
-                  <span className={`font-bold ${currentRule.totalWeightage === 100 ? 'text-green-600' : 'text-amber-600'}`}>
-                    {currentRule.totalWeightage}%
-                  </span>
-                </div>
+                {!isSummationMode && (
+                  <div className="flex justify-between border-t border-border pt-2 mt-2">
+                    <span className="text-muted-foreground">Total Weight:</span>
+                    <span className={`font-bold ${currentRule.totalWeightage === 100 ? 'text-green-600' : 'text-amber-600'}`}>
+                      {currentRule.totalWeightage}%
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -262,15 +311,28 @@ export default function ResultRuleSetup() {
               </div>
 
               <div className="mt-6 space-y-4">
-                <div className="space-y-2">
-                  <Label>Attach Grading Scheme</Label>
-                  <Select onValueChange={(val) => setCreateForm({...createForm, gradingSchemeId: parseInt(val)})}>
-                    <SelectTrigger><SelectValue placeholder="Select scheme..." /></SelectTrigger>
-                    <SelectContent>
-                      {schemes.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Calculation Strategy</Label>
+                    <Select value={createForm.strategyType} onValueChange={(val) => setCreateForm({...createForm, strategyType: val})}>
+                      <SelectTrigger><SelectValue placeholder="Select strategy..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="WEIGHTED_AVERAGE">Weighted Percentages</SelectItem>
+                        <SelectItem value="SUMMATION">Pure Summation (Raw Marks)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Attach Grading Scheme</Label>
+                    <Select onValueChange={(val) => setCreateForm({...createForm, gradingSchemeId: parseInt(val)})}>
+                      <SelectTrigger><SelectValue placeholder="Select scheme..." /></SelectTrigger>
+                      <SelectContent>
+                        {schemes.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Minimum Promotion %</Label>
@@ -289,9 +351,15 @@ export default function ResultRuleSetup() {
 
             // --- STATE: RULE EXISTS (ADD COMPONENTS) ---
             <div className="md-card border border-border flex flex-col">
-              <div className="p-5 border-b border-border bg-muted/10">
-                <h3 className="font-semibold text-lg">Exam Weightages</h3>
-                <p className="text-sm text-muted-foreground">Define how different exams contribute to the final result.</p>
+              <div className="p-5 border-b border-border bg-muted/10 flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-lg">Exam Configuration</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {isSummationMode 
+                      ? "Add exams to sum up their raw maximum and obtained marks." 
+                      : "Define how different exams contribute to the final result."}
+                  </p>
+                </div>
               </div>
               
               <div className="p-5">
@@ -314,8 +382,11 @@ export default function ResultRuleSetup() {
                   <div className="w-24 space-y-1.5">
                     <Label className="text-xs">Weight (%)</Label>
                     <Input 
-                      type="number" min="0" max="100" 
-                      value={compForm.weightagePercent || ""} 
+                      type={isSummationMode ? "text" : "number"}
+                      min="0" max="100" 
+                      disabled={isSummationMode}
+                      placeholder={isSummationMode ? "N/A" : ""}
+                      value={isSummationMode ? "" : (compForm.weightagePercent || "")} 
                       onChange={(e) => setCompForm({...compForm, weightagePercent: parseFloat(e.target.value)})} 
                     />
                   </div>
@@ -352,7 +423,9 @@ export default function ResultRuleSetup() {
                         {currentRule.components.map((comp) => (
                           <TableRow key={comp.id}>
                             <TableCell className="font-medium">{comp.examTypeName}</TableCell>
-                            <TableCell className="font-mono">{comp.weightagePercent}%</TableCell>
+                            <TableCell className="font-mono">
+                              {isSummationMode ? <span className="text-muted-foreground italic">N/A</span> : `${comp.weightagePercent}%`}
+                            </TableCell>
                             <TableCell>
                               {comp.mandatoryPass && <span className="text-xs bg-amber-500/10 text-amber-600 px-2 py-1 rounded-md border border-amber-500/20">Mandatory Pass</span>}
                             </TableCell>
@@ -368,7 +441,8 @@ export default function ResultRuleSetup() {
                   </div>
                 )}
 
-                {currentRule.totalWeightage !== 100 && currentRule.components.length > 0 && (
+                {/* Hide the 100% weightage warning if using Pure Summation */}
+                {!isSummationMode && currentRule.totalWeightage !== 100 && currentRule.components.length > 0 && (
                   <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-md flex items-start gap-2">
                     <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
                     <p className="text-sm text-amber-700 dark:text-amber-500">

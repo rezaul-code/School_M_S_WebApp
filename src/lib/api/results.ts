@@ -53,3 +53,7 @@ export async function publishResult(enrollmentId: number): Promise<void> {
 export async function unpublishResult(enrollmentId: number): Promise<void> {
   await api.post(`/api/v1/results/enrollment/${enrollmentId}/unpublish`);
 }
+
+export async function clearClassResults(academicYearId: number, classLevelId: number): Promise<void> {
+  await api.delete(`/api/v1/results/class?academicYearId=${academicYearId}&classLevelId=${classLevelId}`);
+}
