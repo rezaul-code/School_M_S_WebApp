@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Network, Calculator, Trophy, CheckCircle2, XCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -11,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { useActiveAcademicYear } from "@/hooks/useActiveAcademicYear";
 import { api } from "@/lib/api/client";
-import { calculateBulk, getClassResults, publishResult, unpublishResult } from "@/lib/api/results";
+import { calculateBulk, getClassResults, clearClassResults, publishResult, unpublishResult } from "@/lib/api/results";
 
 import "@/styles/master-data.css";
 
@@ -66,6 +67,16 @@ export default function ConsolidatedAnnual() {
     }
   });
 
+  // Add this new mutation
+  const clearResultsMutation = useMutation({
+    mutationFn: () => clearClassResults(activeYear!.id, parseInt(selectedClassId)),
+    onSuccess: () => {
+      toast.success("All calculated results for this class have been cleared.");
+      refetch(); // Refresh the table
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to clear results.")
+  });
+
   return (
     <div className="md-page">
       <div className="md-hero md-hero--class-subject mb-6">
@@ -99,14 +110,32 @@ export default function ConsolidatedAnnual() {
             </SelectContent>
           </Select>
         </div>
-        <Button 
-          className="gap-2 bg-amber-600 hover:bg-amber-700 text-white" 
-          disabled={!selectedClassId || calcMutation.isPending}
-          onClick={() => calcMutation.mutate()}
-        >
-          {calcMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calculator className="h-4 w-4" />}
-          Run Calculation Engine
-        </Button>
+        
+        {/* ACTION BUTTONS WRAPPER */}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline"
+            className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10 bg-white" 
+            disabled={!selectedClassId || results.length === 0 || clearResultsMutation.isPending}
+            onClick={() => {
+              if (window.confirm("Are you sure you want to delete all calculated report cards for this class? Raw marks will NOT be deleted.")) {
+                clearResultsMutation.mutate();
+              }
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+            Clear Results
+          </Button>
+
+          <Button 
+            className="gap-2 bg-amber-600 hover:bg-amber-700 text-white" 
+            disabled={!selectedClassId || calcMutation.isPending}
+            onClick={() => calcMutation.mutate()}
+          >
+            {calcMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calculator className="h-4 w-4" />}
+            Run Calculation Engine
+          </Button>
+        </div>
       </div>
 
       {!selectedClassId ? (
@@ -143,18 +172,18 @@ export default function ConsolidatedAnnual() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {results.map((res) => (
-                <TableRow key={res.resultId}>
+              {results.map((res: any) => (
+                <TableRow key={res.id}>
                   <TableCell>
-                    {res.classRank ? (
+                    {res.rankInClass ? (
                       <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary font-bold text-xs">
-                        #{res.classRank}
+                        #{res.rankInClass}
                       </span>
                     ) : "-"}
                   </TableCell>
                   <TableCell>
                     <div className="font-medium">{res.studentName}</div>
-                    <div className="text-xs text-muted-foreground">{res.registrationNo}</div>
+                    <div className="text-xs text-muted-foreground">{res.studentRegistrationNo}</div>
                   </TableCell>
                   <TableCell className="font-mono font-medium">{res.percentage}%</TableCell>
                   <TableCell><span className="font-bold text-primary">{res.grade}</span></TableCell>

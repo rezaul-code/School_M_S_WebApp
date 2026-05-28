@@ -203,7 +203,18 @@ export default function ExamBlueprints() {
                 paginatedItems.map((exam, idx) => (
                   <TableRow key={exam.id}>
                     <TableCell className="md-cell-index">{startIdx + idx + 1}</TableCell>
-                    <TableCell className="font-medium text-sm text-sidebar-foreground">{exam.name}</TableCell>
+                    
+                    {/* ---> FIX APPLIED HERE <--- */}
+                    <TableCell>
+                      <div className="font-medium text-sm text-sidebar-foreground">
+                        {exam.name || exam.examTypeName || "Unnamed Exam Session"}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                        <FileText className="h-3 w-3" />
+                        {exam.examTypeCode || "Unknown Type"}
+                      </div>
+                    </TableCell>
+
                     <TableCell><span className="md-badge md-badge--outline">{exam.classLevelName}</span></TableCell>
                     <TableCell className="text-xs font-medium text-muted-foreground">
                       {formatDate(exam.startDate)} — {formatDate(exam.endDate)}

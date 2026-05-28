@@ -7,7 +7,7 @@ export interface ResultRuleComponentResponse {
   examTypeName: string;
   examTypeCode: string;
   weightagePercent: number;
-  mandatoryPass: boolean; // Jackson strips the "is" prefix
+  mandatoryPass: boolean;
 }
 
 export interface ResultRuleResponse {
@@ -17,10 +17,11 @@ export interface ResultRuleResponse {
   academicYearName: string;
   classLevelId: number;
   classLevelName: string;
+  strategyType: string; // <--- Added Strategy Type
   gradingSchemeId: number;
   gradingSchemeName: string;
   promotionMinPercent: number;
-  applyGraceMarks: boolean; // Jackson strips the "is" prefix
+  applyGraceMarks: boolean;
   totalWeightage: number;
   components: ResultRuleComponentResponse[];
 }
@@ -29,6 +30,7 @@ export interface CreateResultRuleRequest {
   name: string;
   academicYearId: number;
   classLevelId: number;
+  strategyType: string; // <--- Added Strategy Type
   gradingSchemeId: number;
   promotionMinPercent: number;
   applyGraceMarks: boolean;
@@ -42,11 +44,9 @@ export interface AddRuleComponentRequest {
 
 export async function getResultRule(academicYearId: number, classLevelId: number): Promise<ResultRuleResponse | null> {
   try {
-    // We expect this to return a list based on your backend controller, but filtered by class it should be 1
     const response = await api.get<{ data: ResultRuleResponse[] }>(
       `/api/v1/result-rules?academicYearId=${academicYearId}`
     );
-    // Find the specific class
     const rule = response.data.data.find(r => r.classLevelId === classLevelId);
     return rule || null;
   } catch (error: any) {
@@ -54,7 +54,6 @@ export async function getResultRule(academicYearId: number, classLevelId: number
   }
 }
 
-// Fetch all rules for a specific year (useful for cloning)
 export async function getRulesByYear(academicYearId: number): Promise<ResultRuleResponse[]> {
   const response = await api.get<{ data: ResultRuleResponse[] }>(`/api/v1/result-rules?academicYearId=${academicYearId}`);
   return response.data.data;
