@@ -37,27 +37,7 @@ export default function ExamTypes() {
 
   return (
     <div className="md-page">
-      {/* ── Hero Banner ──────────────────────────────────── */}
-      <div className="md-hero md-hero--class-subject">
-        <div className="md-hero-glow" />
-        <div className="md-hero-inner">
-          <div className="md-hero-left">
-            <div className="md-hero-icon-wrap bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-              <Award className="h-5 w-5" />
-            </div>
-            <div className="md-hero-text">
-              <h2 className="md-hero-title">Exam Types Setup</h2>
-              <p className="md-hero-sub">
-                Configure global blueprint evaluation structures (UT1, Mid-Term, Annual Final)
-              </p>
-            </div>
-          </div>
-          <span className="md-hero-badge">
-            <Sparkles className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
-            Evaluation Setup
-          </span>
-        </div>
-      </div>
+      
 
       {/* ── KPI Strip ────────────────────────────────────── */}
       <div className="md-stats">

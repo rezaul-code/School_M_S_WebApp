@@ -79,20 +79,7 @@ export default function ConsolidatedAnnual() {
 
   return (
     <div className="md-page">
-      <div className="md-hero md-hero--class-subject mb-6">
-        <div className="md-hero-glow" />
-        <div className="md-hero-inner">
-          <div className="md-hero-left">
-            <div className="md-hero-icon-wrap bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-              <Network className="h-5 w-5" />
-            </div>
-            <div className="md-hero-text">
-              <h2 className="md-hero-title">Consolidated Annual Results</h2>
-              <p className="md-hero-sub">Calculate final percentages, assign ranks, and publish report cards.</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      
 
       <div className="md-card p-5 border border-border mb-6 flex flex-col md:flex-row gap-4 items-end bg-muted/10">
         <div className="space-y-2 flex-1 max-w-xs">

@@ -115,27 +115,7 @@ export default function ExamBlueprints() {
 
   return (
     <div className="md-page">
-      {/* ── Hero Banner ──────────────────────────────────── */}
-      <div className="md-hero md-hero--class-subject">
-        <div className="md-hero-glow" />
-        <div className="md-hero-inner">
-          <div className="md-hero-left">
-            <div className="md-hero-icon-wrap bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-              <CalendarDays className="h-5 w-5" />
-            </div>
-            <div className="md-hero-text">
-              <h2 className="md-hero-title">Exam Schedules Blueprint</h2>
-              <p className="md-hero-sub">
-                Manage and launch scheduled testing sessions for the {activeYear?.name || "current"} academic session
-              </p>
-            </div>
-          </div>
-          <span className="md-hero-badge">
-            <Sparkles className="h-3.5 w-3.5 text-purple-400 animate-pulse" />
-            Active Schedules
-          </span>
-        </div>
-      </div>
+      
 
       {/* ── Toolbar ──────────────────────────────────────── */}
       <div className="md-toolbar mb-6">

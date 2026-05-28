@@ -157,23 +157,7 @@ export default function GradingSchemes() {
   // ---------------------------------------------------------
   return (
     <div className="md-page">
-      <div className="md-hero md-hero--class-subject mb-6">
-        <div className="md-hero-glow" />
-        <div className="md-hero-inner">
-          <div className="md-hero-left">
-            <div className="md-hero-icon-wrap bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <div className="md-hero-text">
-              <h2 className="md-hero-title">Grading Schemes & Rules</h2>
-              <p className="md-hero-sub">Define how percentages translate to grades and GPA</p>
-            </div>
-          </div>
-          <Button onClick={() => setIsCreatingScheme(true)} className="gap-2 h-9 text-sm relative z-10">
-            <Plus className="h-4 w-4" /> New Scheme
-          </Button>
-        </div>
-      </div>
+      
 
       <div className="grid gap-6">
         {isLoading ? (
@@ -206,10 +190,15 @@ export default function GradingSchemes() {
                     </Button>
                   )}
                   {addingScaleForSchemeId !== scheme.id && (
+                    
                     <Button size="sm" onClick={() => setAddingScaleForSchemeId(scheme.id)} className="gap-1">
                       <Plus className="h-4 w-4" /> Add Grade Band
                     </Button>
+                    
                   )}
+                  <Button onClick={() => setIsCreatingScheme(true)} className="gap-2 h-9 text-sm relative z-10">
+                    <Plus className="h-4 w-4" /> New Scheme
+                  </Button>
                 </div>
               </div>
 
