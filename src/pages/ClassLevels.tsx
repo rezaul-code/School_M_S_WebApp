@@ -55,27 +55,30 @@ export default function ClassLevels() {
     <div className="md-page">
       
 
-      {/* ── KPI Strip ────────────────────────────────────── */}
       <div className="md-stats">
-        <div className="md-stat md-stat--violet">
-          <div className="md-stat-icon">
-            <Layers />
-          </div>
-          <div className="md-stat-label">Total Classes</div>
-          <div className="md-stat-value">
-            {isLoading ? "—" : classLevels.length}
-          </div>
-        </div>
-        <div className="md-stat md-stat--blue">
-          <div className="md-stat-icon">
-            <Hash />
-          </div>
-          <div className="md-stat-label">Showing</div>
-          <div className="md-stat-value">
-            {isLoading ? "—" : filtered.length}
-          </div>
-        </div>
+  <div className="md-stat md-stat--violet">
+    <div className="md-stat-icon">
+      <Layers />
+    </div>
+    <div>
+      <div className="md-stat-label">Total Classes</div>
+      <div className="md-stat-value">
+        {isLoading ? "—" : classLevels.length}
       </div>
+    </div>
+  </div>
+  <div className="md-stat md-stat--blue">
+    <div className="md-stat-icon">
+      <Hash />
+    </div>
+    <div>
+      <div className="md-stat-label">Showing</div>
+      <div className="md-stat-value">
+        {isLoading ? "—" : filtered.length}
+      </div>
+    </div>
+  </div>
+</div>
 
       {/* ── Toolbar ──────────────────────────────────────── */}
       <div className="md-toolbar">

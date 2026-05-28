@@ -235,6 +235,7 @@
   color: hsl(var(--foreground));
   line-height: 1.1;
   display: block;
+  text-align: center;
 }
 
 /* ================================================================

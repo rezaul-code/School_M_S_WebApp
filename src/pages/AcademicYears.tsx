@@ -53,32 +53,28 @@ export default function AcademicYears() {
       {/* ── KPI Strip ────────────────────────────────────── */}
       <div className="md-stats">
         <div className="md-stat md-stat--blue">
-          <div className="md-stat-icon">
-            <BookOpen />
-          </div>
-          <div className="md-stat-label">Total Years</div>
-          <div className="md-stat-value">
-            {isLoading ? "—" : years.length}
-          </div>
-        </div>
-        <div className="md-stat md-stat--green">
-          <div className="md-stat-icon">
-            <CalendarCheck />
-          </div>
-          <div className="md-stat-label">Active</div>
-          <div className="md-stat-value">
-            {isLoading ? "—" : activeCount}
-          </div>
-        </div>
-        <div className="md-stat md-stat--amber">
-          <div className="md-stat-icon">
-            <CalendarX />
-          </div>
-          <div className="md-stat-label">Inactive</div>
-          <div className="md-stat-value">
-            {isLoading ? "—" : inactiveCount}
-          </div>
-        </div>
+  <div className="md-stat-icon"><BookOpen /></div>
+  <div>
+    <div className="md-stat-label">Total Years</div>
+    <div className="md-stat-value">{isLoading ? "—" : years.length}</div>
+  </div>
+</div>
+
+<div className="md-stat md-stat--green">
+  <div className="md-stat-icon"><CalendarCheck /></div>
+  <div>
+    <div className="md-stat-label">Active</div>
+    <div className="md-stat-value">{isLoading ? "—" : activeCount}</div>
+  </div>
+</div>
+
+<div className="md-stat md-stat--amber">
+  <div className="md-stat-icon"><CalendarX /></div>
+  <div>
+    <div className="md-stat-label">Inactive</div>
+    <div className="md-stat-value">{isLoading ? "—" : inactiveCount}</div>
+  </div>
+</div>
       </div>
 
       {/* ── Toolbar ──────────────────────────────────────── */}
