@@ -250,27 +250,7 @@ export default function FeeReport() {
   return (
     <div className="rpt-page">
 
-      {/* ── Hero ─────────────────────────────────────────── */}
-      <div className="rpt-hero">
-        <div className="rpt-hero-glow" />
-        <div className="rpt-hero-inner">
-          <div className="rpt-hero-left">
-            <div className="rpt-hero-icon-wrap">
-              <ReceiptText />
-            </div>
-            <div className="rpt-hero-text">
-              <h2 className="rpt-hero-title">Fee Report</h2>
-              <p className="rpt-hero-sub">
-                Track fee collection, balances and payment status across all students
-              </p>
-            </div>
-          </div>
-          <span className="rpt-hero-badge">
-            <Sparkles />
-            Reporting
-          </span>
-        </div>
-      </div>
+      
 
       {/* ── KPI strip ────────────────────────────────────── */}
       <div className="rpt-stats">
