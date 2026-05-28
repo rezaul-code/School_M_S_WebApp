@@ -149,7 +149,7 @@ export default function TCCertificates() {
   // ============================================================================
   if (currentView === 'list') {
     return (
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-4">
            
@@ -263,7 +263,7 @@ export default function TCCertificates() {
   // ============================================================================
   if (currentView === 'audit' && previewData) {
     return (
-      <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* Dynamic Stepper */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" className="gap-2 text-slate-500 hover:text-slate-800 -ml-4" onClick={() => setCurrentView('list')}>
@@ -417,7 +417,7 @@ export default function TCCertificates() {
     const amount = isRefund ? previewData.advanceToRefund : previewData.pendingDuesToClear;
 
     return (
-      <div className="p-6 max-w-5xl mx-auto space-y-6">
+     <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Button variant="ghost" className="gap-2 text-slate-500 hover:text-slate-800 -ml-4" onClick={() => setCurrentView('audit')}>
             <ArrowLeft size={16} /> Back to Audit
