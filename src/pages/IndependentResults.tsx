@@ -64,27 +64,7 @@ export default function IndependentResults() {
 
   return (
     <div className="md-page">
-      {/* Hero */}
-      <div className="md-hero md-hero--class-subject">
-        <div className="md-hero-glow" />
-        <div className="md-hero-inner">
-          <div className="md-hero-left">
-            <div className="md-hero-icon-wrap bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-              <ClipboardList className="h-5 w-5" />
-            </div>
-            <div className="md-hero-text">
-              <h2 className="md-hero-title">Independent Results</h2>
-              <p className="md-hero-sub">
-                Per-exam raw marks view for {activeYear?.name ?? "current"} academic year
-              </p>
-            </div>
-          </div>
-          <span className="md-hero-badge">
-            <Sparkles className="h-3.5 w-3.5 text-purple-400 animate-pulse" />
-            {counts.ALL} exams with marks
-          </span>
-        </div>
-      </div>
+      
 
       {/* Toolbar */}
       <div className="md-toolbar mb-5">
@@ -98,6 +78,16 @@ export default function IndependentResults() {
               className="h-9 w-[300px]"
             />
           </div>
+          <span
+  className="md-hero-badge"
+  style={{
+    backgroundColor: "#ffffff",
+    color: "#000000",
+  }}
+>
+  <Sparkles className="h-3.5 w-3.5 text-black animate-pulse" />
+  {counts.ALL} exams with marks
+</span>
         </div>
       </div>
 

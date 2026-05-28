@@ -183,20 +183,7 @@ export default function ResultRuleSetup() {
 
   return (
     <div className="md-page">
-      <div className="md-hero md-hero--class-subject mb-6">
-        <div className="md-hero-glow" />
-        <div className="md-hero-inner">
-          <div className="md-hero-left">
-            <div className="md-hero-icon-wrap bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-              <Network className="h-5 w-5" />
-            </div>
-            <div className="md-hero-text">
-              <h2 className="md-hero-title">Result Rules Mapping</h2>
-              <p className="md-hero-sub">Map grading schemes and define exam weightages per class.</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      
 
       <div className="grid md:grid-cols-3 gap-6">
         
