@@ -93,27 +93,28 @@ export default function TeachersPage() {
       {!teachersQuery.isLoading && (
         <div className="tm-stats">
           <div className="tm-stat tm-stat--blue">
-            <div className="tm-stat-icon">
-              <Users />
-            </div>
+          <div className="tm-stat-icon"><Users /></div>
+          <div>
             <div className="tm-stat-label">Total Teachers</div>
             <div className="tm-stat-value">{teachersQuery.data?.totalElements ?? 0}</div>
           </div>
-          <div className="tm-stat tm-stat--green">
-            <div className="tm-stat-icon">
-              <UserCheck />
-            </div>
+        </div>
+        <div className="tm-stat tm-stat--green">
+          <div className="tm-stat-icon"><UserCheck /></div>
+          <div>
             <div className="tm-stat-label">Active</div>
             <div className="tm-stat-value">{activeCount}</div>
           </div>
-          <div className="tm-stat tm-stat--amber">
-            <div className="tm-stat-icon">
-              <UserX />
-            </div>
+        </div>
+        <div className="tm-stat tm-stat--amber">
+          <div className="tm-stat-icon"><UserX /></div>
+          <div>
             <div className="tm-stat-label">Inactive</div>
             <div className="tm-stat-value">{inactiveCount}</div>
           </div>
         </div>
+          </div>
+       
       )}
 
       {/* TOOLBAR */}
