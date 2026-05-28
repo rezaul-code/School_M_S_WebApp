@@ -444,81 +444,70 @@
 
 /* ================================================================
    STAT SUMMARY STRIP
-   (shown on Teacher List page above table)
    ================================================================ */
 .tm-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
 }
 
 .tm-stat {
-  position: relative;
-  padding: 1rem 1.125rem 1.125rem;
-  border-radius: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.75rem;
+  border-radius: 0.5rem;
   border: 1px solid hsl(var(--border));
   background: hsl(var(--card));
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
-  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s;
-  box-shadow: 0 1px 3px hsl(0 0% 0% / 0.04);
 }
 .tm-stat:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px hsl(0 0% 0% / 0.08);
+  box-shadow: 0 4px 16px hsl(0 0% 0% / 0.08);
 }
-.tm-stat::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--tm-color);
-  opacity: 0.04;
-  pointer-events: none;
-}
-.tm-stat::after {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: var(--tm-color);
-  opacity: 0.7;
-  border-radius: 0.875rem 0.875rem 0 0;
-}
+
+/* remove old accent bar and tint */
+.tm-stat::before { display: none; }
+.tm-stat::after  { display: none; }
 
 .tm-stat-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.5rem;
-  background: var(--tm-color);
-  margin-bottom: 0.75rem;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  flex-shrink: 0;
   position: relative;
 }
-.tm-stat-icon svg { width: 0.9rem; height: 0.9rem; color: #fff; }
+.tm-stat-icon svg { width: 1.75rem; height: 1.75rem; color: inherit; }
+
+.tm-stat--blue  .tm-stat-icon { background: hsl(217 91% 93%); color: hsl(217 91% 52%); }
+.tm-stat--green .tm-stat-icon { background: hsl(142 60% 90%); color: hsl(142 63% 40%); }
+.tm-stat--amber .tm-stat-icon { background: hsl(38 92% 92%);  color: hsl(38 92% 44%);  }
+.tm-stat--violet .tm-stat-icon { background: hsl(263 60% 93%); color: hsl(263 70% 52%); }
 
 .tm-stat-label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.065em;
+  font-size: 0.85rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
   color: hsl(var(--muted-foreground));
   margin-bottom: 0.25rem;
-  position: relative;
-}
-.tm-stat-value {
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: hsl(var(--foreground));
-  line-height: 1;
-  position: relative;
+  white-space: nowrap;
+  display: block;
 }
 
-.tm-stat--blue   { --tm-color: hsl(217 91% 50%); }
-.tm-stat--green  { --tm-color: hsl(142 71% 38%); }
-.tm-stat--amber  { --tm-color: hsl(38 92% 44%); }
-.tm-stat--violet { --tm-color: hsl(263 70% 52%); }
+.tm-stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: hsl(var(--foreground));
+  line-height: 1.1;
+  display: block;
+}
 
 /* ================================================================
    FORM SECTIONS (Register / Edit)

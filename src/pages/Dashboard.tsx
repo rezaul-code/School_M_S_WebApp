@@ -120,7 +120,7 @@ export default function Dashboard() {
   const today = format(new Date(), "EEEE, d MMMM yyyy");
 
   return (
-    <div className="db-page">
+    <div className="db-page" style={{ paddingTop: 0 }}>
 
       {/* Stat Cards */}
       <div className="db-stats-grid">

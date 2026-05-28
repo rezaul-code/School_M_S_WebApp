@@ -65,27 +65,7 @@ export default function FeeStructuresPage() {
   return (
     <div className="fs-page">
 
-      {/* ── Hero Banner ──────────────────────────────────── */}
-      <div className="fs-hero">
-        <div className="fs-hero-glow" />
-        <div className="fs-hero-inner">
-          <div className="fs-hero-left">
-            <div className="fs-hero-icon-wrap">
-              <CreditCard />
-            </div>
-            <div className="fs-hero-text">
-              <h2 className="fs-hero-title">Fee Structures</h2>
-              <p className="fs-hero-sub">
-                Manage school fee schedules, categories and amounts
-              </p>
-            </div>
-          </div>
-          <span className="fs-hero-badge">
-            <Sparkles />
-            Master Data
-          </span>
-        </div>
-      </div>
+      
 
       {/* ── Tabs ─────────────────────────────────────────── */}
       <Tabs

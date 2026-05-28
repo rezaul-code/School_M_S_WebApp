@@ -59,27 +59,7 @@ export default function ClassSections() {
 
   return (
     <div className="md-page">
-      {/* ── Hero Banner ──────────────────────────────────── */}
-      <div className="md-hero md-hero--class-section">
-        <div className="md-hero-glow" />
-        <div className="md-hero-inner">
-          <div className="md-hero-left">
-            <div className="md-hero-icon-wrap">
-              <Network />
-            </div>
-            <div className="md-hero-text">
-              <h2 className="md-hero-title">Class Sections</h2>
-              <p className="md-hero-sub">
-                Manage class–section mappings per academic year
-              </p>
-            </div>
-          </div>
-          <span className="md-hero-badge">
-            <Sparkles />
-            Master Data
-          </span>
-        </div>
-      </div>
+      
 
       {/* ── KPI Strip ────────────────────────────────────── */}
       <div className="md-stats">

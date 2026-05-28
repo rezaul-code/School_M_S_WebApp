@@ -56,27 +56,7 @@ export default function ClassSubjectMappings() {
 
   return (
     <div className="md-page">
-      {/* ── Hero Banner ──────────────────────────────────── */}
-      <div className="md-hero md-hero--class-subject">
-        <div className="md-hero-glow" />
-        <div className="md-hero-inner">
-          <div className="md-hero-left">
-            <div className="md-hero-icon-wrap">
-              <Link2 />
-            </div>
-            <div className="md-hero-text">
-              <h2 className="md-hero-title">Class-Subject Mappings</h2>
-              <p className="md-hero-sub">
-                Assign subjects to class levels across the curriculum
-              </p>
-            </div>
-          </div>
-          <span className="md-hero-badge">
-            <Sparkles />
-            Master Data
-          </span>
-        </div>
-      </div>
+     
 
       {/* ── KPI Strip ────────────────────────────────────── */}
       <div className="md-stats">

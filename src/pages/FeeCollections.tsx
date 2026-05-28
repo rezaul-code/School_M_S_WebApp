@@ -153,11 +153,13 @@ function StatCard({
   return (
     <div className={`ac-stat ${colorClass}`}>
       <div className="ac-stat-icon">{icon}</div>
-      <div className="ac-stat-label">{label}</div>
-      <div className="ac-stat-value">
-        {loading
-          ? <div className="ac-skel" style={{ height: 20, width: 88, marginTop: 2 }} />
-          : value}
+      <div>
+        <div className="ac-stat-label">{label}</div>
+        <div className="ac-stat-value">
+          {loading
+            ? <div className="ac-skel" style={{ height: 20, width: 88, marginTop: 2 }} />
+            : value}
+        </div>
       </div>
     </div>
   );
@@ -560,25 +562,7 @@ export default function FeeCollections() {
   return (
     <div className="ac-page">
 
-      {/* ── Hero banner ────────────────────────────────────── */}
-      <div className="ac-hero">
-        <div className="ac-hero-glow" />
-        <div className="ac-hero-inner">
-          <div className="ac-hero-left">
-            <div className="ac-hero-icon-wrap"><Wallet /></div>
-            <div className="ac-hero-text">
-              <h2 className="ac-hero-title">Fee Collections</h2>
-              <p className="ac-hero-sub">
-                Track all incoming fee payments — today, monthly, or by date range
-              </p>
-            </div>
-          </div>
-          <span className="ac-hero-badge">
-            <Sparkles />
-            Accounting
-          </span>
-        </div>
-      </div>
+      
 
       {/* ── API error alert (only shown on hard error, not loading) ── */}
       {activeQ.isError && (

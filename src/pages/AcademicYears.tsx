@@ -48,57 +48,33 @@ export default function AcademicYears() {
 
   return (
     <div className="md-page">
-      {/* ── Hero Banner ──────────────────────────────────── */}
-      <div className="md-hero md-hero--academic">
-        <div className="md-hero-glow" />
-        <div className="md-hero-inner">
-          <div className="md-hero-left">
-            <div className="md-hero-icon-wrap">
-              <CalendarDays />
-            </div>
-            <div className="md-hero-text">
-              <h2 className="md-hero-title">Academic Years</h2>
-              <p className="md-hero-sub">
-                Define and manage academic periods for the school
-              </p>
-            </div>
-          </div>
-          <span className="md-hero-badge">
-            <Sparkles />
-            Master Data
-          </span>
-        </div>
-      </div>
+      
 
       {/* ── KPI Strip ────────────────────────────────────── */}
       <div className="md-stats">
         <div className="md-stat md-stat--blue">
-          <div className="md-stat-icon">
-            <BookOpen />
-          </div>
-          <div className="md-stat-label">Total Years</div>
-          <div className="md-stat-value">
-            {isLoading ? "—" : years.length}
-          </div>
-        </div>
-        <div className="md-stat md-stat--green">
-          <div className="md-stat-icon">
-            <CalendarCheck />
-          </div>
-          <div className="md-stat-label">Active</div>
-          <div className="md-stat-value">
-            {isLoading ? "—" : activeCount}
-          </div>
-        </div>
-        <div className="md-stat md-stat--amber">
-          <div className="md-stat-icon">
-            <CalendarX />
-          </div>
-          <div className="md-stat-label">Inactive</div>
-          <div className="md-stat-value">
-            {isLoading ? "—" : inactiveCount}
-          </div>
-        </div>
+  <div className="md-stat-icon"><BookOpen /></div>
+  <div>
+    <div className="md-stat-label">Total Years</div>
+    <div className="md-stat-value">{isLoading ? "—" : years.length}</div>
+  </div>
+</div>
+
+<div className="md-stat md-stat--green">
+  <div className="md-stat-icon"><CalendarCheck /></div>
+  <div>
+    <div className="md-stat-label">Active</div>
+    <div className="md-stat-value">{isLoading ? "—" : activeCount}</div>
+  </div>
+</div>
+
+<div className="md-stat md-stat--amber">
+  <div className="md-stat-icon"><CalendarX /></div>
+  <div>
+    <div className="md-stat-label">Inactive</div>
+    <div className="md-stat-value">{isLoading ? "—" : inactiveCount}</div>
+  </div>
+</div>
       </div>
 
       {/* ── Toolbar ──────────────────────────────────────── */}

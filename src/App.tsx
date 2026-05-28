@@ -3,6 +3,8 @@ import ExamTypes from "@/pages/ExamTypes";
 import ExamSetupWizard from "./pages/ExamSetupWizard";
 import ExamBlueprints from "@/pages/ExamBlueprints";
 import GradingSchemes from "./pages/GradingSchemes";
+import ResultRuleSetup from "./pages/ResultRuleSetup";
+import ConsolidatedAnnual from "./pages/ConsolidatedAnnual";
 import ExamDetails from "./pages/ExamDetails";
 import ExamMarksEntry from "./pages/ExamMarksEntry";
 import IndependentResults       from "./pages/IndependentResults";
@@ -108,6 +110,9 @@ export default function App() {
               <Route path="/exam-blueprints/setup" element={<ExamSetupWizard />} />
               <Route path="/exam-blueprints/setup/:examId" element={<ExamSetupWizard />} />
               <Route path="/grade-rule-engine/schemes" element={<GradingSchemes />} />
+              <Route path="/grade-rule-engine/rules" element={<ResultRuleSetup />} />
+              <Route path="/consolidated-setup" element={<ConsolidatedAnnual />} />
+              
               {/* INDEPENDENT RESULTS */}
               <Route path="/independent-results"        element={<IndependentResults />} />
               <Route path="/independent-results/:examId" element={<IndependentResultsDetail />} />

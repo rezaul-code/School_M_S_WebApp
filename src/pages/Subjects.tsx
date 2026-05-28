@@ -159,27 +159,7 @@ export default function Subjects() {
 
   return (
     <div className="md-page">
-      {/* ── Hero Banner ──────────────────────────────────── */}
-      <div className="md-hero md-hero--subjects">
-        <div className="md-hero-glow" />
-        <div className="md-hero-inner">
-          <div className="md-hero-left">
-            <div className="md-hero-icon-wrap">
-              <BookOpen />
-            </div>
-            <div className="md-hero-text">
-              <h2 className="md-hero-title">Subjects</h2>
-              <p className="md-hero-sub">
-                Define and manage subjects for the curriculum
-              </p>
-            </div>
-          </div>
-          <span className="md-hero-badge">
-            <Sparkles />
-            Master Data
-          </span>
-        </div>
-      </div>
+      
 
       {/* ── KPI Strip ────────────────────────────────────── */}
       <div className="md-stats">

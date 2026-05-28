@@ -226,79 +226,64 @@
    ================================================================ */
 .ac-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1rem;
 }
 
 .ac-stat {
-  position: relative;
-  overflow: hidden;
-  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.75rem;
+  border-radius: 0.5rem;
   border: 1px solid hsl(var(--border));
   background: hsl(var(--card));
-  padding: 1.125rem 1.25rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
-  box-shadow: 0 1px 3px hsl(0 0% 0% / 0.04), 0 4px 14px hsl(0 0% 0% / 0.04);
-  animation: ac-enter-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
 }
 .ac-stat:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px hsl(0 0% 0% / 0.07), 0 10px 26px hsl(0 0% 0% / 0.06);
-}
-.ac-stat::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: var(--ac-accent);
-  opacity: 0.85;
-  border-radius: 1rem 1rem 0 0;
-}
-.ac-stat::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--ac-accent);
-  opacity: 0.025;
-  pointer-events: none;
+  box-shadow: 0 4px 16px hsl(0 0% 0% / 0.08);
 }
 
 .ac-stat-icon {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.125rem;
-  height: 2.125rem;
-  border-radius: 0.5625rem;
-  background: var(--ac-accent);
-  margin-bottom: 0.2rem;
-  box-shadow: 0 3px 8px var(--ac-accent-shadow, hsl(0 0% 0% / 0.15));
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
   flex-shrink: 0;
 }
-.ac-stat-icon svg { width: 0.9375rem; height: 0.9375rem; color: #fff; }
+.ac-stat-icon svg { width: 1.75rem; height: 1.75rem; color: inherit; }
+
+.ac-stat--teal   .ac-stat-icon { background: hsl(172 60% 90%); color: hsl(172 66% 38%); }
+.ac-stat--green  .ac-stat-icon { background: hsl(142 60% 90%); color: hsl(142 63% 40%); }
+.ac-stat--violet .ac-stat-icon { background: hsl(263 60% 93%); color: hsl(263 70% 52%); }
+.ac-stat--amber  .ac-stat-icon { background: hsl(38 92% 92%);  color: hsl(38 92% 44%);  }
+.ac-stat--blue   .ac-stat-icon { background: hsl(217 91% 93%); color: hsl(217 91% 52%); }
+.ac-stat--rose   .ac-stat-icon { background: hsl(330 60% 92%); color: hsl(330 65% 48%); }
 
 .ac-stat-label {
-  position: relative;
-  z-index: 1;
-  font-size: 0.67rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.065em;
+  font-size: 0.85rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
   color: hsl(var(--muted-foreground));
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  display: block;
 }
+
 .ac-stat-value {
-  position: relative;
-  z-index: 1;
-  font-size: 1.4375rem;
-  font-weight: 800;
+  font-size: 1.75rem;
+  font-weight: 700;
   letter-spacing: -0.03em;
   color: hsl(var(--foreground));
-  line-height: 1;
+  line-height: 1.1;
+  display: block;
+  text-align: center;
 }
 
 /* Accent variants */
