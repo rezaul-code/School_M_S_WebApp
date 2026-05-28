@@ -252,44 +252,53 @@ export default function FeeReport() {
 
       
 
-      {/* ── KPI strip ────────────────────────────────────── */}
       <div className="rpt-stats">
-        <div className="rpt-stat rpt-stat--blue">
-          <div className="rpt-stat-icon"><BadgeDollarSign /></div>
-          <div className="rpt-stat-label">Gross Amount</div>
-          <div className="rpt-stat-value">
-            {isLoading ? "—" : INR(report?.totalGrossAmount ?? 0)}
-          </div>
-        </div>
-        <div className="rpt-stat rpt-stat--violet">
-          <div className="rpt-stat-icon"><TrendingDown /></div>
-          <div className="rpt-stat-label">Total Discount</div>
-          <div className="rpt-stat-value">
-            {isLoading ? "—" : INR(report?.totalDiscount ?? 0)}
-          </div>
-        </div>
-        <div className="rpt-stat rpt-stat--teal">
-          <div className="rpt-stat-icon"><Wallet /></div>
-          <div className="rpt-stat-label">Net Amount</div>
-          <div className="rpt-stat-value">
-            {isLoading ? "—" : INR(report?.totalNetAmount ?? 0)}
-          </div>
-        </div>
-        <div className="rpt-stat rpt-stat--green">
-          <div className="rpt-stat-icon"><CheckCircle2 /></div>
-          <div className="rpt-stat-label">Amount Paid</div>
-          <div className="rpt-stat-value">
-            {isLoading ? "—" : INR(report?.totalPaidAmount ?? 0)}
-          </div>
-        </div>
-        <div className="rpt-stat rpt-stat--rose">
-          <div className="rpt-stat-icon"><AlertCircle /></div>
-          <div className="rpt-stat-label">Balance Due</div>
-          <div className="rpt-stat-value">
-            {isLoading ? "—" : INR(report?.totalBalanceAmount ?? 0)}
-          </div>
-        </div>
+  <div className="rpt-stat rpt-stat--blue">
+    <div className="rpt-stat-icon"><BadgeDollarSign /></div>
+    <div>
+      <div className="rpt-stat-label">Gross Amount</div>
+      <div className="rpt-stat-value">
+        {isLoading ? "—" : INR(report?.totalGrossAmount ?? 0)}
       </div>
+    </div>
+  </div>
+  <div className="rpt-stat rpt-stat--violet">
+    <div className="rpt-stat-icon"><TrendingDown /></div>
+    <div>
+      <div className="rpt-stat-label">Total Discount</div>
+      <div className="rpt-stat-value">
+        {isLoading ? "—" : INR(report?.totalDiscount ?? 0)}
+      </div>
+    </div>
+  </div>
+  <div className="rpt-stat rpt-stat--teal">
+    <div className="rpt-stat-icon"><Wallet /></div>
+    <div>
+      <div className="rpt-stat-label">Net Amount</div>
+      <div className="rpt-stat-value">
+        {isLoading ? "—" : INR(report?.totalNetAmount ?? 0)}
+      </div>
+    </div>
+  </div>
+  <div className="rpt-stat rpt-stat--green">
+    <div className="rpt-stat-icon"><CheckCircle2 /></div>
+    <div>
+      <div className="rpt-stat-label">Amount Paid</div>
+      <div className="rpt-stat-value">
+        {isLoading ? "—" : INR(report?.totalPaidAmount ?? 0)}
+      </div>
+    </div>
+  </div>
+  <div className="rpt-stat rpt-stat--rose">
+    <div className="rpt-stat-icon"><AlertCircle /></div>
+    <div>
+      <div className="rpt-stat-label">Balance Due</div>
+      <div className="rpt-stat-value">
+        {isLoading ? "—" : INR(report?.totalBalanceAmount ?? 0)}
+      </div>
+    </div>
+  </div>
+</div>
 
       {/* ── Filter card ──────────────────────────────────── */}
       <div className="rpt-filter-card">

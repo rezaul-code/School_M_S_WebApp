@@ -153,11 +153,13 @@ function StatCard({
   return (
     <div className={`ac-stat ${colorClass}`}>
       <div className="ac-stat-icon">{icon}</div>
-      <div className="ac-stat-label">{label}</div>
-      <div className="ac-stat-value">
-        {loading
-          ? <div className="ac-skel" style={{ height: 20, width: 88, marginTop: 2 }} />
-          : value}
+      <div>
+        <div className="ac-stat-label">{label}</div>
+        <div className="ac-stat-value">
+          {loading
+            ? <div className="ac-skel" style={{ height: 20, width: 88, marginTop: 2 }} />
+            : value}
+        </div>
       </div>
     </div>
   );
