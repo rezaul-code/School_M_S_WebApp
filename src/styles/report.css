@@ -139,7 +139,7 @@
    ================================================================ */
 .rpt-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+ grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
 }
 
@@ -147,13 +147,14 @@
   display: flex;
   align-items: center;
   gap: 1.25rem;
-  padding: 1.75rem;
+  padding: 1.75rem 1.75rem;
   border-radius: 0.5rem;
   border: 1px solid hsl(var(--border));
   background: hsl(var(--card));
   box-shadow: 0 1px 4px hsl(0 0% 0% / 0.05);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
+  min-width: 0;
 }
 .rpt-stat:hover {
   transform: translateY(-2px);
@@ -164,12 +165,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 4rem;
-  height: 4rem;
+  width: 5rem;
+  height: 5rem;
   border-radius: 50%;
   flex-shrink: 0;
 }
-.rpt-stat-icon svg { width: 1.75rem; height: 1.75rem; color: inherit; }
+.rpt-stat-icon svg { width: 2.25rem; height: 2.25rem; color: inherit; }
 
 .rpt-stat--blue   .rpt-stat-icon { background: hsl(217 91% 93%); color: hsl(217 91% 52%); }
 .rpt-stat--violet .rpt-stat-icon { background: hsl(263 60% 93%); color: hsl(263 70% 52%); }
@@ -195,7 +196,6 @@
   color: hsl(var(--foreground));
   line-height: 1.1;
   display: block;
-  text-align: center;
 }
 
 /* Palette tokens */
@@ -274,7 +274,7 @@
 .rpt-search-wrap {
   position: relative;
   flex: 1;
-  max-width: 28rem;
+  min-width: 0;
 }
 .rpt-search-wrap .rpt-search-icon {
   position: absolute;
@@ -390,9 +390,9 @@
 }
 
 /* Scrollable table wrapper */
-.rpt-table-wrap { overflow-x: auto; }
+.rpt-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-.rpt-table { width: 100%; }
+.rpt-table { width: 100%; min-width: 860px; }
 
 .rpt-table thead tr {
   background: linear-gradient(
@@ -626,18 +626,52 @@
    RESPONSIVE
    ================================================================ */
 @media (max-width: 1300px) {
-  .rpt-stats        { grid-template-columns: repeat(3, 1fr); }
-  .rpt-filter-grid  { grid-template-columns: repeat(3, 1fr); }
+  .rpt-stats       { grid-template-columns: repeat(3, 1fr); }
+  .rpt-filter-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 900px) {
-  .rpt-stats        { grid-template-columns: repeat(2, 1fr); }
-  .rpt-filter-grid  { grid-template-columns: repeat(2, 1fr); }
+  .rpt-filter-grid { grid-template-columns: repeat(2, 1fr); }
 }
-@media (max-width: 540px) {
-  .rpt-stats        { grid-template-columns: 1fr 1fr; }
-  .rpt-filter-grid  { grid-template-columns: 1fr; }
+@media (max-width: 768px) {
+  .rpt-stats       { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .rpt-filter-grid { grid-template-columns: repeat(2, 1fr); }
+
+  .rpt-stat        { padding: 1rem 1.125rem; gap: 1rem; }
+  .rpt-stat-icon   { width: 3.5rem; height: 3.5rem; }
+  .rpt-stat-icon svg { width: 1.6rem; height: 1.6rem; }
+  .rpt-stat-value  { font-size: 1.4rem; }
+
+  .rpt-filter-body  { padding: 0.875rem; }
+  .rpt-search-row   { flex-wrap: nowrap; }
   .rpt-hero         { padding: 1.25rem 1.125rem 1.375rem; }
   .rpt-hero-badge   { display: none; }
-  .rpt-filter-body  { padding: 0.875rem; }
-  .rpt-search-wrap  { max-width: 100%; }
+
+  .rpt-table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .rpt-pagination {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+  .rpt-pagination-controls { justify-content: center; }
+}
+@media (max-width: 480px) {
+  .rpt-stats       { grid-template-columns: 1fr; }
+  .rpt-filter-grid { grid-template-columns: 1fr; gap: 0.625rem; }
+
+  .rpt-stat        { padding: 0.875rem 1rem; }
+  .rpt-stat-icon   { width: 3rem; height: 3rem; }
+  .rpt-stat-icon svg { width: 1.4rem; height: 1.4rem; }
+  .rpt-stat-value  { font-size: 1.25rem; }
+
+  .rpt-filter-header { padding: 0.75rem 0.875rem; }
+  .rpt-filter-body   { padding: 0.75rem; }
+  .rpt-table-header  { padding: 0.75rem 0.875rem; }
+  .rpt-pagination    { padding: 0.625rem 0.875rem; }
 }
