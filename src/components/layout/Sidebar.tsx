@@ -29,7 +29,7 @@ import {
   ShieldCheck,
   Award,
   Menu,
-  X,                       // ← NEW: cross icon for collapsed state
+  X,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -135,8 +135,8 @@ const anyActive = (
 
 export default function SidebarContent({
   onNavigate,
-  collapsed = false,           // ← NEW prop
-  onToggleCollapse,            // ← NEW prop
+  collapsed = false,
+  onToggleCollapse,
 }: {
   onNavigate?: () => void;
   collapsed?: boolean;
@@ -212,16 +212,22 @@ export default function SidebarContent({
           </div>
         )}
 
-        {/* Toggle button — Menu (≡) when expanded, X when collapsed */}
+        {/*
+          Toggle button:
+          - DESKTOP (lg+): visible. Shows X when expanded (click to collapse),
+            Menu when collapsed (click to expand).
+          - MOBILE/TABLET: hidden via "hidden lg:flex". The Sheet drawer in
+            AppLayout handles open/close on mobile — this button has no meaning there.
+        */}
         <button
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={onToggleCollapse}
-          className="flex items-center justify-center rounded p-1 transition-transform duration-200 hover:scale-110"
+          className="hidden lg:flex items-center justify-center rounded p-1 transition-transform duration-200 hover:scale-110"
           style={{ color: "#ffffff" }}
         >
           {collapsed
-            ? <X    className="h-6 w-6" />
-            : <Menu className="h-6 w-6" />
+            ? <Menu className="h-6 w-6" />   /* collapsed  → show Menu  to expand  */
+            : <X    className="h-6 w-6" />   /* expanded   → show X     to collapse */
           }
         </button>
       </div>
@@ -472,7 +478,7 @@ interface SidebarSectionProps {
   expanded: boolean;
   onToggle: (key: string) => void;
   children: React.ReactNode;
-  collapsed?: boolean;        // ← NEW
+  collapsed?: boolean;
 }
 
 function SidebarSection({
@@ -482,7 +488,7 @@ function SidebarSection({
   expanded,
   onToggle,
   children,
-  collapsed = false,          // ← NEW
+  collapsed = false,
 }: SidebarSectionProps) {
   return (
     <div style={{ borderBottom: `1px solid ${C.divider}` }}>
@@ -539,7 +545,7 @@ function SidebarSection({
 }
 
 /* =========================================================
-   SUB ITEM COMPONENT  (unchanged)
+   SUB ITEM COMPONENT
 ========================================================= */
 
 interface SidebarSubItemProps {

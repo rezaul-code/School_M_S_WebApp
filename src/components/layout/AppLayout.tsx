@@ -1,6 +1,6 @@
 // src/components/layout/AppLayout.tsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Menu } from "lucide-react";
 
@@ -64,15 +64,28 @@ function getActiveNav(pathname: string): NavItem {
 ========================================================= */
 
 export default function AppLayout() {
-  const [mobileOpen,      setMobileOpen]      = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // ← NEW
+  const [mobileOpen,       setMobileOpen]      = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Track whether we're on a desktop (lg+) breakpoint.
+  // paddingLeft should only apply when the sidebar is actually visible (lg+).
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1024
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const location = useLocation();
   const active   = getActiveNav(location.pathname);
 
   const toggleCollapse = () => setSidebarCollapsed((prev) => !prev);
 
-  // Sidebar pixel width that drives both the <aside> and the main content offset
+  // Sidebar pixel width drives the <aside> and the main content offset
   const sidebarWidth = sidebarCollapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W;
 
   return (
@@ -93,19 +106,23 @@ export default function AppLayout() {
         />
       </aside>
 
-      {/* ── Main area (shifts right to match sidebar width) ─ */}
+      {/* ── Main area ─────────────────────────────────────
+          paddingLeft only applied on desktop (lg+) where the
+          sidebar is actually rendered. On mobile/tablet the
+          sidebar is in a Sheet drawer, so no offset is needed.
+      ─────────────────────────────────────────────────── */}
       <div
         className="flex min-h-screen w-full flex-col"
-        style={{
-          // Only apply the left offset on lg+ screens (sidebar is hidden on mobile)
-          paddingLeft: `max(0px, ${sidebarWidth}px)`,
-          transition:  "padding-left 300ms ease-in-out",
-        }}
+        style={
+          isDesktop
+            ? { paddingLeft: sidebarWidth, transition: "padding-left 300ms ease-in-out" }
+            : undefined
+        }
       >
         {/* ── Top header ──────────────────────────────── */}
         <header className="tm-header sticky top-0 z-20 flex h-16 items-center gap-4 px-4 lg:px-6">
 
-          {/* Mobile hamburger (opens Sheet, not the collapse toggle) */}
+          {/* Mobile hamburger — opens Sheet drawer, only visible below lg */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button
@@ -122,7 +139,7 @@ export default function AppLayout() {
               side="left"
               className="w-72 border-sidebar-border bg-sidebar p-0"
             >
-              {/* Mobile sidebar is always "expanded" — no collapse inside Sheet */}
+              {/* Mobile sidebar is always "expanded" — collapse has no meaning inside a Sheet */}
               <SidebarContent onNavigate={() => setMobileOpen(false)} />
             </SheetContent>
           </Sheet>
