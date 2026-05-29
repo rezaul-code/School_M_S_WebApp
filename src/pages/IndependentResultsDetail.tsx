@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import React from 'react';
 import {
   ArrowLeft, Search, Download, CheckCircle2, XCircle,
   ChevronRight, ChevronDown, Info, AlertTriangle,
@@ -31,9 +32,7 @@ import {
   rejectMark,
   bulkApproveMarks,
   groupMarksByStudent,
-  StudentMarksRow,
   MarkStatus,
-  StudentMarkResponse,
 } from "@/lib/api/marks";
 import { getCurrentUser } from "@/lib/api/auth";
 
@@ -45,10 +44,6 @@ const STATUS_META: Record<string, { label: string; cls: string; icon: React.Reac
   LOCKED:    { label: "Locked",    cls: "bg-slate-500/10 text-slate-600 border-slate-500/20",   icon: <Lock className="h-3 w-3" /> },
   REJECTED:  { label: "Rejected",  cls: "bg-red-500/10 text-red-500 border-red-500/20",         icon: <XCircle className="h-3 w-3" /> },
   COMPLETED: { label: "Completed", cls: "bg-teal-500/10 text-teal-600 border-teal-500/20",      icon: <CheckCheck className="h-3 w-3" /> },
-};
-
-const STATUS_PRIORITY: Record<MarkStatus, number> = {
-  REJECTED: 0, DRAFT: 1, SUBMITTED: 2, APPROVED: 3, LOCKED: 4,
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -127,6 +122,10 @@ export default function IndependentResultsDetail() {
   const [sectionFilter, setSectionFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<MarkStatus | "">("");
   const [sortBy, setSortBy] = useState<"rank" | "name" | "roll" | "hi" | "lo">("rank");
+  
+  // NEW: Rank Mode State
+  const [rankMode, setRankMode] = useState<"CLASS" | "SECTION">("CLASS"); 
+  
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [rejectMarkId, setRejectMarkId] = useState<number | null>(null);
 
@@ -168,11 +167,48 @@ export default function IndependentResultsDetail() {
     return Array.from(s).sort();
   }, [studentRows]);
 
+  // NEW: Dynamic Rank Engine (Handles both Class vs Section and Ties)
   const ranked = useMemo(() => {
-    return [...studentRows]
-      .sort((a, b) => b.totalObtained - a.totalObtained)
-      .map((r, i) => ({ ...r, rank: i + 1 }));
-  }, [studentRows]);
+    if (rankMode === "CLASS") {
+      let currentRank = 1;
+      let previousMarks = -1;
+      
+      return [...studentRows]
+        .sort((a, b) => b.totalObtained - a.totalObtained)
+        .map((r, i) => {
+          if (r.totalObtained !== previousMarks) {
+            currentRank = i + 1; // Standard dense ranking tie breaker
+            previousMarks = r.totalObtained;
+          }
+          return { ...r, rank: currentRank };
+        });
+    } else {
+      const sectionsMap: Record<string, typeof studentRows> = {};
+      
+      studentRows.forEach((r) => {
+        const sec = r.sectionName || "Unassigned";
+        if (!sectionsMap[sec]) sectionsMap[sec] = [];
+        sectionsMap[sec].push(r);
+      });
+
+      const rankedBySection = Object.values(sectionsMap).flatMap((sectionGroup) => {
+        let currentRank = 1;
+        let previousMarks = -1;
+
+        return [...sectionGroup]
+          .sort((a, b) => b.totalObtained - a.totalObtained)
+          .map((r, i) => {
+            if (r.totalObtained !== previousMarks) {
+              currentRank = i + 1;
+              previousMarks = r.totalObtained;
+            }
+            return { ...r, rank: currentRank };
+          });
+      });
+
+      return rankedBySection;
+    }
+  }, [studentRows, rankMode]);
 
   const displayRows = useMemo(() => {
     let rows = ranked;
@@ -188,6 +224,7 @@ export default function IndependentResultsDetail() {
     else if (sortBy === "roll") rows = [...rows].sort((a, b) => a.rollNumber.localeCompare(b.rollNumber));
     else if (sortBy === "hi") rows = [...rows].sort((a, b) => b.totalObtained - a.totalObtained);
     else if (sortBy === "lo") rows = [...rows].sort((a, b) => a.totalObtained - b.totalObtained);
+    else if (sortBy === "rank") rows = [...rows].sort((a, b) => (a as any).rank - (b as any).rank);
     return rows;
   }, [ranked, search, sectionFilter, statusFilter, sortBy]);
 
@@ -252,7 +289,7 @@ export default function IndependentResultsDetail() {
       : rank === 3 ? "bg-orange-100 text-orange-700 border-orange-200"
       : "bg-muted text-muted-foreground border-border";
     return (
-      <span className={cn("inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-semibold border", cls)}>
+      <span className={cn("inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-full text-[11px] font-semibold border", cls)}>
         {rank}
       </span>
     );
@@ -371,6 +408,17 @@ export default function IndependentResultsDetail() {
             className="pl-8 h-9"
           />
         </div>
+        
+        {/* Rank Mode Filter */}
+        <select
+          value={rankMode}
+          onChange={(e) => setRankMode(e.target.value as "CLASS" | "SECTION")}
+          className="h-9 px-3 text-sm font-medium border border-blue-200 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+        >
+          <option value="CLASS">Rank Across Class</option>
+          <option value="SECTION">Rank Within Section</option>
+        </select>
+
         <select
           value={sectionFilter}
           onChange={(e) => setSectionFilter(e.target.value)}
@@ -379,6 +427,7 @@ export default function IndependentResultsDetail() {
           <option value="">All sections</option>
           {sections.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
+        
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as MarkStatus | "")}
@@ -389,6 +438,7 @@ export default function IndependentResultsDetail() {
             <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
           ))}
         </select>
+        
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
@@ -400,6 +450,7 @@ export default function IndependentResultsDetail() {
           <option value="hi">Sort: highest first</option>
           <option value="lo">Sort: lowest first</option>
         </select>
+        
         <span className="text-xs text-muted-foreground ml-auto">
           {displayRows.length} student{displayRows.length !== 1 ? "s" : ""}
         </span>
@@ -449,8 +500,8 @@ export default function IndependentResultsDetail() {
                 const hasSubmitted = allSubjectMarks.some((m) => m.status === "SUBMITTED");
 
                 return (
-                  <>
-                    <TableRow key={row.enrollmentId} className="group">
+                  <React.Fragment key={row.enrollmentId}>
+                    <TableRow className="group">
 
                       {/* Expand toggle */}
                       <TableCell className="px-2">
@@ -523,14 +574,18 @@ export default function IndependentResultsDetail() {
                       {/* Actions */}
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">
-                          {/* Report card print button — always visible */}
+                         {/* Report card print button — always visible */}
                           {examDetail && (
                             <ReportCardButton
                               row={row}
                               examDetail={examDetail}
                               subjectNames={subjectNames}
                               rank={(row as any).rank}
-                              totalStudents={ranked.length}
+                              totalStudents={
+                                rankMode === "CLASS" 
+                                  ? ranked.length 
+                                  : ranked.filter(r => r.sectionName === row.sectionName).length
+                              } // <--- THE FIX
                             />
                           )}
 
@@ -564,7 +619,6 @@ export default function IndependentResultsDetail() {
                               </Button>
                             </>
                           ) : (
-                            // Show a dash only if there's also no print button (examDetail not loaded)
                             !examDetail && (
                               <span className="text-[11px] text-muted-foreground">—</span>
                             )
@@ -606,7 +660,7 @@ export default function IndependentResultsDetail() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </React.Fragment>
                 );
               })}
             </TableBody>
@@ -614,7 +668,6 @@ export default function IndependentResultsDetail() {
         )}
       </div>
 
-      {/* Reject dialog */}
       <RejectDialog
         markId={rejectMarkId}
         onClose={() => setRejectMarkId(null)}
