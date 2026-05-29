@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Network, Calculator, Trophy, CheckCircle2, XCircle, Eye, EyeOff, Loader2 } from "lucide-react";
+import { 
+  Network, Calculator, Trophy, CheckCircle2, XCircle, 
+  Eye, EyeOff, Loader2, Trash2, FileText 
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -14,12 +16,18 @@ import { useActiveAcademicYear } from "@/hooks/useActiveAcademicYear";
 import { api } from "@/lib/api/client";
 import { calculateBulk, getClassResults, clearClassResults, publishResult, unpublishResult } from "@/lib/api/results";
 
+// Import the new Report Card component
+import ReportCardView from "@/components/print/AnnualReportCardView";
+
 import "@/styles/master-data.css";
 
 export default function ConsolidatedAnnual() {
   const queryClient = useQueryClient();
   const { data: activeYear } = useActiveAcademicYear();
+  
   const [selectedClassId, setSelectedClassId] = useState<string>("");
+  // New state to control the Report Card Modal
+  const [viewingReportCardId, setViewingReportCardId] = useState<number | null>(null);
 
   // Fetch Classes for Dropdown
   const { data: classes = [] } = useQuery({
@@ -67,7 +75,6 @@ export default function ConsolidatedAnnual() {
     }
   });
 
-  // Add this new mutation
   const clearResultsMutation = useMutation({
     mutationFn: () => clearClassResults(activeYear!.id, parseInt(selectedClassId)),
     onSuccess: () => {
@@ -78,9 +85,7 @@ export default function ConsolidatedAnnual() {
   });
 
   return (
-    <div className="md-page">
-      
-
+    <div className="md-page relative">
       <div className="md-card p-5 border border-border mb-6 flex flex-col md:flex-row gap-4 items-end bg-muted/10">
         <div className="space-y-2 flex-1 max-w-xs">
           <Label>Academic Year</Label>
@@ -181,22 +186,42 @@ export default function ConsolidatedAnnual() {
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600 bg-red-500/10 px-2 py-1 rounded-md"><XCircle className="h-3.5 w-3.5" /> {res.resultStatus}</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
-                    {res.published ? (
-                      <Button variant="outline" size="sm" className="text-amber-600 border-amber-200 hover:bg-amber-50" onClick={() => unpublishMutation.mutate(res.enrollmentId)}>
-                        <EyeOff className="h-4 w-4 mr-1" /> Unpublish
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-2">
+                      {/* NEW: View Report Card Button */}
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-slate-600 hover:text-slate-900 border-slate-200" 
+                        onClick={() => setViewingReportCardId(res.enrollmentId)}
+                      >
+                        <FileText className="h-4 w-4 mr-1.5" /> Report Card
                       </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" className="text-primary" onClick={() => publishMutation.mutate(res.enrollmentId)}>
-                        <Eye className="h-4 w-4 mr-1" /> Publish
-                      </Button>
-                    )}
+
+                      {res.published ? (
+                        <Button variant="outline" size="sm" className="text-amber-600 border-amber-200 hover:bg-amber-50" onClick={() => unpublishMutation.mutate(res.enrollmentId)}>
+                          <EyeOff className="h-4 w-4 mr-1.5" /> Unpublish
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" className="text-primary border-primary/20 hover:bg-primary/5" onClick={() => publishMutation.mutate(res.enrollmentId)}>
+                          <Eye className="h-4 w-4 mr-1.5" /> Publish
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {/* RENDER THE REPORT CARD OVERLAY IF AN ID IS SELECTED */}
+      {viewingReportCardId && (
+        <ReportCardView 
+          enrollmentId={viewingReportCardId} 
+          onClose={() => setViewingReportCardId(null)} 
+        />
       )}
     </div>
   );
