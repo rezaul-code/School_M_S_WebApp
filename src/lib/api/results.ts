@@ -57,3 +57,8 @@ export async function unpublishResult(enrollmentId: number): Promise<void> {
 export async function clearClassResults(academicYearId: number, classLevelId: number): Promise<void> {
   await api.delete(`/api/v1/results/class?academicYearId=${academicYearId}&classLevelId=${classLevelId}`);
 }
+
+export async function getReportCard(enrollmentId: number): Promise<any> {
+  const response = await api.get(`/api/v1/results/enrollment/${enrollmentId}`);
+  return response.data.data;
+}
