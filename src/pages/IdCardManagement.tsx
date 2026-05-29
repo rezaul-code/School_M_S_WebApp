@@ -87,6 +87,14 @@ export default function IdCardManagement() {
                 }}
               />
             </div>
+            <button
+            onClick={handlePrintSelected}
+            disabled={selectedIds.length === 0 || isPrinting}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
+          >
+            <Printer size={16} />
+            {isPrinting ? "Generating..." : `Print Selected (${selectedIds.length})`}
+          </button>
           </div>
         </div>
 
