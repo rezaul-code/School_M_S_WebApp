@@ -1037,6 +1037,7 @@
   .tm-stat-value     { font-size: 1.25rem; }
 }
 
+/* FIND */
 /* ================================================================
    REGISTER TEACHER FORM WIDTH FIX
    ================================================================ */
@@ -1109,5 +1110,89 @@
 
   .tm-form-card--wide {
     max-width: 100% !important;
+  }
+}
+
+/* REPLACE */
+/* ================================================================
+   REGISTER TEACHER FORM
+   ================================================================ */
+.tm-form-card--wide {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.tm-form-row-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  align-items: start;
+}
+
+.tm-form-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Every section inside the single card gets a divider, no extra bg */
+.tm-form-card--wide .tm-form-section {
+  padding: 1.375rem 1.5rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+  border-right: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  border-left: none;
+  border-top: none;
+}
+
+/* Left column sections get a right divider to separate the two columns */
+.tm-form-col:first-child .tm-form-section {
+  border-right: 1px solid hsl(var(--border) / 0.6);
+}
+
+/* Last section in each column has no bottom border */
+.tm-form-col:first-child .tm-form-section:last-child,
+.tm-form-col:last-child  .tm-form-section:last-child {
+  border-bottom: none;
+}
+
+.tm-form-card--wide textarea {
+  min-height: 108px;
+  resize: vertical;
+}
+
+.tm-form-card--wide .tm-form-footer {
+  padding: 1rem 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .tm-form-row-split {
+    grid-template-columns: 1fr;
+  }
+
+  /* Remove right divider on mobile — columns stack */
+  .tm-form-col:first-child .tm-form-section {
+    border-right: none;
+  }
+
+  /* Restore bottom border for all sections on mobile */
+  .tm-form-col .tm-form-section {
+    border-bottom: 1px solid hsl(var(--border) / 0.6);
+  }
+
+  /* Only the very last section (last child of last col) loses border */
+  .tm-form-col:last-child .tm-form-section:last-child {
+    border-bottom: none;
+  }
+
+  .tm-form-card--wide {
+    max-width: 100%;
+  }
+
+  .tm-form-card--wide .tm-form-footer {
+    padding: 0.75rem 1rem;
   }
 }
