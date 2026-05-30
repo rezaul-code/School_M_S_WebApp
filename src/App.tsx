@@ -46,7 +46,7 @@ import ClassSections from "./pages/ClassSections";
 
 // Reporting
 import FeeReport from "./pages/FeeReport";
-import StudentFeeStatement    from './pages/Studentfeestatement';
+import StudentFeeStatement    from './pages/StudentFeeStatement';
 import StudentFeeStatementPdf from './pages/StudentFeeStatementPdf';
 
 // Accounting
