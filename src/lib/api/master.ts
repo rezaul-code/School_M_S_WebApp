@@ -1,3 +1,4 @@
+// master.ts
 import { api } from "./client";
  
 import type {
@@ -14,7 +15,6 @@ import type {
 // Academic Years
 // ─────────────────────────────────────────────────
  
-// ✅ Updated to strictly match your backend API URL
 export const getActiveAcademicYear = async () => {
   const res = await api.get("/api/master/academic-years/active");
   return res.data.data;
@@ -123,9 +123,16 @@ export async function deleteClassSubject(id: number | string) {
 // ─────────────────────────────────────────────────
 // Class-Sections (Mappings)
 // ─────────────────────────────────────────────────
- 
-export async function listClassSections() {
-  const response = await api.get<ApiResponse<ClassSection[]>>("/api/master/class-sections");
+
+// ✅ Now accepts an optional classLevelId to filter by class
+export async function listClassSections(classLevelId?: number) {
+  const params = new URLSearchParams();
+  if (classLevelId != null) params.set("classLevelId", String(classLevelId));
+  const query = params.size > 0 ? `?${params}` : "";
+
+  const response = await api.get<ApiResponse<ClassSection[]>>(
+    `/api/master/class-sections${query}`
+  );
   return response.data.data;
 }
  
@@ -142,5 +149,4 @@ export async function createClassSection(payload: {
   return response.data.data;
 }
  
-// Keeping this around just in case you still rely on it in other parts of the app
 export const CLASS_OPTIONS = Array.from({ length: 12 }, (_, i) => `CLASS_${i + 1}`);
