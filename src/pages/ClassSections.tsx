@@ -7,13 +7,18 @@ import {
   Network,
   Search,
   Users,
-  Sparkles,
   BookOpen,
-  Hash,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -24,7 +29,7 @@ import {
 } from "@/components/ui/table";
 import Pagination from "@/components/common/Pagination";
 import CreateClassSectionDialog from "@/components/dashboard/CreateClassSectionDialog";
-import { listClassSections } from "@/lib/api/master";
+import { listClassSections, getClassLevelOptions } from "@/lib/api/master";
 
 import "@/styles/master-data.css";
 
@@ -34,10 +39,22 @@ export default function ClassSections() {
   const [openCreate, setOpenCreate] = useState<boolean>(false);
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
+  const [selectedClassId, setSelectedClassId] = useState<string>("all");
 
+  // Fetch all class-sections (unfiltered — we filter client-side for search,
+  // but pass classLevelId to the API for the class filter)
   const { data: sections = [], isLoading } = useQuery({
-    queryKey: ["class-sections"],
-    queryFn: listClassSections,
+    queryKey: ["class-sections", selectedClassId],
+    queryFn: () =>
+      listClassSections(
+        selectedClassId !== "all" ? Number(selectedClassId) : undefined
+      ),
+  });
+
+  // Fetch class level options for the filter dropdown
+  const { data: classLevelOptions = [] } = useQuery({
+    queryKey: ["class-level-options"],
+    queryFn: getClassLevelOptions,
   });
 
   const filtered = sections.filter(
@@ -59,7 +76,6 @@ export default function ClassSections() {
 
   return (
     <div className="md-page">
-      
 
       {/* ── KPI Strip ────────────────────────────────────── */}
       <div className="md-stats">
@@ -113,7 +129,29 @@ export default function ClassSections() {
               className="h-9"
             />
           </div>
+
+          {/* ── Class Filter ── */}
+          <Select
+            value={selectedClassId}
+            onValueChange={(val) => {
+              setSelectedClassId(val);
+              setPage(0);
+            }}
+          >
+            <SelectTrigger className="h-9 w-[180px]">
+              <SelectValue placeholder="Filter by class" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classes</SelectItem>
+              {classLevelOptions.map((cl) => (
+                <SelectItem key={cl.id} value={String(cl.id)}>
+                  {cl.displayName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+
         <div className="md-toolbar-right">
           <Button
             onClick={() => setOpenCreate(true)}
@@ -133,7 +171,7 @@ export default function ClassSections() {
             <p className="md-card-subtitle">
               {isLoading
                 ? "Loading…"
-                : `${filtered.length} mapping${filtered.length !== 1 ? "s" : ""}`}
+                : `${filtered.length} mapping${filtered.length !== 1 ? "s" : ""}${selectedClassId !== "all" ? " · filtered by class" : ""}`}
             </p>
           </div>
         </div>
@@ -170,11 +208,13 @@ export default function ClassSections() {
                     <div className="md-empty">
                       <Network className="md-empty-icon" />
                       <p className="md-empty-title">
-                        {search ? "No results found" : "No class sections yet"}
+                        {search || selectedClassId !== "all"
+                          ? "No results found"
+                          : "No class sections yet"}
                       </p>
                       <p className="md-empty-desc">
-                        {search
-                          ? "Try a different search term."
+                        {search || selectedClassId !== "all"
+                          ? "Try a different search term or class filter."
                           : "Create your first class section mapping to get started."}
                       </p>
                     </div>
@@ -211,9 +251,7 @@ export default function ClassSections() {
                         }}
                         className="md-cell-meta"
                       >
-                        <Users
-                          style={{ width: "0.8rem", height: "0.8rem" }}
-                        />
+                        <Users style={{ width: "0.8rem", height: "0.8rem" }} />
                         <span>{section.studentCount || 0}</span>
                       </div>
                     </TableCell>

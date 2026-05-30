@@ -6,7 +6,6 @@ import {
   Plus,
   Link2,
   Search,
-  Sparkles,
   BookOpen,
   Hash,
   ListFilter,
@@ -14,6 +13,13 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -24,7 +30,10 @@ import {
 } from "@/components/ui/table";
 import Pagination from "@/components/common/Pagination";
 import CreateClassSubjectDialog from "@/components/dashboard/CreateClassSubjectDialog";
-import { getAllClassSubjects } from "@/lib/api/classSubjects";
+import { getAllClassSubjects, getClassSubjectsByClass } from "@/lib/api/classSubjects";
+import { getClassLevelOptions } from "@/lib/api/master";
+// Note: getClassSubjectsByClass hits GET /api/master/class-subjects?classLevelId=X
+// Make sure your backend ClassSubjectController exposes this endpoint (see backend note below)
 
 import "@/styles/master-data.css";
 
@@ -34,10 +43,21 @@ export default function ClassSubjectMappings() {
   const [page, setPage] = useState(0);
   const [openCreate, setOpenCreate] = useState(false);
   const [search, setSearch] = useState("");
+  const [selectedClassId, setSelectedClassId] = useState<string>("all");
 
+  // Fetch mappings — switch query fn based on filter selection
   const { data: mappings = [], isLoading } = useQuery({
-    queryKey: ["classSubjectMappings"],
-    queryFn: getAllClassSubjects,
+    queryKey: ["classSubjectMappings", selectedClassId],
+    queryFn: () =>
+      selectedClassId !== "all"
+        ? getClassSubjectsByClass(Number(selectedClassId))
+        : getAllClassSubjects(),
+  });
+
+  // Fetch class level options for the filter dropdown
+  const { data: classLevelOptions = [] } = useQuery({
+    queryKey: ["class-level-options"],
+    queryFn: getClassLevelOptions,
   });
 
   const filtered = mappings.filter(
@@ -56,7 +76,6 @@ export default function ClassSubjectMappings() {
 
   return (
     <div className="md-page">
-     
 
       {/* ── KPI Strip ────────────────────────────────────── */}
       <div className="md-stats">
@@ -121,7 +140,29 @@ export default function ClassSubjectMappings() {
               className="h-9"
             />
           </div>
+
+          {/* ── Class Filter ── */}
+          <Select
+            value={selectedClassId}
+            onValueChange={(val) => {
+              setSelectedClassId(val);
+              setPage(0);
+            }}
+          >
+            <SelectTrigger className="h-9 w-[180px]">
+              <SelectValue placeholder="Filter by class" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classes</SelectItem>
+              {classLevelOptions.map((cl) => (
+                <SelectItem key={cl.id} value={String(cl.id)}>
+                  {cl.displayName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+
         <div className="md-toolbar-right">
           <Button
             onClick={() => setOpenCreate(true)}
@@ -141,7 +182,7 @@ export default function ClassSubjectMappings() {
             <p className="md-card-subtitle">
               {isLoading
                 ? "Loading…"
-                : `${filtered.length} mapping${filtered.length !== 1 ? "s" : ""}`}
+                : `${filtered.length} mapping${filtered.length !== 1 ? "s" : ""}${selectedClassId !== "all" ? " · filtered by class" : ""}`}
             </p>
           </div>
         </div>
@@ -177,11 +218,13 @@ export default function ClassSubjectMappings() {
                     <div className="md-empty">
                       <Link2 className="md-empty-icon" />
                       <p className="md-empty-title">
-                        {search ? "No results found" : "No mappings yet"}
+                        {search || selectedClassId !== "all"
+                          ? "No results found"
+                          : "No mappings yet"}
                       </p>
                       <p className="md-empty-desc">
-                        {search
-                          ? "Try a different search term."
+                        {search || selectedClassId !== "all"
+                          ? "Try a different search term or class filter."
                           : "Create your first class-subject mapping to get started."}
                       </p>
                     </div>

@@ -1,3 +1,4 @@
+// classSubjects.ts
 import { api } from "./client";
 import type { ClassSubjectMapping, ApiResponse } from "@/types/api";
 
@@ -15,6 +16,14 @@ export async function createClassSubject(payload: {
 export async function getAllClassSubjects() {
   const response = await api.get<ApiResponse<ClassSubjectMapping[]>>(
     "/api/master/class-subjects"
+  );
+  return response.data.data;
+}
+
+// ✅ Added: filter mappings by class level
+export async function getClassSubjectsByClass(classLevelId: number) {
+  const response = await api.get<ApiResponse<ClassSubjectMapping[]>>(
+    `/api/master/class-subjects?classLevelId=${classLevelId}`
   );
   return response.data.data;
 }
