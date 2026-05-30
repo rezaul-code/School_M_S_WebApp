@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { WizardState, PaymentRow } from '@/pages/AdmissionWizard';
+import type { WizardState, PaymentRow } from '@/components/students/AdmissionWizard';
 import { getFeePreview } from '@/lib/api/feeStructures';
  
 const feeTypeBadge: Record<string, string> = {

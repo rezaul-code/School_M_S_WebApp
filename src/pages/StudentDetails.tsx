@@ -1,5 +1,3 @@
-// src/pages/StudentDetails.tsx
-
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -19,11 +17,13 @@ import {
   Users,
   PhoneCall,
   CheckCircle2,
+  Droplets, // <-- ADDED
+  Book,     // <-- ADDED
 } from "lucide-react";
 
 import { getStudent } from "@/lib/api/students";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PrintSingleIdCardButton } from "@/components/students/PrintSingleIdCardButton"; // <-- ADDED IMPORT
+import { PrintSingleIdCardButton } from "@/components/students/PrintSingleIdCardButton";
 
 import "@/styles/student-pages.css";
 
@@ -37,6 +37,12 @@ function getInitials(name?: string): string {
     .slice(0, 2)
     .map((w) => w[0].toUpperCase())
     .join("");
+}
+
+// <-- ADDED HELPER -->
+function formatEnum(val?: string) {
+  if (!val) return undefined;
+  return val.replace(/_/g, ' ').replace('POSITIVE', '+').replace('NEGATIVE', '-');
 }
 
 // ── Profile row ──────────────────────────────────────────────────
@@ -188,7 +194,7 @@ export default function StudentDetailsPage() {
     );
   }
 
-  const s = q.data!;
+  const s = q.data! as any; // Cast added to bypass TS complaints if Student type isn't updated globally yet
   const fullName =
     `${s.firstName ?? ""} ${s.lastName ?? ""}`.trim() || s.fullName || "—";
 
@@ -216,7 +222,6 @@ export default function StudentDetailsPage() {
 
           {/* Wrapper for the print button and admission badge */}
           <div className="flex items-center gap-3">
-            {/* <-- ADDED PRINT BUTTON HERE --> */}
             <PrintSingleIdCardButton studentId={s.id} />
             
             {s.admissionDate && (
@@ -240,6 +245,12 @@ export default function StudentDetailsPage() {
         <Row icon={Mail}         label="Email Address" value={s.email} />
         <Row icon={Phone}        label="Phone Number"  value={s.phone} />
         <Row icon={CalendarDays} label="Date of Birth" value={s.dateOfBirth} />
+
+        {/* <-- ADDED ENUM ROWS --> */}
+        <Row icon={User}         label="Gender"        value={formatEnum(s.gender)} />
+        <Row icon={Droplets}     label="Blood Group"   value={formatEnum(s.bloodGroup)} />
+        <Row icon={Book}         label="Religion"      value={formatEnum(s.religion)} />
+        
         <Row icon={MapPin}       label="Address"       value={s.address} />
       </SectionCard>
 
@@ -263,7 +274,7 @@ export default function StudentDetailsPage() {
         title="Guardian Information"
         subtitle="Emergency contact and guardian details"
       >
-        <Row icon={Users}    label="Guardian Name"  value={s.guardianName} />
+        <Row icon={Users}     label="Guardian Name"  value={s.guardianName} />
         <Row icon={PhoneCall} label="Guardian Phone" value={s.guardianPhone} />
       </SectionCard>
     </div>

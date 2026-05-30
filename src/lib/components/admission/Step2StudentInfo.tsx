@@ -1,4 +1,4 @@
-import type { WizardState } from '@/pages/AdmissionWizard';
+import type { WizardState } from '@/components/students/AdmissionWizard';
 
 interface Step2StudentInfoProps {
   state: WizardState;
@@ -26,13 +26,42 @@ function Field({
   );
 }
 
-// ⬇️ THIS IS THE MAGIC LINE THAT FORCES LIGHT MODE ON ALL INPUTS ⬇️
-// ⬇️ THIS IS THE MAGIC LINE THAT FORCES LIGHT MODE ON ALL INPUTS (AND BEATS BROWSER AUTOFILL) ⬇️
 const inputClass =
   'w-full bg-white border border-gray-300 text-gray-900 rounded-lg px-3 py-2.5 text-sm ' +
   'placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 shadow-sm transition-shadow ' +
   '[&:-webkit-autofill]:bg-white [&:-webkit-autofill]:[-webkit-text-fill-color:#111827] [&:-webkit-autofill]:[transition:background-color_5000s_ease-in-out_0s]';
   
+// --- Enum Options ---
+const GENDER_OPTIONS = [
+  { label: "Male", value: "MALE" },
+  { label: "Female", value: "FEMALE" },
+  { label: "Other", value: "OTHER" },
+  { label: "Prefer not to say", value: "PREFER_NOT_TO_SAY" }
+];
+
+const RELIGION_OPTIONS = [
+  { label: "Hinduism", value: "HINDUISM" },
+  { label: "Islam", value: "ISLAM" },
+  { label: "Christianity", value: "CHRISTIANITY" },
+  { label: "Sikhism", value: "SIKHISM" },
+  { label: "Buddhism", value: "BUDDHISM" },
+  { label: "Jainism", value: "JAINISM" },
+  { label: "Other", value: "OTHER" },
+  { label: "Not Specified", value: "NOT_SPECIFIED" }
+];
+
+const BLOOD_GROUP_OPTIONS = [
+  { label: "A+", value: "A_POSITIVE" },
+  { label: "A-", value: "A_NEGATIVE" },
+  { label: "B+", value: "B_POSITIVE" },
+  { label: "B-", value: "B_NEGATIVE" },
+  { label: "O+", value: "O_POSITIVE" },
+  { label: "O-", value: "O_NEGATIVE" },
+  { label: "AB+", value: "AB_POSITIVE" },
+  { label: "AB-", value: "AB_NEGATIVE" },
+  { label: "Unknown", value: "UNKNOWN" }
+];
+
 export default function Step2StudentInfo({ state, setState }: Step2StudentInfoProps) {
   const update = (key: StudentInfoKey, value: string) => {
     setState((prev) => ({
@@ -87,12 +116,47 @@ export default function Step2StudentInfo({ state, setState }: Step2StudentInfoPr
           />
         </Field>
 
-        <Field label="Roll number">
+        {/* --- NEW FIELDS START HERE --- */}
+        <Field label="Gender" required>
+          <select
+            className={`${inputClass} appearance-none cursor-pointer`}
+            value={state.studentInfo.gender}
+            onChange={(e) => update('gender', e.target.value)}
+          >
+            <option value="" disabled>Select gender</option>
+            {GENDER_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+        </Field>
+
+        <Field label="Blood Group">
+          <select
+            className={`${inputClass} appearance-none cursor-pointer`}
+            value={state.studentInfo.bloodGroup}
+            onChange={(e) => update('bloodGroup', e.target.value)}
+          >
+            <option value="">Select blood group</option>
+            {BLOOD_GROUP_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+        </Field>
+
+        <Field label="Religion">
+          <select
+            className={`${inputClass} appearance-none cursor-pointer`}
+            value={state.studentInfo.religion}
+            onChange={(e) => update('religion', e.target.value)}
+          >
+            <option value="">Select religion</option>
+            {RELIGION_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+        </Field>
+        {/* --- NEW FIELDS END HERE --- */}
+
+        <Field label="Date of birth">
           <input
+            type="date"
             className={inputClass}
-            placeholder="2026-CS-401"
-            value={state.studentInfo.rollNumber}
-            onChange={(e) => update('rollNumber', e.target.value)}
+            value={state.studentInfo.dateOfBirth}
+            onChange={(e) => update('dateOfBirth', e.target.value)}
           />
         </Field>
 
@@ -105,12 +169,12 @@ export default function Step2StudentInfo({ state, setState }: Step2StudentInfoPr
           />
         </Field>
 
-        <Field label="Date of birth">
+        <Field label="Roll number">
           <input
-            type="date"
             className={inputClass}
-            value={state.studentInfo.dateOfBirth}
-            onChange={(e) => update('dateOfBirth', e.target.value)}
+            placeholder="2026-CS-401"
+            value={state.studentInfo.rollNumber}
+            onChange={(e) => update('rollNumber', e.target.value)}
           />
         </Field>
 
