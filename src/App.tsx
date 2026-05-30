@@ -46,6 +46,8 @@ import ClassSections from "./pages/ClassSections";
 
 // Reporting
 import FeeReport from "./pages/FeeReport";
+import StudentFeeStatement    from './pages/Studentfeestatement';
+import StudentFeeStatementPdf from './pages/StudentFeeStatementPdf';
 
 // Accounting
 import FeeCollections from "./pages/FeeCollections";
@@ -73,6 +75,7 @@ export default function App() {
           <Routes>
             {/* PUBLIC */}
             <Route path="/login" element={<Login />} />
+            <Route path="/reports/student-statement/pdf" element={<StudentFeeStatementPdf />} />
 
             {/* PROTECTED */}
             <Route
@@ -131,6 +134,7 @@ export default function App() {
 
               {/* REPORTING */}
               <Route path="/reports/fees" element={<FeeReport />} />
+              <Route path="/reports/student-statement"  element={<StudentFeeStatement />} />
 
               {/* ACCOUNTING */}
               <Route path="/accounting/fee-collections" element={<FeeCollections />} />

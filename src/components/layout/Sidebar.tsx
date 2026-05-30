@@ -31,6 +31,7 @@ import {
   Menu,
   X,
   BadgeDollarSign,
+  FileText,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -105,6 +106,7 @@ export const feeStructureSubItems = [
 
 export const reportingItems = [
   { to: "/reports/fees", label: "Fee Report", icon: ReceiptText, exact: false },
+   { to: '/reports/student-statement',  label: 'Student Fee Statement', icon: FileText,   exact: false },
 ];
 
 export const accountingItems = [
