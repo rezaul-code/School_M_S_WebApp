@@ -162,39 +162,16 @@ export default function StudentFeeStatement() {
   return (
     <div className="max-w-6xl mx-auto space-y-5 pb-10 pt-2">
 
-      {/* ── Page header ───────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
-            <span>Reporting</span>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-slate-700 font-medium">Student Statement</span>
-          </div>
-          <h1 className="text-xl font-bold text-slate-900">Student Fee Statement</h1>
-        </div>
-        {stmt && (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 text-slate-600"
-              onClick={handleExportPdf}
-            >
-              <FileDown className="h-4 w-4" /> Export PDF
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2 text-slate-600">
-              <Mail className="h-4 w-4" /> Send to parent
-            </Button>
-          </div>
-        )}
-      </div>
+      
 
       {/* ── Selector card ─────────────────────────────────────────────── */}
       <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
           Select student
         </p>
-        <div className="flex flex-wrap gap-3 items-end">
+        <div className="flex flex-wrap justify-between gap-4 items-end">
+  {/* Left side - Filters */}
+  <div className="flex flex-wrap gap-3 items-end flex-1">
 
           {/* Class */}
           <div className="flex flex-col gap-1 min-w-[150px]">
@@ -229,7 +206,7 @@ export default function StudentFeeStatement() {
             </select>
           </div>
 
-          {/* Search */}
+                    {/* Search */}
           <div className="flex flex-col gap-1 flex-1 min-w-[220px]">
             <label className="text-[11px] text-slate-500">Search student</label>
             <div className="relative">
@@ -238,12 +215,40 @@ export default function StudentFeeStatement() {
                 type="text"
                 placeholder="Name or roll number…"
                 value={studentSearch}
-                onChange={e => { setStudentSearch(e.target.value); setSelectedStudent(null); }}
+                onChange={e => {
+                  setStudentSearch(e.target.value);
+                  setSelectedStudent(null);
+                }}
                 className="h-9 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
+
         </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-blue-200 text-blue-600 hover:bg-blue-50"
+            onClick={handleExportPdf}
+          >
+            <FileDown className="h-4 w-4" />
+            Export PDF
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-blue-200 text-blue-600 hover:bg-blue-50"
+          >
+            <Mail className="h-4 w-4" />
+            Send to Parent
+          </Button>
+        </div>
+      </div>
+        
 
         {/* Student results */}
         {hasFilter && studentQuery.isLoading && (
