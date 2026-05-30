@@ -2,83 +2,137 @@
 
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
-  ShieldCheck, 
-  Search, 
-  Printer, 
-  UserX, 
-  CheckCircle, 
-  Loader2, 
-  ArrowRight,
-  ShieldAlert,
-  ReceiptText,
-  ArrowRightLeft,
-  Info,
-  ChevronRight,
-  ArrowLeft,
-  Download,
-  Wallet
+import {
+  Search, Printer, UserX, CheckCircle, Loader2, ArrowRight,
+  ShieldAlert, ReceiptText, ArrowRightLeft, Info, ChevronRight,
+  ArrowLeft, Download, Wallet, ShieldCheck, GraduationCap, LayoutGrid,
 } from "lucide-react";
 
-import { 
-  listStudents, 
-  getExitClearancePreview, 
-  processStudentExitPermanently, 
+import {
+  getTcStudents,
+  getExitClearancePreview,
+  processStudentExitPermanently,
   getTransferCertificateData,
   processSettlementPayment,
-  ExitClearancePreviewResponse,
-  TransferCertificateResponse
-} from "../lib/api/students";
+  type TcStudentSummary,
+  type ExitClearancePreviewResponse,
+  type TransferCertificateResponse,
+} from "@/lib/api/tcCertificates";
 
-import { Button } from "../components/ui/button";
-import Pagination from "../components/common/Pagination";
-import { useToast } from "../hooks/use-toast";
+import { getClassLevels, getClassSections, type IdLabel } from "@/lib/api/options";
+import { Button } from "@/components/ui/button";
+import Pagination from "@/components/common/Pagination";
+import { useToast } from "@/hooks/use-toast";
 
 type WizardStep = 'list' | 'audit' | 'settlement' | 'tc';
+
+const STATUS_OPTIONS = [
+  { label: 'All Statuses', value: '' },
+  { label: 'Active',       value: 'ACTIVE' },
+  { label: 'Inactive',     value: 'INACTIVE' },
+  { label: 'Alumni',       value: 'ALUMNI' },
+  { label: 'Transferred',  value: 'TRANSFERRED' },
+  { label: 'Suspended',    value: 'SUSPENDED' },
+];
+
+const selectStyle = (hasValue: boolean, disabled = false): React.CSSProperties => ({
+  paddingLeft: "0.75rem",
+  paddingRight: "0.875rem",
+  paddingTop: "0.45rem",
+  paddingBottom: "0.45rem",
+  fontSize: "0.8125rem",
+  borderRadius: "0.375rem",
+  border: "1px solid #e2e8f0",
+  background: "#ffffff",
+  color: hasValue ? "#0f172a" : "#94a3b8",
+  cursor: disabled ? "not-allowed" : "pointer",
+  opacity: disabled ? 0.5 : 1,
+  outline: "none",
+  height: "2.5rem",
+  minWidth: "150px",
+});
 
 export default function TCCertificates() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
-  const [currentView, setCurrentView] = useState<WizardStep>('list');
+
+  // ── List filters ──────────────────────────────────────────────────────────
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+  const [selectedClassLevelId, setSelectedClassLevelId] = useState<string>("");
+  const [selectedSectionId, setSelectedSectionId]       = useState<string>("");
+  const [selectedStatus, setSelectedStatus]             = useState<string>("");
 
-  const [previewData, setPreviewData] = useState<ExitClearancePreviewResponse | null>(null);
-  const [tcData, setTcData] = useState<TransferCertificateResponse | null>(null);
-  const [isAuditing, setIsAuditing] = useState(false);
+  // ── Wizard state ──────────────────────────────────────────────────────────
+  const [currentView, setCurrentView]   = useState<WizardStep>('list');
+  const [selectedStudent, setSelectedStudent] = useState<TcStudentSummary | null>(null);
+  const [previewData, setPreviewData]   = useState<ExitClearancePreviewResponse | null>(null);
+  const [tcData, setTcData]             = useState<TransferCertificateResponse | null>(null);
+  const [isAuditing, setIsAuditing]     = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
-  
+
   const printComponentRef = useRef<HTMLDivElement>(null);
 
+  // ── Class levels ──────────────────────────────────────────────────────────
+  const { data: classLevels = [] } = useQuery<IdLabel[]>({
+    queryKey: ["options", "class-levels"],
+    queryFn: getClassLevels,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  // ── Sections (lazy) ───────────────────────────────────────────────────────
+  const { data: sections = [], isLoading: sectionsLoading } = useQuery<IdLabel[]>({
+    queryKey: ["options", "class-sections", selectedClassLevelId],
+    queryFn: () => getClassSections(Number(selectedClassLevelId)),
+    enabled: Boolean(selectedClassLevelId),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // ── Students list ─────────────────────────────────────────────────────────
+  const hasAnyFilter = Boolean(selectedClassLevelId || selectedSectionId || selectedStatus || search.trim());
+
   const studentsQuery = useQuery({
-    queryKey: ["tc-students", page, search],
-    queryFn: () => listStudents({ page, size: 10, search: search || undefined }),
+    queryKey: ["tc-students", page, search, selectedClassLevelId, selectedSectionId, selectedStatus],
+    queryFn: () =>
+      getTcStudents({
+        classLevelId:  selectedClassLevelId ? Number(selectedClassLevelId) : undefined,
+        classSectionId: selectedSectionId   ? Number(selectedSectionId)   : undefined,
+        status:        selectedStatus || undefined,
+        search:        search.trim()  || undefined,
+        page,
+        size: 10,
+      }),
+    enabled: hasAnyFilter,
     placeholderData: (prev) => prev,
   });
 
-  const students = studentsQuery.data?.content ?? [];
+  const students      = studentsQuery.data?.content      ?? [];
   const totalElements = studentsQuery.data?.totalElements ?? 0;
-  const totalPages = Math.ceil(totalElements / 10);
+  const totalPages    = Math.ceil(totalElements / 10);
 
-  const requiresSettlement = previewData ? (previewData.pendingDuesToClear > 0 || previewData.advanceToRefund > 0) : false;
+  const requiresSettlement = previewData
+    ? (previewData.pendingDuesToClear > 0 || previewData.advanceToRefund > 0)
+    : false;
 
-  // ── ROUTING ────────────────────────────────────────────────────────
-  const handleStartClearance = async (student: any) => {
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  const handleClassChange = (value: string) => {
+    setSelectedClassLevelId(value);
+    setSelectedSectionId("");
+    setPage(0);
+  };
+
+  const handleStartClearance = async (student: TcStudentSummary) => {
     setSelectedStudent(student);
     setIsAuditing(true);
     try {
-      if (student.status === "INACTIVE" || student.status === "ARCHIVED") {
-        // Path 3: Direct to TC Download
+      if (student.status === "INACTIVE" || (student as any).status === "ARCHIVED") {
         const data = await getTransferCertificateData(student.id);
         setTcData(data);
-        setCurrentView('tc'); 
+        setCurrentView('tc');
       } else {
-        // Paths 1 & 2: Financial Audit
         const data = await getExitClearancePreview(student.id);
         setPreviewData(data);
-        setCurrentView('audit'); 
+        setCurrentView('audit');
       }
     } catch (error: any) {
       toast({
@@ -92,74 +146,102 @@ export default function TCCertificates() {
     }
   };
 
-  // ── EXIT MUTATION (Issues TC) ──────────────────────────────────────
+  // ── Exit mutation ─────────────────────────────────────────────────────────
   const exitMutation = useMutation({
-    mutationFn: () => processStudentExitPermanently(selectedStudent.id, "TC_ISSUED"),
+    mutationFn: () => processStudentExitPermanently(selectedStudent!.id, "TC_ISSUED"),
     onSuccess: async () => {
-      toast({
-        title: "Exit Processed Successfully",
-        description: "Student is now inactive. Retrieving official document...",
-      });
+      toast({ title: "Exit Processed", description: "Retrieving official document…" });
       queryClient.invalidateQueries({ queryKey: ["tc-students"] });
-
       try {
-        const data = await getTransferCertificateData(selectedStudent.id);
+        const data = await getTransferCertificateData(selectedStudent!.id);
         setTcData(data);
-        setCurrentView('tc'); 
+        setCurrentView('tc');
       } catch (err: any) {
-        toast({
-          variant: "destructive",
-          title: "Certificate Fetch Failed",
-          description: err.response?.data?.message || "TC could not be rendered.",
-        });
+        toast({ variant: "destructive", title: "Certificate Fetch Failed", description: err.response?.data?.message || "TC could not be rendered." });
         setCurrentView('list');
       }
     },
     onError: (error: any) => {
-      toast({
-        variant: "destructive",
-        title: "Exit Refused",
-        description: error.response?.data?.message || "Please resolve outstanding fee obligations before continuing.",
-      });
-    }
+      toast({ variant: "destructive", title: "Exit Refused", description: error.response?.data?.message || "Resolve outstanding obligations first." });
+    },
   });
 
-  // ── PAYMENT MUTATION (Chain -> Exit) ───────────────────────────────
+  // ── Payment mutation ──────────────────────────────────────────────────────
   const paymentMutation = useMutation({
-    mutationFn: () => processSettlementPayment(selectedStudent.id, previewData!.pendingDuesToClear, paymentMethod),
+    mutationFn: () => processSettlementPayment(selectedStudent!.id, previewData!.pendingDuesToClear, paymentMethod),
     onSuccess: () => {
-      toast({ title: "Settlement Cleared", description: "Payment recorded successfully." });
-      // Proceed automatically to exit now that payment is cleared
+      toast({ title: "Settlement Cleared" });
       exitMutation.mutate();
     },
     onError: (error: any) => {
-      toast({
-        variant: "destructive",
-        title: "Payment Failed",
-        description: error.response?.data?.message || "Could not process the transaction.",
-      });
-    }
+      toast({ variant: "destructive", title: "Payment Failed", description: error.response?.data?.message || "Could not process transaction." });
+    },
   });
 
-  const triggerBrowserPrint = () => window.print();
-  const offsetAmount = previewData ? Math.min(previewData.grossPendingDues, previewData.grossAdvancePool) : 0;
+  const offsetAmount = previewData
+    ? Math.min(previewData.grossPendingDues, previewData.grossAdvancePool)
+    : 0;
 
-  // ============================================================================
-  // RENDER: LIST VIEW
-  // ============================================================================
+  // ==========================================================================
+  // LIST VIEW
+  // ==========================================================================
   if (currentView === 'list') {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex items-center gap-4">
-           
-           
-          </div>
-        </div>
-
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-200 flex items-center gap-4 bg-slate-50/50">
-            <div className="relative w-full max-w-md">
+
+          {/* ── Toolbar ── */}
+          <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-wrap items-center gap-3">
+
+            {/* Class */}
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <GraduationCap size={14} style={{ position: "absolute", left: "0.5rem", color: "#94a3b8", pointerEvents: "none" }} />
+              <select
+                value={selectedClassLevelId}
+                onChange={(e) => handleClassChange(e.target.value)}
+                style={{ ...selectStyle(Boolean(selectedClassLevelId)), paddingLeft: "1.75rem" }}
+              >
+                <option value="">All Classes</option>
+                {classLevels.map((cl) => (
+                  <option key={cl.id} value={String(cl.id)}>{cl.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Section */}
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <LayoutGrid size={14} style={{ position: "absolute", left: "0.5rem", color: "#94a3b8", pointerEvents: "none" }} />
+              <select
+                value={selectedSectionId}
+                onChange={(e) => { setSelectedSectionId(e.target.value); setPage(0); }}
+                disabled={!selectedClassLevelId || sectionsLoading}
+                style={{ ...selectStyle(Boolean(selectedSectionId), !selectedClassLevelId || sectionsLoading), paddingLeft: "1.75rem" }}
+              >
+                <option value="">
+                  {!selectedClassLevelId ? "Select Class First" : sectionsLoading ? "Loading…" : "All Sections"}
+                </option>
+                {sections.map((cs) => (
+                  <option key={cs.id} value={String(cs.id)}>{cs.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Status */}
+            <select
+              value={selectedStatus}
+              onChange={(e) => { setSelectedStatus(e.target.value); setPage(0); }}
+              style={selectStyle(Boolean(selectedStatus))}
+            >
+              {STATUS_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+
+            {/* Divider */}
+            <div style={{ width: "1px", height: "1.5rem", background: "#e2e8f0", flexShrink: 0 }} />
+
+            {/* Search — always enabled */}
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 className="flex h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -170,6 +252,7 @@ export default function TCCertificates() {
             </div>
           </div>
 
+          {/* ── Table ── */}
           <div className="w-full overflow-auto">
             <table className="w-full text-sm text-left">
               <thead>
@@ -182,17 +265,38 @@ export default function TCCertificates() {
                 </tr>
               </thead>
               <tbody>
-                {!studentsQuery.isLoading && students.length === 0 && (
+                {/* Idle */}
+                {!hasAnyFilter && (
                   <tr>
-                    <td colSpan={5} className="p-4 align-middle border-b border-slate-100">
+                    <td colSpan={5} className="p-4 border-b border-slate-100">
                       <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <UserX className="h-12 w-12 text-slate-300 mb-4" />
-                        <p className="text-lg font-medium text-slate-900">No student records found</p>
+                        <GraduationCap className="h-12 w-12 text-slate-300 mb-4" />
+                        <p className="text-lg font-medium text-slate-900">Search by name or filter by class to get started</p>
                       </div>
                     </td>
                   </tr>
                 )}
 
+                {/* Loading */}
+                {hasAnyFilter && studentsQuery.isLoading && (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-slate-400 text-sm">Loading…</td>
+                  </tr>
+                )}
+
+                {/* Empty */}
+                {hasAnyFilter && !studentsQuery.isLoading && students.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="p-4 border-b border-slate-100">
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <UserX className="h-12 w-12 text-slate-300 mb-4" />
+                        <p className="text-lg font-medium text-slate-900">No students found</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+
+                {/* Rows */}
                 {students.map((student) => (
                   <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-5 py-4 align-middle border-b border-slate-100 font-medium text-slate-700">
@@ -208,24 +312,24 @@ export default function TCCertificates() {
                     </td>
                     <td className="px-5 py-4 align-middle border-b border-slate-100">
                       <span className={`px-2 py-1 text-[10px] font-bold rounded-md uppercase tracking-wider ${
-                        (student as any).status === "ACTIVE" 
-                          ? "bg-emerald-100 text-emerald-800 border border-emerald-200" 
+                        student.status === "ACTIVE"
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                           : "bg-amber-100 text-amber-800 border border-amber-200"
                       }`}>
-                        {(student as any).status}
+                        {student.status}
                       </span>
                     </td>
                     <td className="px-5 py-4 align-middle border-b border-slate-100 text-right pr-5">
                       <Button
                         size="sm"
-                        variant={(student as any).status === "ACTIVE" ? "default" : "outline"}
+                        variant={student.status === "ACTIVE" ? "default" : "outline"}
                         className="gap-2 rounded-lg text-xs"
                         disabled={isAuditing && selectedStudent?.id === student.id}
                         onClick={() => handleStartClearance(student)}
                       >
                         {isAuditing && selectedStudent?.id === student.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (student as any).status === "ACTIVE" ? (
+                        ) : student.status === "ACTIVE" ? (
                           <>Verify Clearance <ArrowRight size={14} /></>
                         ) : (
                           <span className="text-indigo-600 flex items-center gap-1.5 font-semibold">
@@ -240,16 +344,16 @@ export default function TCCertificates() {
             </table>
           </div>
 
-          {(totalPages > 1 || totalElements > 0) && (
+          {/* ── Pagination ── */}
+          {hasAnyFilter && (totalPages > 1 || totalElements > 0) && (
             <div className="flex items-center justify-between p-4 border-t border-slate-200 bg-slate-50">
               <span className="text-sm text-slate-500 font-medium">
-                {totalElements > 0 ? `Showing ${page * 10 + 1}–${Math.min((page + 1) * 10, totalElements)} of ${totalElements}` : "No students"}
+                {totalElements > 0
+                  ? `Showing ${page * 10 + 1}–${Math.min((page + 1) * 10, totalElements)} of ${totalElements}`
+                  : "No students"}
               </span>
               {totalPages > 1 && (
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>Previous</Button>
-                  <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>Next</Button>
-                </div>
+                <Pagination page={page} totalPages={totalPages} onChange={setPage} />
               )}
             </div>
           )}
@@ -258,13 +362,12 @@ export default function TCCertificates() {
     );
   }
 
-  // ============================================================================
-  // RENDER: FINANCIAL AUDIT WIZARD (STEP 1)
-  // ============================================================================
+  // ==========================================================================
+  // AUDIT VIEW
+  // ==========================================================================
   if (currentView === 'audit' && previewData) {
     return (
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Dynamic Stepper */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" className="gap-2 text-slate-500 hover:text-slate-800 -ml-4" onClick={() => setCurrentView('list')}>
             <ArrowLeft size={16} /> Back to Roster
@@ -303,16 +406,12 @@ export default function TCCertificates() {
           </div>
 
           <div className="p-6 space-y-6">
-            <div className={`p-4 rounded-xl border flex items-center justify-between shadow-sm ${
-              previewData.cleared ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'
-            }`}>
+            <div className={`p-4 rounded-xl border flex items-center justify-between shadow-sm ${previewData.cleared ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
               <div className="flex items-center gap-3">
                 {previewData.cleared ? <CheckCircle className="h-8 w-8 text-emerald-600" /> : <ShieldAlert className="h-8 w-8 text-amber-600" />}
                 <div>
                   <h4 className="font-bold text-base">{previewData.cleared ? 'Cleared for Exit' : 'Financial Block Active'}</h4>
-                  <p className="text-xs opacity-90 mt-0.5">
-                    {previewData.cleared ? 'No outstanding debt. Ready to process.' : 'Outstanding dues detected. Exit block is enforced.'}
-                  </p>
+                  <p className="text-xs opacity-90 mt-0.5">{previewData.cleared ? 'No outstanding debt. Ready to process.' : 'Outstanding dues detected.'}</p>
                 </div>
               </div>
             </div>
@@ -322,7 +421,6 @@ export default function TCCertificates() {
                 <ReceiptText className="h-4 w-4 text-slate-500" />
                 <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider">Detailed Settlement Statement</h4>
               </div>
-              
               <div className="p-4 space-y-4 text-sm">
                 <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
                   <table className="w-full text-sm text-left">
@@ -338,7 +436,7 @@ export default function TCCertificates() {
                         <tr><td colSpan={3} className="px-4 py-6 text-center text-slate-400 italic">No financial records to settle.</td></tr>
                       ) : (
                         previewData.pendingLineItems.map((item) => {
-                          const isCredit = item.balance < 0; 
+                          const isCredit = item.balance < 0;
                           const absBal = Math.abs(item.balance).toFixed(2);
                           return (
                             <tr key={item.id} className="hover:bg-slate-50/50">
@@ -346,7 +444,7 @@ export default function TCCertificates() {
                               <td className="px-4 py-3 text-slate-500 text-xs">
                                 <span className={`text-[9px] uppercase px-1.5 py-0.5 rounded font-bold tracking-widest mr-1 ${isCredit ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                                   {isCredit ? 'Credit' : 'Debit'}
-                                </span> 
+                                </span>
                                 {isCredit ? 'Advance Overpayment' : 'Unpaid Past Due'}
                               </td>
                               <td className={`px-4 py-3 text-right font-semibold ${isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>{isCredit ? '+' : '-'}${absBal}</td>
@@ -361,14 +459,12 @@ export default function TCCertificates() {
                     </tfoot>
                   </table>
                 </div>
-                
                 {offsetAmount > 0 && (
                   <div className="flex justify-between items-center text-slate-500 text-xs px-2 pt-1">
                     <span className="flex items-center gap-1.5 font-medium"><ArrowRightLeft className="h-3.5 w-3.5 text-indigo-500" /> System Auto-Offset Applied</span>
                     <span className="font-semibold text-slate-700">+${offsetAmount.toFixed(2)} credit shifted to clear past dues</span>
                   </div>
                 )}
-                
                 <div className="border-t border-slate-300 pt-4 flex items-center justify-between bg-white p-5 rounded-xl border shadow-sm">
                   <span className="font-bold text-slate-800 text-lg">Net Settlement Outcome</span>
                   <div className="text-right">
@@ -383,7 +479,7 @@ export default function TCCertificates() {
                 </div>
               </div>
             </div>
-            
+
             {previewData.futureFeesToCancel > 0 && (
               <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl flex items-center justify-between px-6 shadow-sm">
                 <span className="text-sm text-slate-600 font-medium flex items-center gap-2"><Info className="h-5 w-5 text-slate-400" /> Future Unearned Fees (Automatically Dropped)</span>
@@ -409,15 +505,15 @@ export default function TCCertificates() {
     );
   }
 
-  // ============================================================================
-  // RENDER: SETTLEMENT WIZARD (STEP 2 if needed)
-  // ============================================================================
+  // ==========================================================================
+  // SETTLEMENT VIEW
+  // ==========================================================================
   if (currentView === 'settlement' && previewData) {
     const isRefund = previewData.advanceToRefund > 0;
-    const amount = isRefund ? previewData.advanceToRefund : previewData.pendingDuesToClear;
+    const amount   = isRefund ? previewData.advanceToRefund : previewData.pendingDuesToClear;
 
     return (
-     <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Button variant="ghost" className="gap-2 text-slate-500 hover:text-slate-800 -ml-4" onClick={() => setCurrentView('audit')}>
             <ArrowLeft size={16} /> Back to Audit
@@ -452,7 +548,6 @@ export default function TCCertificates() {
                 ${amount.toFixed(2)}
               </p>
             </div>
-
             <div className="space-y-4">
               <label className="text-sm font-semibold text-slate-800">Select {isRefund ? 'Refund' : 'Payment'} Method</label>
               <div className="grid grid-cols-3 gap-3">
@@ -461,8 +556,8 @@ export default function TCCertificates() {
                     key={mode}
                     onClick={() => setPaymentMethod(mode)}
                     className={`p-3 rounded-lg border text-sm font-medium transition-all ${
-                      paymentMethod === mode 
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600' 
+                      paymentMethod === mode
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600'
                         : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                     }`}
                   >
@@ -477,12 +572,11 @@ export default function TCCertificates() {
             <Button variant="outline" className="bg-white" onClick={() => setCurrentView('audit')} disabled={paymentMutation.isPending || exitMutation.isPending}>
               Back
             </Button>
-            <Button 
-              className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white min-w-[200px] shadow-sm" 
+            <Button
+              className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white min-w-[200px] shadow-sm"
               onClick={() => {
                 if (isRefund) {
-                  // For refunds, directly exit. Implement real refund API later if needed.
-                  toast({ title: "Refund Recorded", description: "Refund logged successfully." });
+                  toast({ title: "Refund Recorded" });
                   exitMutation.mutate();
                 } else {
                   paymentMutation.mutate();
@@ -490,11 +584,9 @@ export default function TCCertificates() {
               }}
               disabled={paymentMutation.isPending || exitMutation.isPending}
             >
-              {(paymentMutation.isPending || exitMutation.isPending) ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>{isRefund ? 'Process Refund' : 'Process Payment'} & Issue TC <CheckCircle size={16} /></>
-              )}
+              {(paymentMutation.isPending || exitMutation.isPending)
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <>{isRefund ? 'Process Refund' : 'Process Payment'} & Issue TC <CheckCircle size={16} /></>}
             </Button>
           </div>
         </div>
@@ -502,9 +594,9 @@ export default function TCCertificates() {
     );
   }
 
-  // ============================================================================
-  // RENDER: TC DOCUMENT WIZARD (STEP 3)
-  // ============================================================================
+  // ==========================================================================
+  // TC DOCUMENT VIEW
+  // ==========================================================================
   if (currentView === 'tc' && tcData) {
     return (
       <div className="p-6 max-w-5xl mx-auto space-y-6 print:p-0 print:m-0 print:block">
@@ -527,18 +619,18 @@ export default function TCCertificates() {
               <h2 className="text-xl font-bold text-emerald-700 flex items-center gap-2">
                 <CheckCircle className="h-6 w-6" /> Official Document Ready
               </h2>
-              <p className="text-slate-500 text-sm mt-1">The student has been successfully exited. The document is ready to print.</p>
+              <p className="text-slate-500 text-sm mt-1">Student has been successfully exited. The document is ready to print.</p>
             </div>
             <div className="flex gap-3">
               <Button variant="outline" className="bg-white" onClick={() => setCurrentView('list')}>Done</Button>
-              <Button className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-sm" onClick={triggerBrowserPrint}>
+              <Button className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-sm" onClick={() => window.print()}>
                 <Printer size={16} /> Print Document
               </Button>
             </div>
           </div>
 
           <div className="p-8 md:p-12 print:p-0">
-            <div 
+            <div
               ref={printComponentRef}
               className="print-tc-document bg-white border-8 border-slate-900 p-10 md:p-14 relative text-slate-900 shadow-sm print:shadow-none print:border-slate-950 font-serif max-w-4xl mx-auto min-h-[800px]"
             >
@@ -550,7 +642,6 @@ export default function TCCertificates() {
                   <div className="h-1 bg-slate-900 w-48 mx-auto my-4" />
                   <h3 className="text-3xl font-semibold tracking-wider italic text-slate-900 font-serif">Transfer Certificate</h3>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8 pt-6 font-sans text-base">
                   <div className="flex justify-between border-b border-dotted border-slate-400 pb-1.5"><span className="text-slate-500">Student Name:</span><span className="font-bold uppercase text-slate-900">{tcData.studentName}</span></div>
                   <div className="flex justify-between border-b border-dotted border-slate-400 pb-1.5"><span className="text-slate-500">Certificate Issue Date:</span><span className="font-semibold text-slate-900">{tcData.issueDate}</span></div>
@@ -561,12 +652,10 @@ export default function TCCertificates() {
                   <div className="flex justify-between border-b border-dotted border-slate-400 pb-1.5"><span className="text-slate-500">Class Last Attended:</span><span className="font-bold text-slate-900 uppercase">{tcData.lastClassAttended.replace('_', ' ')}</span></div>
                   <div className="flex justify-between border-b border-dotted border-slate-400 pb-1.5"><span className="text-slate-500">Academic Leaving Outcome:</span><span className="font-bold text-slate-900 uppercase">{tcData.academicOutcome.replace('_', ' ')}</span></div>
                 </div>
-
                 <div className="pt-10 space-y-16">
                   <p className="text-center italic text-slate-700 text-lg font-serif max-w-3xl mx-auto leading-relaxed">
-                    "This is to certify that the student mentioned above has been officially cleared of all physical, financial, and academic liabilities at Sarbajanin Academy. All school fee payments were audited, fully verified, and cleared prior to certificate issuance."
+                    "This is to certify that the student mentioned above has been officially cleared of all physical, financial, and academic liabilities at Sarbajanin Academy."
                   </p>
-
                   <div className="flex flex-col md:flex-row items-center justify-between pt-12 gap-8 px-4">
                     <div className="flex items-center gap-4 border-4 border-emerald-600 p-4 rounded-xl rotate-[-4deg] uppercase bg-emerald-50/30 text-emerald-800 font-sans shadow-sm">
                       <CheckCircle className="h-10 w-10 text-emerald-600 shrink-0" />
@@ -575,7 +664,6 @@ export default function TCCertificates() {
                         <span className="text-base font-black tracking-widest">Financials Cleared</span>
                       </div>
                     </div>
-
                     <div className="flex gap-20 font-sans">
                       <div className="text-center w-40">
                         <div className="h-12 border-b border-slate-950" />
