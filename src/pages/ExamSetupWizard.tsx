@@ -259,26 +259,7 @@ export default function ExamSetupWizard() {
 
   return (
     <div className="md-page">
-      <div className="md-hero md-hero--class-subject">
-        <div className="md-hero-glow" />
-        <div className="md-hero-inner">
-          <div className="md-hero-left">
-            <div className="md-hero-icon-wrap bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-              <FileText className="h-5 w-5" />
-            </div>
-            <div className="md-hero-text">
-              <h2 className="md-hero-title">Configure Exam Schedule</h2>
-              <p className="md-hero-sub">
-                {isResumeMode ? "Resume your exam configuration setup" : "Follow the steps to configure the assessment blueprint and timetable."}
-              </p>
-            </div>
-          </div>
-          <span className="md-hero-badge">
-            {isResumeMode && <RotateCcw className="h-3.5 w-3.5 text-blue-400 animate-pulse mr-1.5" />}
-            Step {currentStep} of 3
-          </span>
-        </div>
-      </div>
+      
 
       <div className="md-wizard">
         <div className="flex items-center justify-between mb-12 px-6">

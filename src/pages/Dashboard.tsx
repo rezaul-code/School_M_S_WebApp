@@ -4,9 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   GraduationCap, Users, BookOpen, Layers,
-  LayoutDashboard, CalendarDays,
   BarChart2, TrendingUp, PieChart as PieIcon, Activity,
-  Zap,
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, AreaChart, Area,
@@ -20,6 +18,7 @@ import { listStudents } from "../lib/api/students";
 import { listTeachers } from "../lib/api/teachers";
 import { listSubjects } from "../lib/api/subjects";
 import { listClassSections, listAcademicYears } from "../lib/api/master";
+import { api } from "../lib/api/client"; // Needed for our direct backend call
 
 import "@/styles/dashboard.css";
 
@@ -38,6 +37,7 @@ const tooltipStyle = {
 };
 
 export default function Dashboard() {
+  // Existing data queries
   const studentsQ = useQuery({
     queryKey: ["dashboard", "students"],
     queryFn: () => listStudents({ page: 0, size: 200 }),
@@ -59,28 +59,25 @@ export default function Dashboard() {
     queryFn: listAcademicYears,
   });
 
+  // =========================================================================
+  // PRODUCTION GRADE: Fetch pre-calculated chart data directly from backend
+  // =========================================================================
+  const { data: studentsPerClassLevel = [], isLoading: isLoadingClassChart } = useQuery({
+    queryKey: ["dashboard", "classPopulation"],
+    queryFn: async () => {
+      // Ensure this endpoint matches the Controller route you created
+      const res = await api.get("/api/admin/dashboard/class-population"); 
+      return Array.isArray(res.data) ? res.data : (res.data?.data || []);
+    }
+  });
+
   const students = studentsQ.data?.content ?? [];
   const teachers = teachersQ.data?.content ?? [];
 
-  const studentsPerSection = useMemo(() => {
-    const sections = sectionsQ.data ?? [];
-    if (sections.length) {
-      return sections.map((s) => ({
-        name: `${s.className?.replace("CLASS_", "C")}-${s.sectionName ?? ""}`,
-        students: s.studentCount ?? students.filter((st) => st.classSectionId === s.id).length,
-      }));
-    }
-    const map = new Map<string, number>();
-    students.forEach((s) => {
-      const key = s.classSectionName || "Unassigned";
-      map.set(key, (map.get(key) ?? 0) + 1);
-    });
-    return Array.from(map.entries()).map(([name, students]) => ({ name, students }));
-  }, [sectionsQ.data, students]);
-
+  // Keep other calculations local for now
   const admissionsByMonth = useMemo(() => {
     const map = new Map<string, number>();
-    students.forEach((s) => {
+    students.forEach((s: any) => {
       if (!s.admissionDate) return;
       const d = new Date(s.admissionDate);
       if (isNaN(d.getTime())) return;
@@ -93,7 +90,7 @@ export default function Dashboard() {
   }, [students]);
 
   const teacherStatus = useMemo(() => {
-    const active = teachers.filter((t) => t.active).length;
+    const active = teachers.filter((t: any) => t.active).length;
     const inactive = teachers.length - active;
     return [
       { name: "Active", value: active, color: SUCCESS },
@@ -104,20 +101,18 @@ export default function Dashboard() {
   const yearEnrollment = useMemo(() => {
     const years = yearsQ.data ?? [];
     if (years.length) {
-      return years.map((y) => ({
+      return years.map((y: any) => ({
         year: y.name,
-        students: y.studentCount ?? students.filter((s) => s.academicYearId === y.id).length,
+        students: y.studentCount ?? students.filter((s: any) => s.academicYearId === y.id).length,
       }));
     }
     const map = new Map<string, number>();
-    students.forEach((s) => {
+    students.forEach((s: any) => {
       const key = s.academicYearName || "—";
       map.set(key, (map.get(key) ?? 0) + 1);
     });
     return Array.from(map.entries()).map(([year, students]) => ({ year, students }));
   }, [yearsQ.data, students]);
-
-  const today = format(new Date(), "EEEE, d MMMM yyyy");
 
   return (
     <div className="db-page" style={{ paddingTop: 0 }}>
@@ -125,34 +120,33 @@ export default function Dashboard() {
       {/* Stat Cards */}
       <div className="db-stats-grid">
         <StatCard
-  label="Total Students"
-  value={studentsQ.data?.totalElements ?? students.length}
-  icon={GraduationCap}
-  loading={studentsQ.isLoading}
-  accent="success"
-
-/>
-<StatCard
-  label="Total Teachers"
-  value={teachersQ.data?.totalElements ?? teachers.length}
-  icon={Users}
-  loading={teachersQ.isLoading}
-  accent="primary"
-/>
-<StatCard
-  label="Total Subjects"
-  value={subjectsQ.data?.length}
-  icon={BookOpen}
-  loading={subjectsQ.isLoading}
-  accent="warning"
-/>
-<StatCard
-  label="Class Sections"
-  value={sectionsQ.data?.length}
-  icon={Layers}
-  loading={sectionsQ.isLoading}
-  accent="destructive"
-/>
+          label="Total Students"
+          value={studentsQ.data?.totalElements ?? students.length}
+          icon={GraduationCap}
+          loading={studentsQ.isLoading}
+          accent="success"
+        />
+        <StatCard
+          label="Total Teachers"
+          value={teachersQ.data?.totalElements ?? teachers.length}
+          icon={Users}
+          loading={teachersQ.isLoading}
+          accent="primary"
+        />
+        <StatCard
+          label="Total Subjects"
+          value={subjectsQ.data?.length}
+          icon={BookOpen}
+          loading={subjectsQ.isLoading}
+          accent="warning"
+        />
+        <StatCard
+          label="Class Sections"
+          value={sectionsQ.data?.length}
+          icon={Layers}
+          loading={sectionsQ.isLoading}
+          accent="destructive"
+        />
       </div>
 
       {/* Charts */}
@@ -165,9 +159,14 @@ export default function Dashboard() {
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
 
-          <ChartCard title="Students per Class Section" icon={<BarChart2 />}>
+          {/* BACKEND-DRIVEN CHART */}
+          <ChartCard 
+            title="Students per Class Level" 
+            icon={<BarChart2 />} 
+            loading={isLoadingClassChart}
+          >
             <ResponsiveContainer width="100%" height={248}>
-              <BarChart data={studentsPerSection}>
+              <BarChart data={studentsPerClassLevel}>
                 <CartesianGrid stroke={GRID} vertical={false} />
                 <XAxis dataKey="name" stroke={AXIS} fontSize={11} />
                 <YAxis stroke={AXIS} fontSize={11} allowDecimals={false} />
@@ -252,10 +251,12 @@ function ChartCard({
   title,
   icon,
   children,
+  loading = false,
 }: {
   title: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
+  loading?: boolean;
 }) {
   return (
     <div className="db-chart-card">
@@ -263,7 +264,14 @@ function ChartCard({
         <span className="db-chart-card-title">{title}</span>
         {icon && <span className="db-chart-card-icon">{icon}</span>}
       </div>
-      <div className="db-chart-body">{children}</div>
+      <div className="db-chart-body relative">
+        {loading ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
+            <span className="text-sm text-slate-500 animate-pulse">Loading data...</span>
+          </div>
+        ) : null}
+        {children}
+      </div>
     </div>
   );
 }
