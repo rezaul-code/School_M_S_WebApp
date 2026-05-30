@@ -141,9 +141,13 @@ interface StatCardProps {
 function StatCard({ label, value, colorClass, icon: Icon }: StatCardProps) {
   return (
     <div className={`sp-stat ${colorClass}`}>
-      <div className="sp-stat-icon"><Icon size={16} /></div>
-      <div className="sp-stat-label">{label}</div>
-      <div className="sp-stat-value">{value}</div>
+      <div className="sp-stat-circle">
+        <Icon size={36} />
+      </div>
+      <div className="sp-stat-body">
+        <div className="sp-stat-label">{label}</div>
+        <div className="sp-stat-value">{value}</div>
+      </div>
     </div>
   );
 }
@@ -296,56 +300,14 @@ export default function StudentFeeSummaryPage() {
         <ArrowLeft /> Back to Students
       </button>
 
-      {/* ── Hero banner ── */}
-      <div className="sp-hero">
-        <div className="sp-hero-glow2" />
-        <div className="sp-hero-inner">
-          <div className="sp-hero-left">
-            <div className="sp-hero-icon"><Receipt /></div>
-            <div className="sp-hero-text">
-              <h1 className="sp-hero-title">Fee Summary</h1>
-              <p className="sp-hero-sub">
-                {activeYear?.name
-                  ? `Academic Year: ${activeYear.name}`
-                  : "Gross, paid and outstanding amounts by fee type"}
-              </p>
-            </div>
-          </div>
-          <div className="sp-hero-badge">
-            <IndianRupee size={11} />
-            {groups.length > 0
-              ? `${groups.length} fee type${groups.length !== 1 ? "s" : ""}`
-              : "No records"}
-          </div>
-        </div>
-      </div>
+      
 
       {/* ── Stat cards ── */}
       <div className="sp-stat-grid">
-        <StatCard
-          label="Gross Due"
-          value={formatINR(summary.grossDueYear)}
-          colorClass="sp-stat--blue"
-          icon={TrendingUp}
-        />
-        <StatCard
-          label="Collected"
-          value={formatINR(summary.collectedSoFar)}
-          colorClass="sp-stat--green"
-          icon={Wallet}
-        />
-        <StatCard
-          label="Balance Remaining"
-          value={formatINR(summary.balanceRemaining)}
-          colorClass="sp-stat--amber"
-          icon={TrendingDown}
-        />
-        <StatCard
-          label="Overdue"
-          value={formatINR(summary.overdue)}
-          colorClass="sp-stat--red"
-          icon={CircleAlert}
-        />
+        <StatCard label="Gross Due"          value={formatINR(summary.grossDueYear)}     colorClass="sp-stat--blue"  icon={TrendingUp}  />
+        <StatCard label="Collected"          value={formatINR(summary.collectedSoFar)}   colorClass="sp-stat--green" icon={Wallet}      />
+        <StatCard label="Balance Remaining"  value={formatINR(summary.balanceRemaining)} colorClass="sp-stat--amber" icon={TrendingDown} />
+        <StatCard label="Overdue"            value={formatINR(summary.overdue)}          colorClass="sp-stat--red"   icon={CircleAlert} />
       </div>
 
       {/* ── Fee breakdown ── */}

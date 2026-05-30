@@ -129,19 +129,7 @@ const studentsQuery = useQuery({
             {/* Dropdown Filters */}
             <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
               
-              <select
-                className={dropdownClass}
-                value={selectedStatus}
-                onChange={(e) => {
-                  setSelectedStatus(e.target.value);
-                  setPage(0);
-                }}
-              >
-                <option value="">All Statuses</option>
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
+
 
               <select
                 className={dropdownClass}
@@ -172,6 +160,22 @@ const studentsQuery = useQuery({
                 </option>
                 {availableSections.map((s) => (
                   <option key={s.id} value={s.id}>{s.sectionName}</option>
+                ))}
+              </select>
+
+
+
+                            <select
+                className={dropdownClass}
+                value={selectedStatus}
+                onChange={(e) => {
+                  setSelectedStatus(e.target.value);
+                  setPage(0);
+                }}
+              >
+                <option value="">All Statuses</option>
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
               
