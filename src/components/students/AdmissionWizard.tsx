@@ -38,6 +38,10 @@ export type WizardState = {
     address: string;
     guardianName: string;
     guardianPhone: string;
+
+    gender: string;
+    religion: string;
+    bloodGroup: string;
   };
   initialPayments: PaymentRow[];
 };
@@ -59,6 +63,7 @@ const INITIAL_STATE: WizardState = {
     firstName: '', lastName: '', email: '', password: '',
     rollNumber: '', phone: '', dateOfBirth: '',
     address: '', guardianName: '', guardianPhone: '',
+    gender: '', religion: '', bloodGroup: '',
   },
   initialPayments: [],
 };
@@ -194,6 +199,7 @@ export default function AdmissionWizard() {
     state.studentInfo.lastName.trim() !== '' &&
     state.studentInfo.email.trim() !== '' &&
     state.studentInfo.password.trim() !== '';
+    state.studentInfo.gender.trim() !== ''; // Gender is required!
 
   const isStep3Valid = () => state.initialPayments.length > 0;
 
@@ -248,6 +254,9 @@ export default function AdmissionWizard() {
         address: state.studentInfo.address || undefined,
         guardianName: state.studentInfo.guardianName || undefined,
         guardianPhone: state.studentInfo.guardianPhone || undefined,
+        gender: state.studentInfo.gender,
+        religion: state.studentInfo.religion || undefined,
+        bloodGroup: state.studentInfo.bloodGroup || undefined,
         classSectionId: String(state.setupData.classSectionId!),
         // @ts-expect-error - extended payload fields
         academicYearId: state.setupData.academicYearId,

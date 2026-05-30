@@ -1,5 +1,3 @@
-// src/lib/api/students.ts
-
 import { api } from "./client";
 
 import type {
@@ -45,6 +43,11 @@ export interface AdmitStudentPayload {
   transactionReference?: string;
   classSectionId: string;
   initialPayments: InitialPayment[];
+  
+  // --- ADDED NEW FIELDS ---
+  gender: string;
+  religion?: string;
+  bloodGroup?: string;
 }
 
 export async function admitStudent(payload: AdmitStudentPayload) {
