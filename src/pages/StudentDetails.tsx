@@ -77,31 +77,37 @@ function SectionCard({
   title,
   subtitle,
   children,
+  action,
 }: {
   accentClass: string;
   icon: React.ElementType;
   title: string;
   subtitle?: string;
   children: React.ReactNode;
+  action?: React.ReactNode;
 }) {
   return (
     <div className={`sp-card ${accentClass}`}>
       <div className="sp-card-header">
-        <div className="sp-card-header-icon">
-          <Icon size={15} />
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <div className="sp-card-header-icon">
+            <Icon size={15} />
+          </div>
+          <div>
+            <h2 className="sp-card-title">{title}</h2>
+            {subtitle && <p className="sp-card-subtitle">{subtitle}</p>}
+          </div>
         </div>
-        <div>
-          <h2 className="sp-card-title">{title}</h2>
-          {subtitle && <p className="sp-card-subtitle">{subtitle}</p>}
-        </div>
+
+        {action}
       </div>
+
       <div className="sp-card-body">
         <dl className="sp-profile">{children}</dl>
       </div>
     </div>
   );
 }
-
 // ── Loading skeleton ─────────────────────────────────────────────
 
 function Skeleton({ className, style }: { className?: string; style?: React.CSSProperties }) {
@@ -205,42 +211,26 @@ export default function StudentDetailsPage() {
         <ArrowLeft /> Back to Students
       </button>
 
-      {/* ── Hero banner ── */}
-      <div className="sp-hero">
-        <div className="sp-hero-glow2" />
-        <div className="sp-hero-inner">
-          <div className="sp-hero-left">
-            <div className="sp-avatar">{getInitials(fullName)}</div>
-            <div className="sp-hero-text">
-              <h1 className="sp-hero-title">{fullName}</h1>
-              <p className="sp-hero-sub">
-                {s.rollNumber ? `Roll No. ${s.rollNumber}` : "No roll number assigned"}
-                {s.classSectionName ? ` · ${s.classSectionName}` : ""}
-              </p>
-            </div>
-          </div>
-
-          {/* Wrapper for the print button and admission badge */}
-          <div className="flex items-center gap-3">
-            <PrintSingleIdCardButton studentId={s.id} />
-            
-            {s.admissionDate && (
-              <div className="sp-hero-badge">
-                <CheckCircle2 size={16} />
-                Admitted
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      
 
       {/* ── Personal Information ── */}
-      <SectionCard
+        <SectionCard
         accentClass="sp-card--indigo"
         icon={User}
         title="Personal Information"
         subtitle="Contact details and personal data"
-      >
+        action={
+          <div
+      style={{
+        background: "#2563eb",
+        borderRadius: "8px",
+        padding: "4px",
+      }}
+    >
+      <PrintSingleIdCardButton studentId={s.id} />
+    </div>
+  }
+>
         <Row icon={User}         label="Full Name"     value={fullName} />
         <Row icon={Mail}         label="Email Address" value={s.email} />
         <Row icon={Phone}        label="Phone Number"  value={s.phone} />
