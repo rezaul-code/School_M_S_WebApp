@@ -30,6 +30,7 @@ import {
   Award,
   Menu,
   X,
+  BadgeDollarSign,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -108,6 +109,7 @@ export const reportingItems = [
 
 export const accountingItems = [
   { to: "/accounting/fee-collections", label: "Fee Collections", icon: Wallet, exact: false },
+   { to: "/accounting/pay-fee",         label: "Pay Fee",         icon: BadgeDollarSign, exact: false },
 ];
 
 /* =========================================================

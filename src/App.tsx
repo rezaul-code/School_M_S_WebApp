@@ -1,5 +1,6 @@
 // src/App.tsx
 import ExamTypes from "@/pages/ExamTypes";
+import PayFee from "./pages/PayFee";
 import ExamSetupWizard from "./pages/ExamSetupWizard";
 import ExamBlueprints from "@/pages/ExamBlueprints";
 import GradingSchemes from "./pages/GradingSchemes";
@@ -133,6 +134,7 @@ export default function App() {
 
               {/* ACCOUNTING */}
               <Route path="/accounting/fee-collections" element={<FeeCollections />} />
+              <Route path="/accounting/pay-fee" element={<PayFee />} />
             </Route>
 
             {/* FALLBACK */}
