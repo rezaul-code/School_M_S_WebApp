@@ -14,6 +14,7 @@ import SidebarContent, {
   studentItems,
   reportingItems,
   accountingItems,
+  examManagementItems,
 } from "@/components/layout/Sidebar";
 
 import "@/styles/teacher.css";
@@ -39,18 +40,21 @@ interface NavItem {
 }
 
 function getActiveNav(pathname: string): NavItem {
+  if (pathname === "/students/admit")           return { to: "/students/admit",       label: "Admit Student"       };
+  if (pathname === "/students/id-cards")        return { to: "/students/id-cards",    label: "ID Cards"            };
+  if (pathname.startsWith("/exam-blueprints/")) return { to: "/exam-blueprints",      label: "Exam Blueprint"      };
+  if (pathname.startsWith("/independent-results/")) return { to: "/independent-results", label: "Independent Results" };
+
   const allItems: NavItem[] = [
     ...navItems,
     ...studentItems,
     ...teacherItems,
+    ...examManagementItems,
     ...masterDataItems,
     { to: "/fee-structures", label: "Fee Structures" },
     ...reportingItems,
     ...accountingItems,
   ];
-
-  if (pathname === "/students/admit")    return { to: "/students/admit",    label: "Admit Student" };
-  if (pathname === "/students/id-cards") return { to: "/students/id-cards", label: "ID Cards"      };
 
   return (
     allItems.find(
