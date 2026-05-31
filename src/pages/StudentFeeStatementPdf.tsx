@@ -272,7 +272,6 @@ export default function StudentFeeStatementPdf() {
           {/* Right column */}
           <div style={{ textAlign: 'left', paddingLeft: 32 }}>
             <InfoField label="Date:"    value={fmtDate(stmt.generatedOn)} />
-            <InfoField label="Method:"  value="CASH" />
           </div>
         </div>
 
@@ -292,7 +291,7 @@ export default function StudentFeeStatementPdf() {
                   Required (₹)
                 </th>
                 <th style={{ padding: '9px 8px', textAlign: 'right', fontWeight: 700, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#16a34a', width: 130 }}>
-                  Paid Now (₹)
+                  Paid (₹)
                 </th>
                 <th style={{ padding: '9px 0 9px 8px', textAlign: 'right', fontWeight: 700, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#dc2626', width: 120 }}>
                   Balance (₹)
