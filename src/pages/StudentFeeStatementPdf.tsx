@@ -74,12 +74,33 @@ export default function StudentFeeStatementPdf() {
   });
 
   // Auto-print once data is ready
+  // Build filename: e.g. RCP-765287-30MAY2026-14h32m05s
+  const buildFilename = () => {
+    const now  = new Date();
+    const date = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                    .replace(/ /g, '').toUpperCase();                    // "30MAY2026"
+    const hh   = String(now.getHours()).padStart(2, '0');
+    const mm   = String(now.getMinutes()).padStart(2, '0');
+    const ss   = String(now.getSeconds()).padStart(2, '0');
+    const time = `${hh}h${mm}m${ss}s`;                                  // "14h32m05s"
+    return `${stmt!.referenceNo}-${date}-${time}`;
+  };
+
+  // Set document.title = filename so the browser uses it as the default PDF name
+  const handlePrint = () => {
+    const filename = buildFilename();
+    const prev = document.title;
+    document.title = filename;
+    window.print();
+    setTimeout(() => { document.title = prev; }, 2000);
+  };
+
   useEffect(() => {
     if (stmt) {
-      const t = setTimeout(() => window.print(), 600);
+      const t = setTimeout(() => handlePrint(), 600);
       return () => clearTimeout(t);
     }
-  }, [stmt]);
+  }, [stmt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Loading ──
   if (isLoading) {
@@ -141,7 +162,7 @@ export default function StudentFeeStatementPdf() {
           Receipt Preview — {stmt.studentName} · {stmt.academicYearName}
         </span>
         <button
-          onClick={() => window.print()}
+          onClick={handlePrint}
           style={{
             background: '#fff',
             color: '#111827',
@@ -249,9 +270,9 @@ export default function StudentFeeStatementPdf() {
           </div>
 
           {/* Right column */}
-          <div style={{ textAlign: 'right', paddingLeft: 32 }}>
+          <div style={{ textAlign: 'left', paddingLeft: 32 }}>
             <InfoField label="Date:"    value={fmtDate(stmt.generatedOn)} />
-        
+            <InfoField label="Method:"  value="CASH" />
           </div>
         </div>
 
@@ -271,7 +292,7 @@ export default function StudentFeeStatementPdf() {
                   Required (₹)
                 </th>
                 <th style={{ padding: '9px 8px', textAlign: 'right', fontWeight: 700, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#16a34a', width: 130 }}>
-                  Paid (₹)
+                  Paid Now (₹)
                 </th>
                 <th style={{ padding: '9px 0 9px 8px', textAlign: 'right', fontWeight: 700, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#dc2626', width: 120 }}>
                   Balance (₹)
