@@ -1,17 +1,15 @@
 // src/pages/FeeReport.tsx
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Search,
   ReceiptText,
-  Sparkles,
   BadgeDollarSign,
   TrendingDown,
   CheckCircle2,
   AlertCircle,
   Wallet,
-  XCircle,
   Clock,
   ChevronLeft,
   ChevronRight,
@@ -37,11 +35,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import {
-  listAcademicYears,
-  getClassLevelOptions,
-  getSectionOptions,
-} from "@/lib/api/master";
+import { api } from "@/lib/api/client"; 
+import { listAcademicYears } from "@/lib/api/master";
 import {
   getFeeReport,
   type FeeReportFilters,
@@ -52,27 +47,10 @@ import {
 import "@/styles/report.css";
 
 /* =========================================================
-   CONSTANTS
+   CONSTANTS & HELPERS
 ========================================================= */
 
 const PAGE_SIZE = 10;
-
-const STATUS_OPTIONS: { value: FeeStatus; label: string }[] = [
-  { value: "PENDING", label: "Pending" },
-  { value: "PAID",    label: "Paid" },
-  { value: "PARTIAL", label: "Partial" },
-  { value: "OVERDUE", label: "Overdue" },
-  { value: "WAIVED",  label: "Waived" },
-];
-
-const FEE_TYPE_OPTIONS: { value: FeeType; label: string }[] = [
-  { value: "ADMISSION", label: "Admission" },
-  { value: "TUITION",   label: "Tuition"   },
-  { value: "EXAM",      label: "Exam"      },
-  { value: "SPORTS",    label: "Sports"    },
-  { value: "OTHER",     label: "Other"     },
-  { value: "ADHOC",     label: "Adhoc"     },
-];
 
 const INR = (n: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -81,44 +59,21 @@ const INR = (n: number) =>
     maximumFractionDigits: 2,
   }).format(n);
 
+// Formats ENUM strings like "CREDIT_CARD" to "Credit Card"
+const formatLabel = (str: string) =>
+  str.replace(/_/g, " ").replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+
 /* =========================================================
    STATUS BADGE
 ========================================================= */
 
 function StatusBadge({ status }: { status: FeeStatus }) {
-  const map: Record<
-    FeeStatus,
-    { cls: string; icon: React.ReactNode; label: string }
-  > = {
-    PAID: {
-      cls: "rpt-badge rpt-badge--paid",
-      icon: <CheckCircle2 />,
-      label: "Paid",
-    },
-
-    PENDING: {
-      cls: "rpt-badge rpt-badge--pending",
-      icon: <Clock />,
-      label: "Pending",
-    },
-
-    PARTIAL: {
-      cls: "rpt-badge rpt-badge--partial",
-      icon: <Clock />,
-      label: "Partial",
-    },
-
-    OVERDUE: {
-      cls: "rpt-badge rpt-badge--overdue",
-      icon: <AlertCircle />,
-      label: "Overdue",
-    },
-
-    WAIVED: {
-      cls: "rpt-badge rpt-badge--waived",
-      icon: <Wallet />,
-      label: "Waived",
-    },
+  const map: Record<FeeStatus, { cls: string; icon: React.ReactNode; label: string }> = {
+    PAID: { cls: "rpt-badge rpt-badge--paid", icon: <CheckCircle2 />, label: "Paid" },
+    PENDING: { cls: "rpt-badge rpt-badge--pending", icon: <Clock />, label: "Pending" },
+    PARTIAL: { cls: "rpt-badge rpt-badge--partial", icon: <Clock />, label: "Partial" },
+    OVERDUE: { cls: "rpt-badge rpt-badge--overdue", icon: <AlertCircle />, label: "Overdue" },
+    WAIVED: { cls: "rpt-badge rpt-badge--waived", icon: <Wallet />, label: "Waived" },
   };
 
   const cfg = map[status] ?? map.PENDING;
@@ -160,10 +115,11 @@ function SkeletonRows({ count }: { count: number }) {
 export default function FeeReport() {
 
   /* ── Filter state ─────────────────────────────────────── */
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [filters, setFilters] = useState<FeeReportFilters>({
     academicYearId: "",
     classLevelId:   "",
-    sectionId:      "",
+    classSectionId:      "",
     status:         "",
     feeType:        "",
     search:         "",
@@ -171,35 +127,74 @@ export default function FeeReport() {
     size:           PAGE_SIZE,
   });
 
-  // Separate controlled value so search doesn't fire on every keystroke
   const [searchInput, setSearchInput] = useState("");
 
-  /* ── Dropdown data ────────────────────────────────────── */
-  const { data: academicYears = [] } = useQuery({
+  /* ── 1. Backend Dropdown Queries ──────────────────────── */
+  
+  const { data: academicYears = [], isSuccess: isYearsLoaded } = useQuery({
     queryKey: ["academic-years"],
-    queryFn:  listAcademicYears,
+    queryFn:  listAcademicYears, // using your existing master.ts function
   });
-  const { data: classLevels = [] } = useQuery({
-    queryKey: ["class-levels-options"],
-    queryFn:  getClassLevelOptions,
+
+  const { data: classLevels = [], isLoading: classesLoading } = useQuery({
+    queryKey: ["options", "class-levels"],
+    queryFn: async () => {
+      const res = await api.get("/api/options/class-levels");
+      return res.data?.data || [];
+    },
+    staleTime: 10 * 60 * 1000,
   });
-  const { data: sections = [] } = useQuery({
-    queryKey: ["section-options"],
-    queryFn:  getSectionOptions,
+
+  // Dependent Section Fetch: Only runs if classLevelId exists
+  const { data: sections = [], isLoading: sectionsLoading } = useQuery({
+    queryKey: ["options", "class-sections", filters.classLevelId],
+    queryFn: async () => {
+      const res = await api.get(`/api/options/class-sections?classLevelId=${filters.classLevelId}`);
+      return res.data?.data || [];
+    },
+    enabled: Boolean(filters.classLevelId), // Requirement 2
   });
+
+  const { data: paymentStatuses = [], isLoading: statusLoading } = useQuery({
+    queryKey: ["options", "payment-statuses"],
+    queryFn: async () => {
+      const res = await api.get("/api/options/payment-statuses");
+      return res.data?.data || [];
+    },
+    staleTime: 60 * 60 * 1000, // Rarely changes
+  });
+
+  const { data: feeTypes = [], isLoading: feeTypesLoading } = useQuery({
+    queryKey: ["options", "fee-types"],
+    queryFn: async () => {
+      const res = await api.get("/api/options/fee-types");
+      return res.data?.data || [];
+    },
+    staleTime: 60 * 60 * 1000,
+  });
+
+  /* ── 2. Auto-Select Active Academic Year ──────────────── */
+ useEffect(() => {
+    if (isInitialLoad && isYearsLoaded && academicYears.length > 0) {
+      const active = academicYears.find((y: any) => y.active) || academicYears[0];
+      setFilters((prev) => ({ ...prev, academicYearId: Number(active.id) })); // ✅ Wrapped in Number()
+      setIsInitialLoad(false);
+    }
+  }, [academicYears, isInitialLoad, isYearsLoaded]);
 
   /* ── Report data ──────────────────────────────────────── */
   const { data: report, isLoading, isFetching } = useQuery({
     queryKey: ["fee-report", filters],
     queryFn:  () => getFeeReport(filters),
     placeholderData: (prev) => prev,
+    enabled: !isInitialLoad, // Wait until the active academic year is safely set
   });
 
   const rows        = report?.data?.content       ?? [];
   const totalPages  = report?.data?.totalPages    ?? 0;
   const totalItems  = report?.data?.totalElements ?? 0;
   const currentPage = report?.data?.number        ?? 0;
-  const busy        = isLoading || isFetching;
+  const busy        = isLoading || isFetching || isInitialLoad;
 
   /* ── Handlers ─────────────────────────────────────────── */
   const setFilter = useCallback(
@@ -209,14 +204,25 @@ export default function FeeReport() {
     []
   );
 
+  // Requirement 2: Handling dependent selection
+  const handleClassChange = (v: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      classLevelId: v === "ALL" ? "" : Number(v),
+      sectionId: "", // Automatically reset section when class changes
+      page: 0
+    }));
+  };
+
   const handleSearch = () =>
     setFilters((prev) => ({ ...prev, search: searchInput, page: 0 }));
 
   const handleReset = () => {
+    const active = academicYears.find((y: any) => y.active) || academicYears[0];
     setFilters({
-      academicYearId: "",
+      academicYearId: active ? Number(active.id) : "", // ✅ Wrapped in Number()
       classLevelId:   "",
-      sectionId:      "",
+      classSectionId:      "",
       status:         "",
       feeType:        "",
       search:         "",
@@ -250,112 +256,111 @@ export default function FeeReport() {
   return (
     <div className="rpt-page">
 
-      
-
       <div className="rpt-stats">
-  <div className="rpt-stat rpt-stat--blue">
-    <div className="rpt-stat-icon"><BadgeDollarSign /></div>
-    <div>
-      <div className="rpt-stat-label">Gross Amount</div>
-      <div className="rpt-stat-value">
-        {isLoading ? "—" : INR(report?.totalGrossAmount ?? 0)}
+        <div className="rpt-stat rpt-stat--blue">
+          <div className="rpt-stat-icon"><BadgeDollarSign /></div>
+          <div>
+            <div className="rpt-stat-label">Gross Amount</div>
+            <div className="rpt-stat-value">
+              {busy ? "—" : INR(report?.totalGrossAmount ?? 0)}
+            </div>
+          </div>
+        </div>
+        <div className="rpt-stat rpt-stat--violet">
+          <div className="rpt-stat-icon"><TrendingDown /></div>
+          <div>
+            <div className="rpt-stat-label">Total Discount</div>
+            <div className="rpt-stat-value">
+              {busy ? "—" : INR(report?.totalDiscount ?? 0)}
+            </div>
+          </div>
+        </div>
+        <div className="rpt-stat rpt-stat--teal">
+          <div className="rpt-stat-icon"><Wallet /></div>
+          <div>
+            <div className="rpt-stat-label">Net Amount</div>
+            <div className="rpt-stat-value">
+              {busy ? "—" : INR(report?.totalNetAmount ?? 0)}
+            </div>
+          </div>
+        </div>
+        <div className="rpt-stat rpt-stat--green">
+          <div className="rpt-stat-icon"><CheckCircle2 /></div>
+          <div>
+            <div className="rpt-stat-label">Amount Paid</div>
+            <div className="rpt-stat-value">
+              {busy ? "—" : INR(report?.totalPaidAmount ?? 0)}
+            </div>
+          </div>
+        </div>
+        <div className="rpt-stat rpt-stat--rose">
+          <div className="rpt-stat-icon"><AlertCircle /></div>
+          <div>
+            <div className="rpt-stat-label">Balance Due</div>
+            <div className="rpt-stat-value">
+              {busy ? "—" : INR(report?.totalBalanceAmount ?? 0)}
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-  <div className="rpt-stat rpt-stat--violet">
-    <div className="rpt-stat-icon"><TrendingDown /></div>
-    <div>
-      <div className="rpt-stat-label">Total Discount</div>
-      <div className="rpt-stat-value">
-        {isLoading ? "—" : INR(report?.totalDiscount ?? 0)}
-      </div>
-    </div>
-  </div>
-  <div className="rpt-stat rpt-stat--teal">
-    <div className="rpt-stat-icon"><Wallet /></div>
-    <div>
-      <div className="rpt-stat-label">Net Amount</div>
-      <div className="rpt-stat-value">
-        {isLoading ? "—" : INR(report?.totalNetAmount ?? 0)}
-      </div>
-    </div>
-  </div>
-  <div className="rpt-stat rpt-stat--green">
-    <div className="rpt-stat-icon"><CheckCircle2 /></div>
-    <div>
-      <div className="rpt-stat-label">Amount Paid</div>
-      <div className="rpt-stat-value">
-        {isLoading ? "—" : INR(report?.totalPaidAmount ?? 0)}
-      </div>
-    </div>
-  </div>
-  <div className="rpt-stat rpt-stat--rose">
-    <div className="rpt-stat-icon"><AlertCircle /></div>
-    <div>
-      <div className="rpt-stat-label">Balance Due</div>
-      <div className="rpt-stat-value">
-        {isLoading ? "—" : INR(report?.totalBalanceAmount ?? 0)}
-      </div>
-    </div>
-  </div>
-</div>
 
       {/* ── Filter card ──────────────────────────────────── */}
       <div className="rpt-filter-card">
-        <div className="rpt-filter-header">
+        
+        {/* HEADER: Academic Year alongside Reset All (Requirement 1) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 border-b border-slate-100">
           <div>
             <p className="rpt-filter-title">
-              <SlidersHorizontal />
-              Filters
+              <SlidersHorizontal className="mr-2" /> Filters
             </p>
             <p className="rpt-filter-subtitle">Narrow results using the options below</p>
           </div>
-          <button className="rpt-btn-ghost" onClick={handleReset}>
-            <RotateCcw />
-            Reset all
-          </button>
-        </div>
-
-        <div className="rpt-filter-body">
-          {/* Row 1 — 5 dropdowns */}
-          <div className="rpt-filter-grid">
-
-            <div className="rpt-field">
-              <label>Academic Year</label>
+          
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium text-slate-600">Academic Year:</label>
               <Select
                 value={String(filters.academicYearId ?? "")}
-                onValueChange={(v) =>
-                  setFilter("academicYearId", v === "ALL" ? "" : (Number(v) as any))
-                }
+                onValueChange={(v) => setFilter("academicYearId", v === "ALL" ? "" : Number(v))}
               >
-                <SelectTrigger className="rpt-select h-9">
-                  <SelectValue placeholder="All years" />
+                <SelectTrigger className="rpt-select h-9 w-[180px] bg-slate-50 border-slate-200">
+                  <SelectValue placeholder="Loading..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All years</SelectItem>
-                  {academicYears.map((y) => (
-                    <SelectItem key={y.id} value={String(y.id)}>{y.name}</SelectItem>
+                  {academicYears.map((y: any) => (
+                    <SelectItem key={y.id} value={String(y.id)}>
+                      {y.name} {y.active ? "(Active)" : ""}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
+            <Button variant="outline" className="h-9 gap-2 text-slate-600 border-slate-200 hover:bg-slate-50" onClick={handleReset}>
+              <RotateCcw className="h-4 w-4" /> Reset all
+            </Button>
+          </div>
+        </div>
+
+        <div className="rpt-filter-body">
+          {/* Row 1 — 4 dynamic dropdowns */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+
             <div className="rpt-field">
               <label>Class</label>
               <Select
                 value={String(filters.classLevelId ?? "")}
-                onValueChange={(v) =>
-                  setFilter("classLevelId", v === "ALL" ? "" : (Number(v) as any))
-                }
+                onValueChange={handleClassChange}
+                disabled={classesLoading}
               >
                 <SelectTrigger className="rpt-select h-9">
-                  <SelectValue placeholder="All classes" />
+                  <SelectValue placeholder={classesLoading ? "Loading..." : "All classes"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">All classes</SelectItem>
-                  {classLevels.map((c) => (
+                  {classLevels.map((c: any) => (
                     <SelectItem key={c.id} value={String(c.id)}>
-                      {c.displayName ?? c.name}
+                      {c.label ?? c.displayName ?? c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -365,19 +370,18 @@ export default function FeeReport() {
             <div className="rpt-field">
               <label>Section</label>
               <Select
-                value={String(filters.sectionId ?? "")}
-                onValueChange={(v) =>
-                  setFilter("sectionId", v === "ALL" ? "" : (Number(v) as any))
-                }
+                value={String(filters.classSectionId ?? "")}
+                onValueChange={(v) => setFilter("classSectionId", v === "ALL" ? "" : Number(v))}
+                disabled={!filters.classLevelId || sectionsLoading}
               >
                 <SelectTrigger className="rpt-select h-9">
-                  <SelectValue placeholder="All sections" />
+                  <SelectValue placeholder={!filters.classLevelId ? "Select Class First" : "All sections"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">All sections</SelectItem>
-                  {sections.map((s) => (
+                  {sections.map((s: any) => (
                     <SelectItem key={s.id} value={String(s.id)}>
-                      {s.displayName ?? s.name}
+                      {s.label ?? s.displayName ?? s.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -388,17 +392,16 @@ export default function FeeReport() {
               <label>Payment Status</label>
               <Select
                 value={filters.status ?? ""}
-                onValueChange={(v) =>
-                  setFilter("status", v === "ALL" ? "" : (v as FeeStatus))
-                }
+                onValueChange={(v) => setFilter("status", v === "ALL" ? "" : (v as FeeStatus))}
+                disabled={statusLoading}
               >
                 <SelectTrigger className="rpt-select h-9">
-                  <SelectValue placeholder="All statuses" />
+                  <SelectValue placeholder={statusLoading ? "Loading..." : "All statuses"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">All statuses</SelectItem>
-                  {STATUS_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  {paymentStatuses.map((status: string) => (
+                    <SelectItem key={status} value={status}>{formatLabel(status)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -408,17 +411,16 @@ export default function FeeReport() {
               <label>Fee Type</label>
               <Select
                 value={filters.feeType ?? ""}
-                onValueChange={(v) =>
-                  setFilter("feeType", v === "ALL" ? "" : (v as FeeType))
-                }
+                onValueChange={(v) => setFilter("feeType", v === "ALL" ? "" : (v as FeeType))}
+                disabled={feeTypesLoading}
               >
                 <SelectTrigger className="rpt-select h-9">
-                  <SelectValue placeholder="All types" />
+                  <SelectValue placeholder={feeTypesLoading ? "Loading..." : "All types"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">All types</SelectItem>
-                  {FEE_TYPE_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  {feeTypes.map((type: string) => (
+                    <SelectItem key={type} value={type}>{formatLabel(type)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -438,7 +440,7 @@ export default function FeeReport() {
                 className="h-9"
               />
             </div>
-            <Button onClick={handleSearch} className="h-9 gap-2 text-sm">
+            <Button onClick={handleSearch} className="h-9 gap-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white">
               <Search className="h-3.5 w-3.5" />
               Search
             </Button>
@@ -522,7 +524,7 @@ export default function FeeReport() {
                     </TableCell>
                     <TableCell className="rpt-cell-meta">{row.classSectionName}</TableCell>
                     <TableCell>
-                      <span className="rpt-chip">{row.feeType}</span>
+                      <span className="rpt-chip">{formatLabel(row.feeType)}</span>
                     </TableCell>
                     <TableCell className="rpt-cell-meta">{row.periodLabel}</TableCell>
                     <TableCell className="rpt-cell-meta">{row.dueDate}</TableCell>
@@ -548,7 +550,7 @@ export default function FeeReport() {
         </div>
 
         {/* Pagination */}
-        {!isLoading && totalPages > 1 && (
+        {!busy && totalPages > 1 && (
           <div className="rpt-pagination">
             <span className="rpt-pagination-info">
               Page {currentPage + 1} of {totalPages}
