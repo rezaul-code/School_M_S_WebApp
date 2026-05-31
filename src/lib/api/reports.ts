@@ -78,7 +78,7 @@ export async function getFeeReport(
 
   if (filters.academicYearId) params.academicYearId = filters.academicYearId;
   if (filters.classLevelId)   params.classLevelId   = filters.classLevelId;
-  if (filters.classSectionId)      params.sectionId      = filters.classSectionId;
+  if (filters.classSectionId) params.classSectionId = filters.classSectionId;
   if (filters.status)         params.status         = filters.status;
   if (filters.feeType)        params.feeType        = filters.feeType;
   if (filters.search?.trim()) params.search         = filters.search.trim();

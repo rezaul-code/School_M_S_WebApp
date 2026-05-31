@@ -209,7 +209,7 @@ export default function FeeReport() {
     setFilters((prev) => ({
       ...prev,
       classLevelId: v === "ALL" ? "" : Number(v),
-      sectionId: "", // Automatically reset section when class changes
+      classSectionId: "", // Automatically reset section when class changes
       page: 0
     }));
   };
