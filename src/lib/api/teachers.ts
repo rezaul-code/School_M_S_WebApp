@@ -26,11 +26,17 @@ export interface RegisterTeacherPayload {
   dateOfBirth?: string;
   address?: string;
   joiningDate?: string;
+  gender?: string;      
+  religion?: string;
+  bloodGroup?: string;
 }
 
 export interface UpdateTeacherPayload {
   phone?: string;
   address?: string;
+   gender?: string;
+  religion?: string;
+  bloodGroup?: string;
 }
 
 export interface TeacherAssignment {
@@ -218,5 +224,25 @@ export async function getSectionsByClassLevel(classLevelId: number) {
     { params: { classLevelId } }
   );
 
+  return response.data.data;
+}
+
+export async function getGenderOptions(): Promise<string[]> {
+  const response = await api.get<ApiResponse<string[]>>("/api/options/genders");
+  return response.data.data;
+}
+
+export async function getReligionOptions(): Promise<string[]> {
+  const response = await api.get<ApiResponse<string[]>>("/api/options/religions");
+  return response.data.data;
+}
+
+export interface EnumOption {
+  value: string;
+  label: string;
+}
+
+export async function getBloodGroupOptions(): Promise<EnumOption[]> {
+  const response = await api.get<ApiResponse<EnumOption[]>>("/api/options/blood-groups");
   return response.data.data;
 }

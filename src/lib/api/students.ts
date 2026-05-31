@@ -162,3 +162,18 @@ export async function processSettlementPayment(studentId: string, amount: number
   );
   return response.data;
 }
+
+export async function getGenderOptions(): Promise<string[]> {
+  const response = await api.get<ApiResponse<string[]>>("/api/options/genders");
+  return response.data.data;
+}
+
+export async function getReligionOptions(): Promise<string[]> {
+  const response = await api.get<ApiResponse<string[]>>("/api/options/religions");
+  return response.data.data;
+}
+
+export async function getBloodGroupOptions(): Promise<string[]> {
+  const response = await api.get<ApiResponse<string[]>>("/api/options/blood-groups");
+  return response.data.data;
+}

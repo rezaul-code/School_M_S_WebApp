@@ -102,6 +102,9 @@ export default function TeacherDetailDrawer({ teacherId, open, onOpenChange }: P
                 <DetailItem label="Last Name" value={teacher.lastName} />
                 <DetailItem label="Date of Birth" value={teacher.dateOfBirth} />
                 <DetailItem label="Joining Date" value={teacher.joiningDate} />
+                <DetailItem label="Gender"      value={teacher.gender} />
+                <DetailItem label="Religion"    value={teacher.religion} />
+                <DetailItem label="Blood Group" value={teacher.bloodGroup} />
               </div>
             </div>
 
