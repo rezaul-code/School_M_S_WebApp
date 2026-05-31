@@ -29,7 +29,6 @@ import {
   ShieldCheck,
   Award,
   Menu,
-  X,
   BadgeDollarSign,
   FileText,
 } from "lucide-react";
@@ -220,10 +219,7 @@ export default function SidebarContent({
           className="hidden lg:flex items-center justify-center rounded p-1 transition-transform duration-200 hover:scale-110"
           style={{ color: "#ffffff" }}
         >
-          {collapsed
-            ? <Menu className="h-6 w-6" />
-            : <X    className="h-6 w-6" />
-          }
+          <Menu className="h-6 w-6" />
         </button>
       </div>
 
