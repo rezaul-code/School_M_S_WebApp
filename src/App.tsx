@@ -44,6 +44,9 @@ import ClassLevels from "./pages/ClassLevels";
 import Sections from "./pages/Sections";
 import ClassSections from "./pages/ClassSections";
 
+//Fee Structures
+import FeeBrochurePage from "./pages/FeeBrochure";
+
 // Reporting
 import FeeReport from "./pages/FeeReport";
 import StudentFeeStatement    from './pages/StudentFeeStatement';
@@ -131,6 +134,7 @@ export default function App() {
 
               {/* FEES */}
               <Route path="/fee-structures" element={<FeeStructures />} />
+              <Route path="/fee-structures/brochure" element={<FeeBrochurePage />} /> {/* Add this line! */}
 
               {/* REPORTING */}
               <Route path="/reports/fees" element={<FeeReport />} />

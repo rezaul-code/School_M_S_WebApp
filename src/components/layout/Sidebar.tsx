@@ -100,6 +100,7 @@ export const masterDataItems = [
 // UPDATED: Replaced tabs with a single unified route
 export const feeStructureSubItems = [
   { to: "/fee-structures", label: "Manage Fees", exact: true },
+  { to: "/fee-structures/brochure", label: "Fee Brochure", exact: false },
 ];
 
 export const reportingItems = [
