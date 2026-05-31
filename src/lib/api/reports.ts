@@ -57,7 +57,7 @@ export interface FeeReportResponse {
 export interface FeeReportFilters {
   academicYearId?: number | "";
   classLevelId?:   number | "";
-  sectionId?:      number | "";
+  classSectionId?:      number | "";
   status?:         FeeStatus | "";
   feeType?:        FeeType   | "";
   search?:         string;
@@ -78,7 +78,7 @@ export async function getFeeReport(
 
   if (filters.academicYearId) params.academicYearId = filters.academicYearId;
   if (filters.classLevelId)   params.classLevelId   = filters.classLevelId;
-  if (filters.sectionId)      params.sectionId      = filters.sectionId;
+  if (filters.classSectionId)      params.sectionId      = filters.classSectionId;
   if (filters.status)         params.status         = filters.status;
   if (filters.feeType)        params.feeType        = filters.feeType;
   if (filters.search?.trim()) params.search         = filters.search.trim();
