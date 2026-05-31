@@ -220,6 +220,10 @@ export interface Teacher {
   active: boolean;
 
   assignments?: TeacherAssignment[];
+  
+  gender?: string;
+  religion?: string;
+  bloodGroup?: string;
 }
 
 // ======================================================
