@@ -42,7 +42,11 @@ const schema = z.object({
 
 type Values = z.infer<typeof schema>;
 
-export function CreateFeeStructurePanel() {
+interface Props {
+  onSuccess?: () => void;
+}
+
+export function CreateFeeStructurePanel({ onSuccess }: Props) {
   const [response, setResponse] = useState<any>(null);
 
   const classesQuery       = useQuery({ queryKey: ["create-fee-classes"],      queryFn: getClassLevelOptions });
@@ -83,6 +87,7 @@ export function CreateFeeStructurePanel() {
       toast.success("Fee structure created successfully");
       setResponse(data);
       form.reset({ classLevelId: "", academicYearId: "", feeType: "", frequency: "", amount: "", description: "" });
+      if (onSuccess) onSuccess(); // Triggers the view change in parent
     },
     onError: (error) => {
       const message = getApiErrorMessage(error, "Failed to create fee structure");
