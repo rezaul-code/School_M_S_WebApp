@@ -1,6 +1,6 @@
 // src/components/dashboard/FeeStructurePanels/UpdateFeeStructurePanel.tsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,14 +33,30 @@ const schema = z.object({
 
 type Values = z.infer<typeof schema>;
 
-export function UpdateFeeStructurePanel() {
+interface Props {
+  feeStructureId: number | null;
+  onSuccess?: () => void;
+}
+
+export function UpdateFeeStructurePanel({ feeStructureId, onSuccess }: Props) {
   const [response, setResponse] = useState<any>(null);
   const isAuthenticated = !!localStorage.getItem(TOKEN_KEY);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { id: "", amount: "", description: "" },
+    defaultValues: { 
+      id: feeStructureId ? String(feeStructureId) : "", 
+      amount: "", 
+      description: "" 
+    },
   });
+
+  // Pre-fill the form ID when passed from the parent table
+  useEffect(() => {
+    if (feeStructureId) {
+      form.setValue("id", String(feeStructureId));
+    }
+  }, [feeStructureId, form]);
 
   const updateMutation = useMutation({
     mutationFn: (v: Values) =>
@@ -52,6 +68,7 @@ export function UpdateFeeStructurePanel() {
       toast.success("Fee Structure updated successfully");
       setResponse(data);
       form.reset();
+      if (onSuccess) onSuccess(); // Triggers the view change in parent
     },
     onError: (err) => {
       const errorMsg = getApiErrorMessage(err, "Failed to update fee structure");
@@ -79,12 +96,14 @@ export function UpdateFeeStructurePanel() {
           className="space-y-4"
           onSubmit={form.handleSubmit((v) => updateMutation.mutate(v))}
         >
-          {/* Fee Structure ID */}
+          {/* Fee Structure ID - Pre-filled & Read Only */}
           <div className="fs-field">
             <Label htmlFor="id">Fee Structure ID</Label>
             <Input
               id="id"
               type="number"
+              readOnly
+              className="bg-slate-100 text-slate-500 cursor-not-allowed"
               placeholder="Enter fee structure ID"
               {...form.register("id")}
             />

@@ -97,11 +97,10 @@ export const masterDataItems = [
   { to: "/class-subject-mappings", label: "Class-Subject", icon: Link2,        exact: false },
 ];
 
+// UPDATED: Replaced tabs with a single unified route
 export const feeStructureSubItems = [
-  { tabKey: "list",     to: "/fee-structures?tab=list",     label: "List Fee Structures"     },
-  { tabKey: "create",   to: "/fee-structures?tab=create",   label: "Create Fee Structure"    },
-  { tabKey: "filtered", to: "/fee-structures?tab=filtered", label: "Filtered Fee Structures" },
-  { tabKey: "update",   to: "/fee-structures?tab=update",   label: "Update Fee Structure"    },
+  { to: "/fee-structures", label: "Manage Fees", exact: true },
+  { to: "/fee-structures/brochure", label: "Fee Brochure", exact: false },
 ];
 
 export const reportingItems = [
@@ -121,11 +120,6 @@ export const accountingItems = [
 function isRouteActive(pathname: string, to: string, exact: boolean): boolean {
   if (exact) return pathname === to;
   return pathname === to || pathname.startsWith(to + "/");
-}
-
-function isFeeTabActive(pathname: string, search: string, tabKey: string): boolean {
-  if (pathname !== "/fee-structures") return false;
-  return new URLSearchParams(search).get("tab") === tabKey;
 }
 
 const anyActive = (
@@ -158,7 +152,10 @@ export default function SidebarContent({
     if (anyActive(teacherItems, p))        return "teachers";
     if (anyActive(masterDataItems, p))     return "master-data";
     if (anyActive(examManagementItems, p)) return "exam-management";
-    if (p === "/fee-structures")           return "fee-structures";
+    
+    // UPDATED: Now uses anyActive matching to correctly expand the menu
+    if (anyActive(feeStructureSubItems, p)) return "fee-structures";
+    
     if (anyActive(reportingItems, p))      return "reporting";
     if (anyActive(accountingItems, p))     return "accounting";
     return null;
@@ -216,13 +213,7 @@ export default function SidebarContent({
           </div>
         )}
 
-        {/*
-          Toggle button:
-          - DESKTOP (lg+): visible. Shows X when expanded (click to collapse),
-            Menu when collapsed (click to expand).
-          - MOBILE/TABLET: hidden via "hidden lg:flex". The Sheet drawer in
-            AppLayout handles open/close on mobile — this button has no meaning there.
-        */}
+        {/* Toggle button */}
         <button
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={onToggleCollapse}
@@ -230,8 +221,8 @@ export default function SidebarContent({
           style={{ color: "#ffffff" }}
         >
           {collapsed
-            ? <Menu className="h-6 w-6" />   /* collapsed  → show Menu  to expand  */
-            : <X    className="h-6 w-6" />   /* expanded   → show X     to collapse */
+            ? <Menu className="h-6 w-6" />
+            : <X    className="h-6 w-6" />
           }
         </button>
       </div>
@@ -353,7 +344,7 @@ export default function SidebarContent({
           ))}
         </SidebarSection>
 
-        {/* 5. Fee Structures */}
+        {/* 5. Fee Structures (UPDATED) */}
         <SidebarSection
           title="Fee Structures"
           icon={CreditCard}
@@ -364,10 +355,10 @@ export default function SidebarContent({
         >
           {feeStructureSubItems.map((item) => (
             <SidebarSubItem
-              key={item.tabKey}
+              key={item.to}
               to={item.to}
               label={item.label}
-              active={isFeeTabActive(location.pathname, location.search, item.tabKey)}
+              active={isRouteActive(location.pathname, item.to, item.exact)}
               onNavigate={onNavigate}
             />
           ))}
