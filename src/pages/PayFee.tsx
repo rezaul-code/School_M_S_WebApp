@@ -251,7 +251,7 @@ export default function PayFee() {
 
   if (view === "receipt" && receiptData && selectedStudent) {
     return (
-      <div className="max-w-4xl mx-auto space-y-5 pb-12 pt-4">
+      <div className="w-full space-y-5 pb-12 pt-4">
         
         {/* 🔥 Aggressive Print Isolation 🔥 */}
         <style type="text/css" media="print">
@@ -335,7 +335,7 @@ export default function PayFee() {
 
   if (view === "search") {
     return (
-      <div className="max-w-5xl mx-auto space-y-4">
+      <div className="w-full space-y-4">
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-wrap items-center gap-3">
 
@@ -451,7 +451,7 @@ export default function PayFee() {
   const ledger = feeQuery.data;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-5">
+    <div className="w-full space-y-5">
       <Button variant="ghost" className="gap-2 text-slate-500 hover:text-slate-800 -ml-4" onClick={() => setView("search")}>
         <ArrowLeft size={16} /> Back to Search
       </Button>
