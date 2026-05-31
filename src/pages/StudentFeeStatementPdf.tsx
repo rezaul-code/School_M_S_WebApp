@@ -2,9 +2,9 @@
 //
 // Route:  /reports/student-statement/pdf?studentId=...&academicYearId=...
 //
-// This is a dedicated print-only page. On mount it loads the statement
-// and immediately triggers window.print(). The page has zero app chrome —
-// just the A4-formatted document.
+// Redesigned to match the Sarbajanin Academy receipt theme:
+// clean white background, minimal borders, receipt-style layout,
+// OFFICE COPY badge, detach-here dashed footer.
 //
 // Register in App.tsx inside the protected routes:
 //   <Route path="/reports/student-statement/pdf" element={<StudentFeeStatementPdf />} />
@@ -14,7 +14,18 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery }        from '@tanstack/react-query';
 import { Loader2 }         from 'lucide-react';
 
-import { getStudentFeeStatement, type StudentFeeStatementResponse, type StatementLineItem } from '@/lib/api/studentFeeStatement';
+import {
+  getStudentFeeStatement,
+  type StudentFeeStatementResponse,
+  type StatementLineItem,
+} from '@/lib/api/studentFeeStatement';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const SCHOOL_NAME    = 'SARBAJANIN ACADEMY';
+const SCHOOL_ADDRESS = 'Survey No. 42, Gachibowli, Hyderabad – 500032';
+const SCHOOL_EMAIL   = 'accounts@sarbajanin.edu.in';
+const SCHOOL_PHONE   = '+91-40-12345678';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -24,31 +35,35 @@ const INR = (n: number) =>
   }).format(n);
 
 const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric',
-  }).toUpperCase();
+  new Date(iso)
+    .toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    .toUpperCase();
 
-const STATUS_COLOR: Record<string, { bg: string; text: string; dot: string }> = {
-  PAID:    { bg: '#dcfce7', text: '#166534', dot: '#16a34a' },
-  PARTIAL: { bg: '#dbeafe', text: '#1e3a8a', dot: '#2563eb' },
-  PENDING: { bg: '#fef9c3', text: '#854d0e', dot: '#d97706' },
-  OVERDUE: { bg: '#fee2e2', text: '#991b1b', dot: '#dc2626' },
-  WAIVED:  { bg: '#f1f5f9', text: '#475569', dot: '#94a3b8' },
+// Fee-type accent colours (period badge)
+const FEE_PERIOD_COLOR: Record<string, string> = {
+  TUITION:   '#d97706',
+  TRANSPORT: '#2563eb',
+  ACTIVITY:  '#7c3aed',
+  EXAM:      '#db2777',
+  ADMISSION: '#0d9488',
 };
 
-const FEE_TYPE_COLOR: Record<string, { bg: string; text: string }> = {
-  TUITION:   { bg: '#ede9fe', text: '#4c1d95' },
-  TRANSPORT: { bg: '#dbeafe', text: '#1e3a8a' },
-  ACTIVITY:  { bg: '#fef3c7', text: '#78350f' },
-  EXAM:      { bg: '#fce7f3', text: '#831843' },
-  ADMISSION: { bg: '#ccfbf1', text: '#134e4a' },
-};
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function InfoField({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, marginBottom: 5, alignItems: 'baseline' }}>
+      <span style={{ fontSize: 11, color: '#6b7280', minWidth: 68 }}>{label}</span>
+      <span style={{ fontSize: 11, fontWeight: 700, color: '#111827', letterSpacing: '0.01em' }}>{value}</span>
+    </div>
+  );
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function StudentFeeStatementPdf() {
-  const [params] = useSearchParams();
-  const studentId    = params.get('studentId') ?? '';
+  const [params]       = useSearchParams();
+  const studentId      = params.get('studentId') ?? '';
   const academicYearId = Number(params.get('academicYearId') ?? 0);
 
   const { data: stmt, isLoading, isError } = useQuery<StudentFeeStatementResponse>({
@@ -61,21 +76,22 @@ export default function StudentFeeStatementPdf() {
   // Auto-print once data is ready
   useEffect(() => {
     if (stmt) {
-      // Small delay so the DOM finishes painting
       const t = setTimeout(() => window.print(), 600);
       return () => clearTimeout(t);
     }
   }, [stmt]);
 
+  // ── Loading ──
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 12, fontFamily: 'sans-serif', color: '#64748b' }}>
-        <Loader2 style={{ width: 28, height: 28, animation: 'spin 1s linear infinite' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 12, fontFamily: 'sans-serif', color: '#6b7280' }}>
+        <Loader2 style={{ width: 26, height: 26, animation: 'spin 1s linear infinite' }} />
         Preparing statement…
       </div>
     );
   }
 
+  // ── Error ──
   if (isError || !stmt) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', color: '#ef4444' }}>
@@ -84,237 +100,304 @@ export default function StudentFeeStatementPdf() {
     );
   }
 
-  // Separate overdue rows for visual highlighting
-  const overdueIds = new Set(stmt.lineItems.filter(r => r.status === 'OVERDUE').map(r => r.ledgerId));
-
   return (
     <>
-      {/* Print CSS — scoped to this page only */}
+      {/* ── Global styles ── */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: #f1f5f9; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          font-family: 'DM Sans', sans-serif;
+          background: #e5e7eb;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
         @page { size: A4 portrait; margin: 0; }
         @media print {
           body { background: #fff; }
           .no-print { display: none !important; }
-          .paper { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; }
+          .paper {
+            box-shadow: none !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            min-height: 100vh !important;
+          }
         }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
-      {/* Screen-only action bar */}
-      <div className="no-print" style={{ background: '#1e293b', padding: '12px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ color: '#94a3b8', fontSize: 13, fontFamily: 'sans-serif' }}>
-          Preview — {stmt.studentName} · {stmt.academicYearName}
+      {/* ── Screen-only toolbar ── */}
+      <div
+        className="no-print"
+        style={{
+          background: '#111827',
+          padding: '10px 32px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <span style={{ color: '#9ca3af', fontSize: 12, fontFamily: 'sans-serif' }}>
+          Receipt Preview — {stmt.studentName} · {stmt.academicYearName}
         </span>
         <button
           onClick={() => window.print()}
-          style={{ background: '#4f46e5', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'sans-serif' }}
+          style={{
+            background: '#fff',
+            color: '#111827',
+            border: 'none',
+            borderRadius: 6,
+            padding: '7px 18px',
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: 'pointer',
+            letterSpacing: '0.03em',
+          }}
         >
           Print / Save as PDF
         </button>
       </div>
 
-      {/* A4 paper */}
-      <div className="paper" style={{
-        width: 794, minHeight: 1123, margin: '24px auto', background: '#fff',
-        boxShadow: '0 4px 32px rgba(0,0,0,0.12)', borderRadius: 4, overflow: 'hidden',
-      }}>
+      {/* ── A4 Paper ── */}
+      <div
+        className="paper"
+        style={{
+          width: 794,
+          minHeight: 1123,
+          margin: '24px auto',
+          background: '#fff',
+          boxShadow: '0 4px 40px rgba(0,0,0,0.14)',
+          borderRadius: 4,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {/* ════════════════════════════════════════════
+            HEADER — logo · school name · office copy
+            ════════════════════════════════════════════ */}
+        <div style={{ padding: '28px 36px 20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
 
-        {/* ── Header band ──────────────────────────────────────────────── */}
-        <div style={{ background: '#1a2236', padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 38, height: 38, background: '#f59e0b', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: '#fff' }}>H</div>
+          {/* Left: logo + school name */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {/* Circular logo */}
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              border: '1.5px solid #d1d5db',
+              background: '#f9fafb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 24,
+              flexShrink: 0,
+            }}>
+              🏫
+            </div>
             <div>
-              <div style={{ color: '#fff', fontSize: 15, fontWeight: 700, letterSpacing: '0.06em' }}>HATSYNK</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Edutech</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: '#111827', letterSpacing: '0.04em', lineHeight: 1.1 }}>
+                {SCHOOL_NAME}
+              </div>
+              <div style={{ fontSize: 10, color: '#9ca3af', letterSpacing: '0.16em', textTransform: 'uppercase', marginTop: 4 }}>
+                Fee Payment Receipt
+              </div>
             </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ color: '#fff', fontSize: 13, fontWeight: 600, letterSpacing: '0.04em' }}>Student Fee Statement</div>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 3 }}>
-              Ref: {stmt.referenceNo} · Generated: {fmtDate(stmt.generatedOn)}
+
+          {/* Right: office copy badge + receipt no */}
+          <div style={{ textAlign: 'right', paddingTop: 2 }}>
+            <div style={{
+              display: 'inline-block',
+              border: '1px solid #d1d5db',
+              borderRadius: 4,
+              padding: '3px 10px',
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              color: '#6b7280',
+              textTransform: 'uppercase',
+              marginBottom: 10,
+            }}>
+              Office Copy
+            </div>
+            <div style={{ fontSize: 9, color: '#9ca3af', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              Receipt No.
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#111827', letterSpacing: '0.03em', marginTop: 2 }}>
+              {stmt.referenceNo}
             </div>
           </div>
         </div>
 
-        {/* ── Student + statement info ──────────────────────────────────── */}
-        <div style={{ padding: '18px 32px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid #e5e7eb' }}>
-          {/* Left: student */}
-          <div style={{ paddingBottom: 18 }}>
-            <div style={{ fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 8 }}>Student details</div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: '#111827', marginBottom: 6 }}>
-              {stmt.studentName}
-              <span style={{ marginLeft: 8, fontSize: 10, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>
-                {stmt.studentStatus}
-              </span>
-            </div>
-            <InfoRow label="Roll no."       value={stmt.rollNumber ?? '—'} />
-            <InfoRow label="Class / section" value={stmt.classSectionName} />
-            <InfoRow label="Reg. no."       value={stmt.registrationNo} />
-            <InfoRow label="Parent"         value={stmt.parentName ?? '—'} />
-            <InfoRow label="Contact"        value={stmt.parentContact ?? '—'} />
+        {/* ── Divider ── */}
+        <div style={{ borderTop: '1px solid #e5e7eb', margin: '0 36px' }} />
+
+        {/* ════════════════════════════════════════════
+            STUDENT + RECEIPT INFO
+            ════════════════════════════════════════════ */}
+        <div style={{
+          padding: '18px 36px 20px',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 0,
+        }}>
+          {/* Left column */}
+          <div>
+            <InfoField label="Student:"  value={stmt.studentName} />
+            <InfoField label="Adm No:"   value={stmt.registrationNo ?? stmt.rollNumber ?? '—'} />
+            <InfoField label="Class:"    value={stmt.classSectionName} />
           </div>
 
-          {/* Right: statement meta */}
-          <div style={{ paddingLeft: 24, paddingBottom: 18, borderLeft: '1px solid #e5e7eb' }}>
-            <div style={{ fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 8 }}>Statement details</div>
-            <div style={{ height: 17 + 6 }} /> {/* align with student name row */}
-            <InfoRow label="Academic year"  value={stmt.academicYearName} />
-            <InfoRow label="Period"         value={stmt.statementPeriod} />
-            <InfoRow label="Generated by"  value={stmt.generatedBy} />
-            <InfoRow label="Reference"     value={stmt.referenceNo} />
+          {/* Right column */}
+          <div style={{ textAlign: 'right', paddingLeft: 32 }}>
+            <InfoField label="Date:"    value={fmtDate(stmt.generatedOn)} />
+        
           </div>
         </div>
 
-        {/* ── Financial summary strip ───────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', borderBottom: '2px solid #1a2236' }}>
-          {[
-            { label: 'Gross amount', value: INR(stmt.grossAmount),   color: '#1a2236' },
-            { label: 'Total paid',   value: INR(stmt.totalPaid),     color: '#166534' },
-            { label: 'Partial',      value: INR(stmt.totalPartial),  color: '#1e40af' },
-            { label: 'Pending',      value: INR(stmt.totalPending),  color: '#92400e' },
-            { label: 'Overdue',      value: INR(stmt.totalOverdue),  color: '#991b1b' },
-          ].map((c, i) => (
-            <div key={i} style={{ padding: '12px 16px', textAlign: 'center', borderRight: i < 4 ? '1px solid #e5e7eb' : 'none' }}>
-              <div style={{ fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6b7280', marginBottom: 4 }}>{c.label}</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: c.color }}>{c.value}</div>
-            </div>
-          ))}
-        </div>
+        {/* ════════════════════════════════════════════
+            FEE LINE-ITEMS TABLE
+            ════════════════════════════════════════════ */}
+        <div style={{ padding: '0 36px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
 
-        {/* ── Line items table ──────────────────────────────────────────── */}
-        <div style={{ padding: '0 32px 24px' }}>
-          <div style={{ fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9ca3af', padding: '14px 0 8px' }}>
-            Fee ledger — all line items
-          </div>
-
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, tableLayout: 'fixed' }}>
-            <colgroup>
-              <col style={{ width: 24 }} />
-              <col style={{ width: 80 }} />
-              <col style={{ width: 76 }} />
-              <col style={{ width: 72 }} />
-              <col style={{ width: 68 }} />
-              <col style={{ width: 64 }} />
-              <col style={{ width: 68 }} />
-              <col style={{ width: 68 }} />
-              <col style={{ width: 64 }} />
-            </colgroup>
+            {/* Table head */}
             <thead>
-              <tr style={{ background: '#1a2236' }}>
-                {['#', 'Fee type', 'Period', 'Due date', 'Net due', 'Discount', 'Paid', 'Balance', 'Status'].map(h => (
-                  <th key={h} style={{ padding: '8px 8px', fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#fff', textAlign: h === '#' || h === 'Fee type' || h === 'Period' || h === 'Due date' || h === 'Status' ? 'left' : 'right' }}>
-                    {h}
-                  </th>
-                ))}
+              <tr style={{ borderTop: '1.5px solid #111827', borderBottom: '1.5px solid #111827' }}>
+                <th style={{ padding: '9px 8px 9px 0', textAlign: 'left', fontWeight: 700, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#374151' }}>
+                  Particulars
+                </th>
+                <th style={{ padding: '9px 8px', textAlign: 'right', fontWeight: 700, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#374151', width: 130 }}>
+                  Required (₹)
+                </th>
+                <th style={{ padding: '9px 8px', textAlign: 'right', fontWeight: 700, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#16a34a', width: 130 }}>
+                  Paid (₹)
+                </th>
+                <th style={{ padding: '9px 0 9px 8px', textAlign: 'right', fontWeight: 700, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#dc2626', width: 120 }}>
+                  Balance (₹)
+                </th>
               </tr>
             </thead>
+
+            {/* Table body */}
             <tbody>
               {stmt.lineItems.map((row: StatementLineItem, idx: number) => {
-                const isOverdue = overdueIds.has(row.ledgerId);
-                const ftColor   = FEE_TYPE_COLOR[row.feeType] ?? { bg: '#f1f5f9', text: '#374151' };
-                const stColor   = STATUS_COLOR[row.status]    ?? STATUS_COLOR.PENDING;
+                const periodColor = FEE_PERIOD_COLOR[row.feeType] ?? '#6b7280';
+                const isLast      = idx === stmt.lineItems.length - 1;
                 return (
-                  <tr key={row.ledgerId} style={{ background: isOverdue ? '#fff8f8' : idx % 2 === 1 ? '#fafafa' : '#fff', borderBottom: '0.5px solid #e5e7eb' }}>
-                    <td style={{ padding: '8px 8px', color: '#9ca3af' }}>{idx + 1}</td>
-                    <td style={{ padding: '8px 8px' }}>
-                      <span style={{ display: 'inline-block', padding: '2px 6px', borderRadius: 3, fontSize: 9, fontWeight: 700, background: ftColor.bg, color: ftColor.text, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  <tr
+                    key={row.ledgerId}
+                    style={{ borderBottom: isLast ? 'none' : '1px solid #f3f4f6' }}
+                  >
+                    {/* Particulars */}
+                    <td style={{ padding: '11px 8px 11px 0', color: '#111827' }}>
+                      <span style={{ fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                         {row.feeTypeLabel.replace(' Fee', '')}
                       </span>
+                      {row.period && (
+                        <span style={{
+                          marginLeft: 8,
+                          fontSize: 10,
+                          color: periodColor,
+                          fontWeight: 500,
+                        }}>
+                          ({row.period})
+                        </span>
+                      )}
                     </td>
-                    <td style={{ padding: '8px 8px', color: '#6b7280', fontSize: 10 }}>{row.period ?? '—'}</td>
-                    <td style={{ padding: '8px 8px', color: isOverdue ? '#991b1b' : '#374151', fontWeight: isOverdue ? 600 : 400, fontSize: 10 }}>
-                      {fmtDate(row.dueDate)}
+
+                    {/* Required */}
+                    <td style={{ padding: '11px 8px', textAlign: 'right', color: '#374151', fontWeight: 500 }}>
+                      {INR(row.netDue)}
                     </td>
-                    <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 500, color: '#1f2937' }}>{INR(row.netDue)}</td>
-                    <td style={{ padding: '8px 8px', textAlign: 'right', color: row.discount > 0 ? '#166534' : '#d1d5db' }}>
-                      {row.discount > 0 ? `–${INR(row.discount)}` : '—'}
+
+                    {/* Paid */}
+                    <td style={{ padding: '11px 8px', textAlign: 'right', color: '#16a34a', fontWeight: 700 }}>
+                      {INR(row.amountPaid)}
                     </td>
-                    <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 600, color: '#166534' }}>{INR(row.amountPaid)}</td>
-                    <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 600, color: isOverdue ? '#991b1b' : row.balance > 0 ? '#92400e' : '#9ca3af' }}>
+
+                    {/* Balance */}
+                    <td style={{ padding: '11px 0 11px 8px', textAlign: 'right', color: '#dc2626', fontWeight: 700 }}>
                       {INR(row.balance)}
-                    </td>
-                    <td style={{ padding: '8px 8px' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 3, fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', background: stColor.bg, color: stColor.text }}>
-                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: stColor.dot, display: 'inline-block', flexShrink: 0 }} />
-                        {row.status.replace('_', ' ')}
-                      </span>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
+
+            {/* Grand total */}
             <tfoot>
+              {/* Discount row (conditional) */}
               {stmt.totalDiscount > 0 && (
-                <tr style={{ borderTop: '1px solid #d1d5db' }}>
-                  <td colSpan={4} style={{ padding: '8px 8px', fontSize: 10, color: '#6b7280' }}>Discount applied</td>
-                  <td style={{ padding: '8px 8px', textAlign: 'right', color: '#6b7280' }}>{INR(stmt.netAmount)}</td>
-                  <td style={{ padding: '8px 8px', textAlign: 'right', color: '#166534', fontWeight: 600 }}>–{INR(stmt.totalDiscount)}</td>
-                  <td colSpan={3} />
+                <tr style={{ borderTop: '1px solid #e5e7eb' }}>
+                  <td style={{ padding: '8px 8px 8px 0', fontSize: 10, color: '#6b7280' }}>
+                    Scholarship / Discount applied
+                  </td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', color: '#6b7280', fontSize: 10 }}>
+                    {INR(stmt.grossAmount)}
+                  </td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', color: '#16a34a', fontWeight: 600, fontSize: 10 }}>
+                    –{INR(stmt.totalDiscount)}
+                  </td>
+                  <td style={{ padding: '8px 0 8px 8px', textAlign: 'right', color: '#9ca3af', fontSize: 10 }}>
+                    —
+                  </td>
                 </tr>
               )}
-              <tr style={{ background: '#f8fafc', borderTop: '2px solid #1a2236' }}>
-                <td colSpan={4} style={{ padding: '10px 8px', fontWeight: 700, fontSize: 11, color: '#1a2236', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total — {stmt.academicYearName}
+
+              {/* Grand total row */}
+              <tr style={{ borderTop: '1.5px solid #111827', borderBottom: '1.5px solid #111827' }}>
+                <td style={{ padding: '10px 8px 10px 0', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#111827' }}>
+                  Grand Total
                 </td>
-                <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: '#1a2236' }}>{INR(stmt.netAmount)}</td>
-                <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: '#166534' }}>
-                  {stmt.totalDiscount > 0 ? `–${INR(stmt.totalDiscount)}` : '—'}
+                <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: '#111827' }}>
+                  {INR(stmt.netAmount)}
                 </td>
-                <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: '#166534' }}>{INR(stmt.totalPaid)}</td>
-                <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: stmt.balanceDue > 0 ? '#991b1b' : '#9ca3af' }}>
+                <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: '#16a34a' }}>
+                  {INR(stmt.totalPaid)}
+                </td>
+                <td style={{ padding: '10px 0 10px 8px', textAlign: 'right', fontWeight: 700, color: '#dc2626' }}>
                   {INR(stmt.balanceDue)}
                 </td>
-                <td />
               </tr>
             </tfoot>
           </table>
+        </div>
 
-          {/* Legend */}
-          <div style={{ display: 'flex', gap: 18, marginTop: 10, flexWrap: 'wrap' }}>
-            {Object.entries(STATUS_COLOR).filter(([k]) => k !== 'TRANSFER_CREDIT').map(([k, v]) => (
-              <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 9, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: v.dot }} />
-                {k.replace('_', ' ')}
-              </span>
-            ))}
+        {/* ════════════════════════════════════════════
+            SPACER (pushes footer down naturally)
+            ════════════════════════════════════════════ */}
+        <div style={{ flex: 1, minHeight: 48 }} />
+
+        {/* ════════════════════════════════════════════
+            NOTES
+            ════════════════════════════════════════════ */}
+        <div style={{ padding: '0 36px', marginBottom: 20 }}>
+          <div style={{ fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 4 }}>
+            Note
+          </div>
+          <div style={{ fontSize: 10, color: '#9ca3af', lineHeight: 1.65, maxWidth: 480 }}>
+            Payments can be made at the school accounts office or via the parent portal.
+            For queries contact accounts@sarbajanin.edu.in or call +91-40-12345678.
+            This is a system-generated document and is valid without a physical signature.
           </div>
         </div>
 
-        {/* ── Notes ────────────────────────────────────────────────────── */}
-        <div style={{ margin: '0 32px', borderTop: '1px solid #e5e7eb', padding: '12px 0' }}>
-          <div style={{ fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 5 }}>Notes</div>
-          <div style={{ fontSize: 10, color: '#6b7280', lineHeight: 1.6 }}>
-            Payments can be made at the school accounts office or via the parent portal. For queries regarding this statement, contact the accounts department at accounts@hatsynk.edu.in or call +91-40-12345678. This is a system-generated document and is valid without a physical signature.
-          </div>
-        </div>
-
-        {/* ── Footer ───────────────────────────────────────────────────── */}
-        <div style={{ background: '#f8fafc', borderTop: '1px solid #e5e7eb', padding: '12px 32px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 8 }}>
-          <div style={{ fontSize: 9, color: '#9ca3af', lineHeight: 1.7 }}>
-            <div>Hatsynk Model School · Survey No. 42, Gachibowli, Hyderabad – 500032</div>
-            <div>accounts@hatsynk.edu.in · +91-40-12345678</div>
-            <div>Ref: {stmt.referenceNo} · Page 1 of 1</div>
-          </div>
+        {/* ════════════════════════════════════════════
+            AUTHORISED SIGNATORY
+            ════════════════════════════════════════════ */}
+        <div style={{ padding: '0 36px 24px', display: 'flex', justifyContent: 'flex-end' }}>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ width: 120, borderTop: '1px solid #9ca3af', marginBottom: 4, marginLeft: 'auto' }} />
-            <div style={{ fontSize: 8, color: '#9ca3af', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Authorised signatory</div>
+            <div style={{ width: 160, borderTop: '1px solid #9ca3af', marginBottom: 5, marginLeft: 'auto' }} />
+            <div style={{ fontSize: 8, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9ca3af' }}>
+              Authorised Signatory
+            </div>
           </div>
         </div>
 
-      </div>
-    </>
-  );
-}
 
-// ─── Small helper ─────────────────────────────────────────────────────────────
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ display: 'flex', gap: 8, marginBottom: 3 }}>
-      <span style={{ fontSize: 10, color: '#9ca3af', minWidth: 90 }}>{label}</span>
-      <span style={{ fontSize: 10, fontWeight: 500, color: '#1f2937' }}>{value}</span>
-    </div>
+
+      </div>{/* /paper */}
+    </>
   );
 }
