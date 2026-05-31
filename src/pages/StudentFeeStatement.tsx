@@ -160,7 +160,7 @@ export default function StudentFeeStatement() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-6xl mx-auto space-y-5 pb-10 pt-2">
+    <div className="w-full space-y-5 pb-10 pt-2">
 
       
 
