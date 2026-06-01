@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getReportCard } from '@/lib/api/results';
 import { Button } from '@/components/ui/button';
@@ -24,36 +25,36 @@ export default function ReportCardView({ enrollmentId, onClose }: ReportCardView
     documentTitle: `Report_Card_${reportCard?.studentFirstName}_${reportCard?.studentLastName}`,
   });
 
+  // ── The modal content ──────────────────────────────────────────────────────
+  let modalContent: React.ReactNode;
+
   if (isLoading) {
-    return (
+    modalContent = (
       <div className="flex flex-col items-center justify-center h-[500px] bg-white">
         <Loader2 className="h-6 w-6 animate-spin text-slate-400 mb-3" />
         <p className="text-slate-400 text-xs tracking-[0.2em] uppercase">Generating Report Card…</p>
       </div>
     );
-  }
-
-  if (isError || !reportCard) {
-    return (
+  } else if (isError || !reportCard) {
+    modalContent = (
       <div className="flex flex-col items-center justify-center h-[500px] bg-white p-8 text-center">
         <p className="font-semibold text-sm mb-1">Error Loading Report Card</p>
         <p className="text-slate-400 text-xs mb-6">Could not fetch result details.</p>
-        <Button onClick={onClose} variant="outline" className="rounded-none text-xs tracking-widest uppercase">Close</Button>
+        <Button onClick={onClose} variant="outline" className="rounded-none text-xs tracking-widest uppercase">
+          Close
+        </Button>
       </div>
     );
-  }
+  } else {
+    const examTypes: string[] = Array.from(
+      new Set<string>(reportCard.examMarkSnapshots.map((s: any) => s.examTypeCode as string))
+    );
 
-  const examTypes: string[] = Array.from(
-    new Set<string>(reportCard.examMarkSnapshots.map((s: any) => s.examTypeCode as string))
-  );
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 sm:p-8 print:p-0 print:bg-white print:block">
-
-      {/* Modal shell */}
+    modalContent = (
+      /* Modal shell */
       <div className="w-full max-w-[210mm] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden rounded-lg">
 
-        {/* ── Action bar (hidden on print) ── */}
+        {/* ── Action bar (always visible, hidden only on print) ── */}
         <div className="flex justify-between items-center bg-slate-800 px-5 py-3 print:hidden flex-shrink-0">
           <span className="text-[11px] tracking-[0.18em] uppercase text-slate-300 font-semibold">
             📄 Report Card Preview
@@ -86,17 +87,12 @@ export default function ReportCardView({ enrollmentId, onClose }: ReportCardView
 
             {/* ══ 1. HEADER ══ */}
             <div className="flex items-start justify-between pb-4 mb-0 border-b border-black">
-
-              {/* Left — logo + name */}
               <div className="flex items-center gap-3">
                 <div className="w-14 h-14 rounded-full border border-slate-300 flex items-center justify-center text-3xl bg-slate-50 flex-shrink-0">
                   🏫
                 </div>
                 <div>
-                  <p
-                    className="text-[20px] font-black text-black leading-tight"
-                    style={{ letterSpacing: '-0.01em' }}
-                  >
+                  <p className="text-[20px] font-black text-black leading-tight" style={{ letterSpacing: '-0.01em' }}>
                     SARBAJANIN ACADEMY
                   </p>
                   <p className="text-[9px] font-sans text-slate-500 tracking-[0.32em] uppercase mt-[3px]">
@@ -104,24 +100,19 @@ export default function ReportCardView({ enrollmentId, onClose }: ReportCardView
                   </p>
                 </div>
               </div>
-
-              {/* Right — office copy + enrollment + date */}
               <div className="text-right font-sans">
                 <span className="inline-block border border-slate-400 text-[8px] font-bold tracking-[0.22em] uppercase text-slate-500 px-2 py-[2px]">
                   OFFICE COPY
                 </span>
-                <p className="text-[10px] font-bold text-black mt-1.5 tracking-wide">
-                  {reportCard.enrollmentNo}
-                </p>
+                <p className="text-[10px] font-bold text-black mt-1.5 tracking-wide">{reportCard.enrollmentNo}</p>
                 <p className="text-[10px] text-slate-500 mt-0.5">
                   {format(new Date(reportCard.calculatedAt), 'dd MMM yyyy').toUpperCase()}
                 </p>
               </div>
             </div>
 
-            {/* ══ 2. STUDENT INFO — receipt label:value style ══ */}
+            {/* ══ 2. STUDENT INFO ══ */}
             <div className="border-b border-black py-3 mb-0 font-sans grid grid-cols-2 gap-y-1">
-              {/* Left column */}
               <div className="space-y-1">
                 <div className="flex gap-2 items-baseline">
                   <span className="text-[10px] text-slate-500 w-16 flex-shrink-0">Student:</span>
@@ -140,8 +131,6 @@ export default function ReportCardView({ enrollmentId, onClose }: ReportCardView
                   <span className="text-[11px] font-semibold text-black">{reportCard.className}</span>
                 </div>
               </div>
-
-              {/* Right column */}
               <div className="text-right space-y-1">
                 <div className="flex justify-end gap-2 items-baseline">
                   <span className="text-[10px] text-slate-500">Session:</span>
@@ -156,44 +145,27 @@ export default function ReportCardView({ enrollmentId, onClose }: ReportCardView
               </div>
             </div>
 
-            {/* ══ 3. MARKS TABLE — full grid borders matching receipt ══ */}
+            {/* ══ 3. MARKS TABLE ══ */}
             <div className="mt-4 mb-4">
               <table className="w-full border-collapse font-sans" style={{ fontSize: '10px' }}>
-
-                {/* Header */}
                 <thead>
                   <tr>
-                    <th
-                      className="border border-black px-3 py-2 text-left font-bold uppercase tracking-wider"
-                      style={{ fontSize: '9px' }}
-                    >
+                    <th className="border border-black px-3 py-2 text-left font-bold uppercase tracking-wider" style={{ fontSize: '9px' }}>
                       Subject
                     </th>
                     {examTypes.map((type: string) => (
-                      <th
-                        key={type}
-                        className="border border-black px-2 py-2 text-center font-bold uppercase tracking-wide"
-                        style={{ fontSize: '9px' }}
-                      >
+                      <th key={type} className="border border-black px-2 py-2 text-center font-bold uppercase tracking-wide" style={{ fontSize: '9px' }}>
                         {type.replace(/_/g, ' ')}
                       </th>
                     ))}
-                    <th
-                      className="border border-black px-3 py-2 text-center font-bold uppercase tracking-wide"
-                      style={{ fontSize: '9px' }}
-                    >
+                    <th className="border border-black px-3 py-2 text-center font-bold uppercase tracking-wide" style={{ fontSize: '9px' }}>
                       Consol. %
                     </th>
-                    <th
-                      className="border border-black px-3 py-2 text-center font-bold uppercase tracking-wide"
-                      style={{ fontSize: '9px' }}
-                    >
+                    <th className="border border-black px-3 py-2 text-center font-bold uppercase tracking-wide" style={{ fontSize: '9px' }}>
                       Grade
                     </th>
                   </tr>
                 </thead>
-
-                {/* Body */}
                 <tbody>
                   {reportCard.subjectResults.map((subject: any) => {
                     const snaps = reportCard.examMarkSnapshots.filter(
@@ -230,31 +202,21 @@ export default function ReportCardView({ enrollmentId, onClose }: ReportCardView
                     );
                   })}
                 </tbody>
-
-                {/* Grand Total footer row — mirrors the receipt's GRAND TOTAL row */}
                 <tfoot>
                   <tr>
-                    <td
-                      className="border-2 border-black px-3 py-2.5 font-black uppercase tracking-widest text-black"
-                      style={{ fontSize: '9px' }}
-                    >
+                    <td className="border-2 border-black px-3 py-2.5 font-black uppercase tracking-widest text-black" style={{ fontSize: '9px' }}>
                       Grand Total
                     </td>
-                    {/* Empty cells for individual exam columns */}
                     {examTypes.map((type: string) => (
                       <td key={type} className="border-2 border-black px-2 py-2.5" />
                     ))}
-                    {/* Overall % */}
                     <td className="border-2 border-black px-3 py-2.5 text-center">
                       <p style={{ fontSize: '8px' }} className="text-slate-500 uppercase tracking-wider mb-0.5">Overall</p>
                       <p className="text-[15px] font-black text-black leading-none">{reportCard.percentage}%</p>
                     </td>
-                    {/* Grade + Status + Rank */}
                     <td className="border-2 border-black px-3 py-2.5 text-center">
                       <p className="text-[15px] font-black text-black leading-none">{reportCard.grade || '—'}</p>
-                      <p
-                        className={`text-[10px] font-bold mt-0.5 ${reportCard.resultStatus === 'PASS' ? 'text-black' : 'text-black'}`}
-                      >
+                      <p className={`text-[10px] font-bold mt-0.5 ${reportCard.resultStatus === 'PASS' ? 'text-black' : 'text-black'}`}>
                         {reportCard.resultStatus}
                       </p>
                       {reportCard.rankInClass && (
@@ -270,10 +232,7 @@ export default function ReportCardView({ enrollmentId, onClose }: ReportCardView
 
             {/* ══ 4. NOTE ══ */}
             <div className="mt-2 mb-8 font-sans border-t border-slate-300 pt-3">
-              <p
-                className="font-bold uppercase tracking-[0.2em] text-slate-400 mb-1"
-                style={{ fontSize: '8px' }}
-              >
+              <p className="font-bold uppercase tracking-[0.2em] text-slate-400 mb-1" style={{ fontSize: '8px' }}>
                 Note
               </p>
               <p className="text-slate-500 leading-relaxed" style={{ fontSize: '9px' }}>
@@ -291,10 +250,7 @@ export default function ReportCardView({ enrollmentId, onClose }: ReportCardView
                 {['Class Teacher', 'Principal', 'Parent / Guardian', 'Authorised Signatory'].map((label) => (
                   <div key={label} className="text-center" style={{ width: '100px' }}>
                     <div className="border-b border-black mb-1.5" style={{ height: '36px' }} />
-                    <p
-                      className="font-bold uppercase tracking-[0.14em] text-slate-600"
-                      style={{ fontSize: '8px' }}
-                    >
+                    <p className="font-bold uppercase tracking-[0.14em] text-slate-600" style={{ fontSize: '8px' }}>
                       {label}
                     </p>
                   </div>
@@ -311,7 +267,22 @@ export default function ReportCardView({ enrollmentId, onClose }: ReportCardView
 
           </div>{/* end A4 page */}
         </div>{/* end scroll area */}
-      </div>{/* end modal shell */}
-    </div>
+      </div>
+    );
+  }
+
+  // ── KEY FIX: render via portal directly into document.body ────────────────
+  // This escapes the `relative` stacking context on `.md-page` which was
+  // clipping the fixed-position modal and hiding the Print / Close buttons
+  // whenever a section filter was active.
+  return ReactDOM.createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4 sm:p-8 print:p-0 print:bg-white print:block"
+      // Close on backdrop click
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      {modalContent}
+    </div>,
+    document.body
   );
 }
