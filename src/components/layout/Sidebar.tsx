@@ -80,7 +80,7 @@ export const teacherItems = [
 export const examManagementItems = [
   { to: "/exam-types",                label: "Create Exam Types",    icon: Award,         exact: true  },
   { to: "/exam-blueprints",           label: "Exam Blueprint",       icon: CalendarDays,  exact: false },
-  { to: "/subject-wise-setup",        label: "Subject Wise Setup",   icon: BookOpen,      exact: false },
+  //{ to: "/subject-wise-setup",        label: "Subject Wise Setup",   icon: BookOpen,      exact: false },
   { to: "/grade-rule-engine/schemes", label: "Grading Schemes",      icon: ShieldCheck,   exact: false },
   { to: "/grade-rule-engine/rules",   label: "Result Rules Mapping", icon: Network,       exact: false },
   { to: "/consolidated-setup",        label: "Consolidated Annual",  icon: Network,       exact: false },
