@@ -43,16 +43,15 @@ export default function CreateExamTypeDialog({ open, onOpenChange }: CreateExamT
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] bg-sidebar text-sidebar-foreground border-sidebar-border/60">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold tracking-wide">
-            New Exam Type Category
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[480px] bg-white text-gray-900 border border-gray-200">
+        <DialogTitle className="text-lg font-bold text-gray-900">
+  New Exam Type Category
+</DialogTitle>
+<p className="text-sm text-gray-500 mt-1">Define a new exam type category for the institution.</p>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="code" className="text-xs font-medium">Code (Unique Matrix Tracking Key)</Label>
+            <Label htmlFor="code" className="text-sm font-bold text-gray-800">Code (Unique Matrix Tracking Key)</Label>
             <Input
               id="code"
               placeholder="e.g., UNIT_TEST_1_W_26"
@@ -102,10 +101,10 @@ export default function CreateExamTypeDialog({ open, onOpenChange }: CreateExamT
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="h-9 text-xs">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="h-9 text-xs border border-gray-300 text-gray-700 rounded-lg px-5">
             Cancel
           </Button>
-          <Button onClick={() => handleCreate()} disabled={isPending || !name || !code} className="h-9 text-xs">
+          <Button onClick={() => handleCreate()} disabled={isPending || !name || !code} className="h-9 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-5">
             {isPending ? "Saving..." : "Save Category Blueprint"}
           </Button>
         </DialogFooter>
