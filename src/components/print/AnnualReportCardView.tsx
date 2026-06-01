@@ -50,39 +50,27 @@ export default function ReportCardView({ enrollmentId, onClose }: ReportCardView
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 sm:p-8 print:p-0 print:bg-white print:block">
 
-      {/* Floating close button — always visible on the overlay */}
-      <button
-        onClick={onClose}
-        className="fixed top-4 right-4 z-[60] print:hidden bg-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg hover:bg-slate-100 transition-colors border border-slate-200"
-        aria-label="Close"
-      >
-        <X className="h-4 w-4 text-slate-700" />
-      </button>
-
       {/* Modal shell */}
-      <div className="w-full max-w-[210mm] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div className="w-full max-w-[210mm] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden rounded-lg">
 
         {/* ── Action bar (hidden on print) ── */}
-        <div className="flex justify-between items-center bg-white border-b border-slate-200 px-5 py-3 print:hidden">
-          <span className="text-[10px] tracking-[0.22em] uppercase text-slate-400 font-medium">
-            Preview — Report Card
+        <div className="flex justify-between items-center bg-slate-800 px-5 py-3 print:hidden flex-shrink-0">
+          <span className="text-[11px] tracking-[0.18em] uppercase text-slate-300 font-semibold">
+            📄 Report Card Preview
           </span>
           <div className="flex gap-2 items-center">
-            <Button
+            <button
               onClick={handlePrint}
-              size="sm"
-              className="h-8 px-5 rounded-none bg-black text-white hover:bg-slate-800 text-[10px] tracking-[0.18em] uppercase gap-1.5"
+              className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black font-bold text-[11px] tracking-[0.15em] uppercase px-4 py-2 rounded transition-colors"
             >
-              <Printer className="h-3.5 w-3.5" /> Print A4
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+              <Printer className="h-4 w-4" /> Print / Save PDF
+            </button>
+            <button
               onClick={onClose}
-              className="h-8 px-4 rounded-none text-[10px] tracking-[0.18em] uppercase gap-1.5 border-slate-300"
+              className="flex items-center gap-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold text-[11px] tracking-[0.15em] uppercase px-4 py-2 rounded transition-colors"
             >
-              <X className="h-3.5 w-3.5" /> Close
-            </Button>
+              <X className="h-4 w-4" /> Close
+            </button>
           </div>
         </div>
 
@@ -298,7 +286,7 @@ export default function ReportCardView({ enrollmentId, onClose }: ReportCardView
             </div>
 
             {/* ══ 5. SIGNATURES ══ */}
-            <div className="mt-8 pt-8 font-sans border-t border-slate-200">
+            <div className="mt-6 pt-6 font-sans border-t border-slate-200">
               <div className="flex justify-between items-end">
                 {['Class Teacher', 'Principal', 'Parent / Guardian', 'Authorised Signatory'].map((label) => (
                   <div key={label} className="text-center" style={{ width: '100px' }}>
