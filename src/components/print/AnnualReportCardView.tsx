@@ -26,214 +26,304 @@ export default function ReportCardView({ enrollmentId, onClose }: ReportCardView
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[500px] bg-white rounded-lg shadow-xl">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground font-medium">Generating Report Card...</p>
+      <div className="flex flex-col items-center justify-center h-[500px] bg-white">
+        <Loader2 className="h-6 w-6 animate-spin text-slate-400 mb-3" />
+        <p className="text-slate-400 text-xs tracking-[0.2em] uppercase">Generating Report Card…</p>
       </div>
     );
   }
 
   if (isError || !reportCard) {
     return (
-      <div className="flex flex-col items-center justify-center h-[500px] bg-white rounded-lg shadow-xl p-8 text-center">
-        <p className="text-destructive font-semibold text-lg mb-2">Error Loading Report Card</p>
-        <p className="text-muted-foreground mb-6">Could not fetch result details. Please ensure the calculation engine ran successfully.</p>
-        <Button onClick={onClose} variant="outline">Close</Button>
+      <div className="flex flex-col items-center justify-center h-[500px] bg-white p-8 text-center">
+        <p className="font-semibold text-sm mb-1">Error Loading Report Card</p>
+        <p className="text-slate-400 text-xs mb-6">Could not fetch result details.</p>
+        <Button onClick={onClose} variant="outline" className="rounded-none text-xs tracking-widest uppercase">Close</Button>
       </div>
     );
   }
 
-  // Group snapshots by exam type for the dynamic table headers
-  const examTypes = Array.from(new Set(reportCard.examMarkSnapshots.map((s: any) => s.examTypeCode)));
+  const examTypes: string[] = Array.from(
+    new Set<string>(reportCard.examMarkSnapshots.map((s: any) => s.examTypeCode as string))
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-8">
-      
-      {/* Container holding the Print Controls and the A4 Page */}
-      <div className="w-full max-w-[210mm] max-h-[90vh] flex flex-col bg-slate-100 rounded-xl shadow-2xl overflow-hidden relative">
-        
-        {/* Top Action Bar (Will not be printed) */}
-        <div className="flex justify-between items-center bg-white border-b px-6 py-4 shadow-sm z-10 sticky top-0">
-          <h2 className="font-semibold text-lg flex items-center gap-2">
-            <span className="bg-primary/10 text-primary px-3 py-1 rounded-md text-sm">Preview Mode</span>
-            Report Card
-          </h2>
-          <div className="flex gap-3">
-            <Button onClick={handlePrint} className="gap-2 shadow-sm">
-              <Printer className="h-4 w-4" /> Print A4
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 sm:p-8 print:p-0 print:bg-white print:block">
+
+      {/* Floating close button — always visible on the overlay */}
+      <button
+        onClick={onClose}
+        className="fixed top-4 right-4 z-[60] print:hidden bg-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg hover:bg-slate-100 transition-colors border border-slate-200"
+        aria-label="Close"
+      >
+        <X className="h-4 w-4 text-slate-700" />
+      </button>
+
+      {/* Modal shell */}
+      <div className="w-full max-w-[210mm] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+
+        {/* ── Action bar (hidden on print) ── */}
+        <div className="flex justify-between items-center bg-white border-b border-slate-200 px-5 py-3 print:hidden">
+          <span className="text-[10px] tracking-[0.22em] uppercase text-slate-400 font-medium">
+            Preview — Report Card
+          </span>
+          <div className="flex gap-2 items-center">
+            <Button
+              onClick={handlePrint}
+              size="sm"
+              className="h-8 px-5 rounded-none bg-black text-white hover:bg-slate-800 text-[10px] tracking-[0.18em] uppercase gap-1.5"
+            >
+              <Printer className="h-3.5 w-3.5" /> Print A4
             </Button>
-            <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-slate-100 rounded-full">
-              <X className="h-5 w-5" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="h-8 px-4 rounded-none text-[10px] tracking-[0.18em] uppercase gap-1.5 border-slate-300"
+            >
+              <X className="h-3.5 w-3.5" /> Close
             </Button>
           </div>
         </div>
 
-        {/* Scrollable area for the UI Preview */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar bg-slate-100 flex justify-center">
-          
-          {/* THE PHYSICAL A4 PAGE */}
-          <div 
-            ref={componentRef} 
-            /* Added flex, flex-col, and print-specific reset classes */
-            className="bg-white shadow-md p-8 sm:p-12 w-full max-w-[210mm] min-h-[297mm] mx-auto flex flex-col print:shadow-none print:m-0 print:p-8 print:w-auto print:h-auto print:overflow-visible"
-            style={{ fontFamily: "'Inter', sans-serif" }}
+        {/* ── Scroll area ── */}
+        <div className="flex-1 overflow-y-auto bg-slate-100 flex justify-center py-6 px-4 print:p-0 print:bg-white print:block">
+
+          {/* ━━━━━━━━  A4 PAGE  ━━━━━━━━ */}
+          <div
+            ref={componentRef}
+            className="bg-white w-full max-w-[210mm] mx-auto flex flex-col print:shadow-none print:m-0"
+            style={{ fontFamily: 'Georgia, serif', padding: '44px 52px' }}
           >
-            {/* 1. Header Section */}
-            <div className="flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-8 print:border-black">
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-2xl border-2 border-primary print:border-black print:text-black">
-                  SISHU
+
+            {/* ══ 1. HEADER ══ */}
+            <div className="flex items-start justify-between pb-4 mb-0 border-b border-black">
+
+              {/* Left — logo + name */}
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-full border border-slate-300 flex items-center justify-center text-3xl bg-slate-50 flex-shrink-0">
+                  🏫
                 </div>
                 <div>
-                  <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight print:text-black">SISHU ACADEMY</h1>
-                  <p className="text-sm text-slate-500 font-medium tracking-wide uppercase mt-1 print:text-slate-700">Excellence in Education</p>
-                  <p className="text-xs text-slate-400 mt-0.5 print:text-slate-600">Hyderabad, Telangana</p>
+                  <p
+                    className="text-[20px] font-black text-black leading-tight"
+                    style={{ letterSpacing: '-0.01em' }}
+                  >
+                    SARBAJANIN ACADEMY
+                  </p>
+                  <p className="text-[9px] font-sans text-slate-500 tracking-[0.32em] uppercase mt-[3px]">
+                    R E P O R T &nbsp; C A R D
+                  </p>
                 </div>
               </div>
-              <div className="text-right">
-                <h2 className="text-xl font-bold text-slate-800 bg-slate-100 px-4 py-1.5 rounded inline-block print:border print:border-black print:bg-transparent">REPORT CARD</h2>
-                <p className="text-sm font-semibold text-primary mt-2 print:text-black">Academic Session: {reportCard.academicYearName}</p>
-                <p className="text-xs text-slate-500 mt-1 print:text-slate-700">Generated: {format(new Date(reportCard.calculatedAt), 'dd MMM yyyy')}</p>
+
+              {/* Right — office copy + enrollment + date */}
+              <div className="text-right font-sans">
+                <span className="inline-block border border-slate-400 text-[8px] font-bold tracking-[0.22em] uppercase text-slate-500 px-2 py-[2px]">
+                  OFFICE COPY
+                </span>
+                <p className="text-[10px] font-bold text-black mt-1.5 tracking-wide">
+                  {reportCard.enrollmentNo}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  {format(new Date(reportCard.calculatedAt), 'dd MMM yyyy').toUpperCase()}
+                </p>
               </div>
             </div>
 
-            {/* 2. Student Details Grid */}
-            <div className="grid grid-cols-2 gap-x-12 gap-y-4 mb-8 bg-slate-50 p-6 rounded-lg border border-slate-200 print:bg-transparent print:border-black">
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1 print:text-slate-700">Student Name</p>
-                <p className="text-lg font-bold text-slate-900 print:text-black">{reportCard.studentFirstName} {reportCard.studentLastName}</p>
+            {/* ══ 2. STUDENT INFO — receipt label:value style ══ */}
+            <div className="border-b border-black py-3 mb-0 font-sans grid grid-cols-2 gap-y-1">
+              {/* Left column */}
+              <div className="space-y-1">
+                <div className="flex gap-2 items-baseline">
+                  <span className="text-[10px] text-slate-500 w-16 flex-shrink-0">Student:</span>
+                  <span className="text-[11px] font-bold text-black">
+                    {reportCard.studentFirstName} {reportCard.studentLastName}
+                  </span>
+                </div>
+                <div className="flex gap-2 items-baseline">
+                  <span className="text-[10px] text-slate-500 w-16 flex-shrink-0">Adm No:</span>
+                  <span className="text-[11px] font-semibold text-black">
+                    {reportCard.studentRegistrationNo || 'N/A'}
+                  </span>
+                </div>
+                <div className="flex gap-2 items-baseline">
+                  <span className="text-[10px] text-slate-500 w-16 flex-shrink-0">Class:</span>
+                  <span className="text-[11px] font-semibold text-black">{reportCard.className}</span>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1 print:text-slate-700">Class Level</p>
-                <p className="text-lg font-bold text-slate-900 print:text-black">{reportCard.className}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1 print:text-slate-700">Registration Number</p>
-                <p className="text-sm font-medium text-slate-700 print:text-black">{reportCard.studentRegistrationNo || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1 print:text-slate-700">Enrollment ID</p>
-                <p className="text-sm font-medium text-slate-700 print:text-black">{reportCard.enrollmentNo}</p>
+
+              {/* Right column */}
+              <div className="text-right space-y-1">
+                <div className="flex justify-end gap-2 items-baseline">
+                  <span className="text-[10px] text-slate-500">Session:</span>
+                  <span className="text-[11px] font-semibold text-black">{reportCard.academicYearName}</span>
+                </div>
+                <div className="flex justify-end gap-2 items-baseline">
+                  <span className="text-[10px] text-slate-500">Calculated:</span>
+                  <span className="text-[11px] font-semibold text-black">
+                    {format(new Date(reportCard.calculatedAt), 'dd/MM/yyyy')}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* 3. Academic Performance Table */}
-            {/* Removed overflow-hidden which causes print scrollbars */}
-            <div className="mb-8 border border-slate-300 rounded-lg print:border-black print:rounded-none">
-              <table className="w-full text-sm text-left border-collapse">
-                <thead className="bg-slate-800 text-white font-semibold uppercase text-xs tracking-wider print:bg-slate-200 print:text-black">
+            {/* ══ 3. MARKS TABLE — full grid borders matching receipt ══ */}
+            <div className="mt-4 mb-4">
+              <table className="w-full border-collapse font-sans" style={{ fontSize: '10px' }}>
+
+                {/* Header */}
+                <thead>
                   <tr>
-                    <th className="px-4 py-3 border-b print:border-black">Subject</th>
+                    <th
+                      className="border border-black px-3 py-2 text-left font-bold uppercase tracking-wider"
+                      style={{ fontSize: '9px' }}
+                    >
+                      Subject
+                    </th>
                     {examTypes.map((type: string) => (
-                      <th key={type} className="px-4 py-3 text-center border-b print:border-black">{type.replace('_', ' ')}</th>
+                      <th
+                        key={type}
+                        className="border border-black px-2 py-2 text-center font-bold uppercase tracking-wide"
+                        style={{ fontSize: '9px' }}
+                      >
+                        {type.replace(/_/g, ' ')}
+                      </th>
                     ))}
-                    <th className="px-4 py-3 text-center bg-slate-700 border-b print:bg-slate-300 print:border-black">Consolidated %</th>
-                    <th className="px-4 py-3 text-center bg-slate-700 border-b print:bg-slate-300 print:border-black">Grade</th>
+                    <th
+                      className="border border-black px-3 py-2 text-center font-bold uppercase tracking-wide"
+                      style={{ fontSize: '9px' }}
+                    >
+                      Consol. %
+                    </th>
+                    <th
+                      className="border border-black px-3 py-2 text-center font-bold uppercase tracking-wide"
+                      style={{ fontSize: '9px' }}
+                    >
+                      Grade
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 print:divide-black">
-                  {reportCard.subjectResults.map((subject: any) => {
-                    const snapshotsForSubject = reportCard.examMarkSnapshots.filter(
-                      (snap: any) => snap.subjectCode === subject.subjectCode
-                    );
 
+                {/* Body */}
+                <tbody>
+                  {reportCard.subjectResults.map((subject: any) => {
+                    const snaps = reportCard.examMarkSnapshots.filter(
+                      (s: any) => s.subjectCode === subject.subjectCode
+                    );
                     return (
-                      <tr key={subject.id} className="hover:bg-slate-50 print:bg-transparent">
-                        <td className="px-4 py-3 font-medium text-slate-900 border-r border-slate-200 print:border-black print:text-black">
+                      <tr key={subject.id}>
+                        <td className="border border-black px-3 py-2 font-semibold text-black">
                           {subject.subjectName}
                         </td>
                         {examTypes.map((type: string) => {
-                          const snap = snapshotsForSubject.find((s: any) => s.examTypeCode === type);
+                          const snap = snaps.find((s: any) => s.examTypeCode === type);
                           return (
-                            <td key={type} className="px-4 py-3 text-center border-r border-slate-200 print:border-black">
-                              {snap ? (
-                                snap.isAbsent ? (
-                                  <span className="text-amber-600 font-medium text-xs print:text-black">AB</span>
-                                ) : snap.isExempted ? (
-                                  <span className="text-blue-600 font-medium text-xs print:text-black">EX</span>
-                                ) : (
-                                  <span className={snap.isPass ? 'text-slate-700 print:text-black' : 'text-red-600 font-semibold print:text-black'}>
-                                    {snap.marksObtained}
-                                  </span>
-                                )
-                              ) : (
-                                <span className="text-slate-300 print:text-slate-500">-</span>
-                              )}
+                            <td key={type} className="border border-black px-2 py-2 text-center text-black">
+                              {snap
+                                ? snap.isAbsent
+                                  ? <span className="text-slate-500">AB</span>
+                                  : snap.isExempted
+                                    ? <span className="text-slate-500">EX</span>
+                                    : <span className={snap.isPass ? '' : 'underline decoration-dotted font-semibold'}>
+                                        {snap.marksObtained}
+                                      </span>
+                                : <span className="text-slate-300">—</span>}
                             </td>
                           );
                         })}
-                        <td className="px-4 py-3 text-center font-bold bg-slate-50 border-r border-slate-200 print:bg-transparent print:border-black print:text-black">
+                        <td className="border border-black px-3 py-2 text-center font-bold text-black">
                           {subject.percentage}%
                         </td>
-                        <td className={`px-4 py-3 text-center font-bold bg-slate-50 print:bg-transparent print:text-black ${subject.isPass ? 'text-green-600' : 'text-red-600'}`}>
-                          {subject.grade || (subject.isPass ? 'PASS' : 'FAIL')}
+                        <td className={`border border-black px-3 py-2 text-center font-bold ${subject.isPass ? 'text-black' : 'text-black underline'}`}>
+                          {subject.grade || (subject.isPass ? 'P' : 'F')}
                         </td>
                       </tr>
                     );
                   })}
                 </tbody>
+
+                {/* Grand Total footer row — mirrors the receipt's GRAND TOTAL row */}
+                <tfoot>
+                  <tr>
+                    <td
+                      className="border-2 border-black px-3 py-2.5 font-black uppercase tracking-widest text-black"
+                      style={{ fontSize: '9px' }}
+                    >
+                      Grand Total
+                    </td>
+                    {/* Empty cells for individual exam columns */}
+                    {examTypes.map((type: string) => (
+                      <td key={type} className="border-2 border-black px-2 py-2.5" />
+                    ))}
+                    {/* Overall % */}
+                    <td className="border-2 border-black px-3 py-2.5 text-center">
+                      <p style={{ fontSize: '8px' }} className="text-slate-500 uppercase tracking-wider mb-0.5">Overall</p>
+                      <p className="text-[15px] font-black text-black leading-none">{reportCard.percentage}%</p>
+                    </td>
+                    {/* Grade + Status + Rank */}
+                    <td className="border-2 border-black px-3 py-2.5 text-center">
+                      <p className="text-[15px] font-black text-black leading-none">{reportCard.grade || '—'}</p>
+                      <p
+                        className={`text-[10px] font-bold mt-0.5 ${reportCard.resultStatus === 'PASS' ? 'text-black' : 'text-black'}`}
+                      >
+                        {reportCard.resultStatus}
+                      </p>
+                      {reportCard.rankInClass && (
+                        <p style={{ fontSize: '9px' }} className="text-slate-500 mt-0.5">
+                          Rank #{reportCard.rankInClass}
+                        </p>
+                      )}
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
 
-            {/* 4. Final Result Summary Box */}
-            <div className="flex gap-6 mb-8">
-              <div className="flex-1 bg-slate-50 border-l-4 border-primary p-5 rounded-r-lg print:bg-transparent print:border-black print:border-l-4 print:border-t print:border-r print:border-b">
-                <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 print:text-black">Final Evaluation</p>
-                <div className="flex items-end gap-3">
-                  <span className="text-4xl font-extrabold text-slate-900 print:text-black">{reportCard.percentage}%</span>
-                  <span className="text-lg font-medium text-slate-600 mb-1 print:text-slate-800">Overall Score</span>
-                </div>
-                <div className="mt-3 flex gap-4 text-sm font-medium">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-500 print:text-black">Status:</span>
-                    <span className={reportCard.resultStatus === 'PASS' ? 'text-green-600 font-bold print:text-black' : 'text-red-600 font-bold print:text-black'}>
-                      {reportCard.resultStatus}
-                    </span>
+            {/* ══ 4. NOTE ══ */}
+            <div className="mt-2 mb-8 font-sans border-t border-slate-300 pt-3">
+              <p
+                className="font-bold uppercase tracking-[0.2em] text-slate-400 mb-1"
+                style={{ fontSize: '8px' }}
+              >
+                Note
+              </p>
+              <p className="text-slate-500 leading-relaxed" style={{ fontSize: '9px' }}>
+                {reportCard.resultRuleSnapshot
+                  ? `Result calculated using: ${reportCard.resultRuleSnapshot}.`
+                  : 'Result calculated per the configured academic rule.'}{' '}
+                This is a system-generated document and is valid without a physical signature. For queries,
+                contact the school office.
+              </p>
+            </div>
+
+            {/* ══ 5. SIGNATURES ══ */}
+            <div className="mt-8 pt-8 font-sans border-t border-slate-200">
+              <div className="flex justify-between items-end">
+                {['Class Teacher', 'Principal', 'Parent / Guardian', 'Authorised Signatory'].map((label) => (
+                  <div key={label} className="text-center" style={{ width: '100px' }}>
+                    <div className="border-b border-black mb-1.5" style={{ height: '36px' }} />
+                    <p
+                      className="font-bold uppercase tracking-[0.14em] text-slate-600"
+                      style={{ fontSize: '8px' }}
+                    >
+                      {label}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-500 print:text-black">Grade:</span>
-                    <span className="text-slate-900 font-bold print:text-black">{reportCard.grade || 'N/A'}</span>
-                  </div>
-                  {reportCard.rankInClass && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-slate-500 print:text-black">Class Rank:</span>
-                      <span className="text-amber-600 font-bold print:text-black">#{reportCard.rankInClass}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="w-1/3 text-xs text-slate-500 border border-slate-200 rounded-lg p-4 bg-white print:border-black print:text-black">
-                <p className="font-semibold text-slate-700 mb-2 uppercase print:text-black">Result Rule Details</p>
-                <p className="mb-1"><span className="font-medium text-slate-600 print:text-black">Configuration:</span> {reportCard.resultRuleSnapshot}</p>
-                <p><span className="font-medium text-slate-600 print:text-black">Calculated On:</span> {format(new Date(reportCard.calculatedAt), 'dd/MM/yyyy HH:mm')}</p>
+                ))}
               </div>
             </div>
 
-            {/* 5. Signatures (Uses mt-auto to naturally push to the bottom without absolute overlap) */}
-            <div className="mt-auto pt-16 flex justify-between items-end">
-              <div className="text-center w-40">
-                <div className="h-12 border-b border-slate-400 mb-2 print:border-black"></div>
-                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider print:text-black">Class Teacher</p>
-              </div>
-              <div className="text-center w-40">
-                <div className="h-12 border-b border-slate-400 mb-2 print:border-black"></div>
-                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider print:text-black">Principal</p>
-              </div>
-              <div className="text-center w-40">
-                <div className="h-12 border-b border-slate-400 mb-2 print:border-black"></div>
-                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider print:text-black">Parent / Guardian</p>
-              </div>
+            {/* ══ 6. FOOTER ══ */}
+            <div className="mt-5 pt-2.5 border-t border-slate-200 font-sans text-center">
+              <p className="text-slate-400 tracking-widest uppercase" style={{ fontSize: '8px' }}>
+                Generated by HatSynk School Management System &bull; Authenticated Document
+              </p>
             </div>
 
-            {/* Print Footer Watermark */}
-            <div className="mt-8 text-center border-t border-slate-100 pt-3 print:border-black">
-              <p className="text-[10px] text-slate-400 font-medium print:text-black">Generated by HatSynk School Management System • Authenticated Document</p>
-            </div>
-            
-          </div>
-        </div>
-      </div>
+          </div>{/* end A4 page */}
+        </div>{/* end scroll area */}
+      </div>{/* end modal shell */}
     </div>
   );
 }
