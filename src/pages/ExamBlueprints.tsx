@@ -155,7 +155,7 @@ export default function ExamBlueprints() {
               <TableRow>
                 <TableHead className="w-[60px]">#</TableHead>
                 <TableHead className="w-[260px]">Target Session Stream Track</TableHead>
-                <TableHead>Class Tier</TableHead>
+                <TableHead>Class & Section</TableHead>
                 <TableHead>Testing Windows</TableHead>
                 <TableHead>Process Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -184,18 +184,29 @@ export default function ExamBlueprints() {
                   <TableRow key={exam.id}>
                     <TableCell className="md-cell-index">{startIdx + idx + 1}</TableCell>
                     
-                    {/* ---> FIX APPLIED HERE <--- */}
+                    {/* 1. Prominent Exam Name Display */}
                     <TableCell>
-                      <div className="font-medium text-sm text-sidebar-foreground">
-                        {exam.name || exam.examTypeName || "Unnamed Exam Session"}
+                      <div className="font-semibold text-sm text-foreground">
+                        {exam.name || "Unnamed Exam Session"}
                       </div>
-                      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
                         <FileText className="h-3 w-3" />
-                        {exam.examTypeCode || "Unknown Type"}
+                        {exam.examTypeName} ({exam.examTypeCode})
                       </div>
                     </TableCell>
 
-                    <TableCell><span className="md-badge md-badge--outline">{exam.classLevelName}</span></TableCell>
+                    {/* 2. Class Tier & Clean Section Badge */}
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span className="md-badge md-badge--outline">{exam.classLevelName}</span>
+                        {exam.classSectionName && exam.classSectionName !== "All Sections" && (
+                          <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground">
+                            {exam.classSectionName}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+
                     <TableCell className="text-xs font-medium text-muted-foreground">
                       {formatDate(exam.startDate)} — {formatDate(exam.endDate)}
                     </TableCell>

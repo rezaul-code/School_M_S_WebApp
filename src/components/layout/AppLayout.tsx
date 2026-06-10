@@ -14,7 +14,9 @@ import SidebarContent, {
   studentItems,
   reportingItems,
   accountingItems,
-  examManagementItems,
+  examSetupItems,
+  examSchedulingItems,
+  resultItems,
 } from "@/components/layout/Sidebar";
 
 import "@/styles/teacher.css";
@@ -49,7 +51,9 @@ function getActiveNav(pathname: string): NavItem {
     ...navItems,
     ...studentItems,
     ...teacherItems,
-    ...examManagementItems,
+    ...examSetupItems,
+    ...examSchedulingItems,
+    ...resultItems,
     ...masterDataItems,
     { to: "/fee-structures", label: "Fee Structures" },
     ...reportingItems,

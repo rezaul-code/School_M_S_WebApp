@@ -77,13 +77,18 @@ export const teacherItems = [
   { to: "/teachers/subject-assignments", label: "Subject Assignments", icon: BookOpen,      exact: false },
 ];
 
-export const examManagementItems = [
+export const examSetupItems = [
   { to: "/exam-types",                label: "Create Exam Types",    icon: Award,         exact: true  },
-  { to: "/exam-blueprints",           label: "Exam Blueprint",       icon: CalendarDays,  exact: false },
-  //{ to: "/subject-wise-setup",        label: "Subject Wise Setup",   icon: BookOpen,      exact: false },
   { to: "/grade-rule-engine/schemes", label: "Grading Schemes",      icon: ShieldCheck,   exact: false },
   { to: "/grade-rule-engine/rules",   label: "Result Rules Mapping", icon: Network,       exact: false },
-  { to: "/consolidated-setup",        label: "Consolidated Annual",  icon: Network,       exact: false },
+];
+
+export const examSchedulingItems = [
+  { to: "/exam-blueprints",           label: "Exam Blueprint",       icon: CalendarDays,  exact: false },
+];
+
+export const resultItems = [
+  { to: "/consolidated-setup",        label: "Annual Results",       icon: Network,       exact: false },
   { to: "/independent-results",       label: "Independent Results",  icon: ClipboardList, exact: false },
 ];
 
@@ -96,7 +101,6 @@ export const masterDataItems = [
   { to: "/class-subject-mappings", label: "Class-Subject", icon: Link2,        exact: false },
 ];
 
-// UPDATED: Replaced tabs with a single unified route
 export const feeStructureSubItems = [
   { to: "/fee-structures", label: "Manage Fees", exact: true },
   { to: "/fee-structures/brochure", label: "Fee Brochure", exact: false },
@@ -149,12 +153,14 @@ export default function SidebarContent({
     const p = location.pathname;
     if (anyActive(studentItems, p))        return "students";
     if (anyActive(teacherItems, p))        return "teachers";
+    
+    // Check the three distinct exam sections
+    if (anyActive(examSetupItems, p))      return "exam-setup";
+    if (anyActive(examSchedulingItems, p)) return "exam-scheduling";
+    if (anyActive(resultItems, p))         return "results";
+
     if (anyActive(masterDataItems, p))     return "master-data";
-    if (anyActive(examManagementItems, p)) return "exam-management";
-    
-    // UPDATED: Now uses anyActive matching to correctly expand the menu
     if (anyActive(feeStructureSubItems, p)) return "fee-structures";
-    
     if (anyActive(reportingItems, p))      return "reporting";
     if (anyActive(accountingItems, p))     return "accounting";
     return null;
@@ -300,27 +306,7 @@ export default function SidebarContent({
           ))}
         </SidebarSection>
 
-        {/* 3.5. Exam Management */}
-        <SidebarSection
-          title="Exam Management"
-          icon={Award}
-          sectionKey="exam-management"
-          expanded={expandedSection === "exam-management"}
-          onToggle={toggle}
-          collapsed={collapsed}
-        >
-          {examManagementItems.map((item) => (
-            <SidebarSubItem
-              key={item.to}
-              to={item.to}
-              label={item.label}
-              active={isRouteActive(location.pathname, item.to, item.exact)}
-              onNavigate={onNavigate}
-            />
-          ))}
-        </SidebarSection>
-
-        {/* 4. Master Data Setup */}
+         {/* 4. Master Data Setup */}
         <SidebarSection
           title="Master Data Setup"
           icon={Database}
@@ -340,7 +326,67 @@ export default function SidebarContent({
           ))}
         </SidebarSection>
 
-        {/* 5. Fee Structures (UPDATED) */}
+        {/* ── EXAM SETUP ── */}
+        <SidebarSection
+          title="Exam Setup"
+          icon={Award}
+          sectionKey="exam-setup"
+          expanded={expandedSection === "exam-setup"}
+          onToggle={toggle}
+          collapsed={collapsed}
+        >
+          {examSetupItems.map((item) => (
+            <SidebarSubItem
+              key={item.to}
+              to={item.to}
+              label={item.label}
+              active={isRouteActive(location.pathname, item.to, item.exact)}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </SidebarSection>
+
+        {/* ── EXAM SCHEDULING ── */}
+        <SidebarSection
+          title="Exam Scheduling"
+          icon={CalendarDays}
+          sectionKey="exam-scheduling"
+          expanded={expandedSection === "exam-scheduling"}
+          onToggle={toggle}
+          collapsed={collapsed}
+        >
+          {examSchedulingItems.map((item) => (
+            <SidebarSubItem
+              key={item.to}
+              to={item.to}
+              label={item.label}
+              active={isRouteActive(location.pathname, item.to, item.exact)}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </SidebarSection>
+
+        {/* ── RESULTS ── */}
+        <SidebarSection
+          title="Results"
+          icon={ClipboardList}
+          sectionKey="results"
+          expanded={expandedSection === "results"}
+          onToggle={toggle}
+          collapsed={collapsed}
+        >
+          {resultItems.map((item) => (
+            <SidebarSubItem
+              key={item.to}
+              to={item.to}
+              label={item.label}
+              active={isRouteActive(location.pathname, item.to, item.exact)}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </SidebarSection>
+
+        {/* 5. Fee Structures */}
         <SidebarSection
           title="Fee Structures"
           icon={CreditCard}

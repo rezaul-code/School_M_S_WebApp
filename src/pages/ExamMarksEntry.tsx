@@ -37,11 +37,13 @@ export default function ExamMarksEntry() {
     enabled: !!examId
   });
 
+  // FIXED: Now perfectly filters the roster to the specific section of the exam!
   const { data: rosterRes, isLoading: isLoadingRoster } = useQuery({
-    queryKey: ["students", baseExam?.academicYearId, baseExam?.classLevelId],
+    queryKey: ["students", baseExam?.academicYearId, baseExam?.classLevelId, baseExam?.classSectionId],
     queryFn: () => listStudents({ 
       academicYearId: baseExam?.academicYearId?.toString(), 
       classLevelId: baseExam?.classLevelId?.toString(), 
+      classSectionId: baseExam?.classSectionId?.toString(), // Added the section filter
       size: 200 
     } as any),
     enabled: !!baseExam?.academicYearId
@@ -55,7 +57,6 @@ export default function ExamMarksEntry() {
   });
 
   const currentSubject = useMemo(() => {
-    // FIX: Using examSubjectId instead of classSubjectId
     return exam?.subjects?.find((s: any) => s.examSubjectId?.toString() === selectedSubjectId);
   }, [exam, selectedSubjectId]);
 
@@ -64,7 +65,6 @@ export default function ExamMarksEntry() {
 
     const newState: Record<string, EnterMarkRequest> = {};
     const subjectMarks = Array.isArray(existingMarks) 
-      // FIX: Filtering marks by examSubjectId
       ? existingMarks.filter(m => m.examSubjectId === currentSubject.examSubjectId) 
       : [];
 
@@ -74,14 +74,13 @@ export default function ExamMarksEntry() {
       
       newState[rowKey] = {
         enrollmentId: student.enrollmentId || student.id, 
-        examSubjectId: currentSubject.examSubjectId, // FIX: Using examSubjectId here
+        examSubjectId: currentSubject.examSubjectId, 
         isAbsent: existing?.isAbsent || false,
         isExempted: false,
         remarks: existing?.remarks || "",
-        enteredByUserId: "00000000-0000-0000-0000-000000000000", // Fix for the 400 Validation error
+        enteredByUserId: "00000000-0000-0000-0000-000000000000", 
         
         components: currentSubject.components.map((comp: any) => {
-          // Fix: Using examSubjectComponentId for strict backend matching
           const existingComp = existing?.components?.find((c: any) => c.examSubjectComponentId === comp.examSubjectComponentId);
           
           return {
@@ -106,7 +105,6 @@ export default function ExamMarksEntry() {
   });
 
   const { mutate: handleSubmit, isPending: isSubmitting } = useMutation({
-    // FIX: Using examSubjectId for submission
     mutationFn: () => bulkSubmitMarks(currentSubject?.examSubjectId, MOCK_TEACHER_ID),
     onSuccess: () => {
       toast.success("Marks submitted for admin approval.");
@@ -157,7 +155,8 @@ export default function ExamMarksEntry() {
             </Button>
             <div className="flex-1">
               <h2 className="text-2xl font-bold">Marks Entry: {exam?.name}</h2>
-              <p className="text-sm text-white/60">Class: {exam?.classLevelName}</p>
+              {/* FIXED: We can dynamically show the section name in the header here as a nice touch! */}
+              <p className="text-sm text-white/60">Class: {baseExam?.classLevelName} {baseExam?.classSectionName && baseExam?.classSectionName !== "All Sections" ? `- ${baseExam.classSectionName}` : ""}</p>
             </div>
           </div>
         </div>
@@ -172,7 +171,6 @@ export default function ExamMarksEntry() {
               </SelectTrigger>
               <SelectContent>
                 {exam?.subjects?.map((s: any) => (
-                  // FIX: Mapping values using examSubjectId instead of classSubjectId
                   <SelectItem key={s.examSubjectId} value={s.examSubjectId.toString()}>{s.subjectName}</SelectItem>
                 ))}
               </SelectContent>
@@ -212,6 +210,8 @@ export default function ExamMarksEntry() {
                 <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="mx-auto animate-spin" /></TableCell></TableRow>
               ) : !currentSubject ? (
                 <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Please select a subject from the dropdown above to begin.</TableCell></TableRow>
+              ) : students.length === 0 ? (
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No students found in this section.</TableCell></TableRow>
               ) : (
                 students.map((student: any) => {
                   const rowKey = student.enrollmentId || student.id;

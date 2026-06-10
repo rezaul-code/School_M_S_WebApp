@@ -1,3 +1,4 @@
+// src/lib/api/exams.ts
 import { api } from "./client";
 
 export interface ExamType {
@@ -31,6 +32,12 @@ export interface ScheduledExam {
   endDate: string;
   status: "DRAFT" | "SCHEDULED" | "ONGOING" | "EVALUATION" | "COMPLETED" | "CANCELLED";
   classLevelExam: boolean;
+  subjects?: any[]; // <--- ADDED: Holds the stitched subjects data
+}
+
+export interface CreateExamBatchResponse {
+  batchGroupId: string;
+  examIds: number[];
 }
 
 export interface CreateExamScheduleRequest {
@@ -38,7 +45,7 @@ export interface CreateExamScheduleRequest {
   academicYearId: number;
   examTypeId: number;
   classLevelId: number;
-  classSectionId: number | null;
+  classSectionIds: number[]; 
   startDate: string;
   endDate: string;
 }
@@ -69,15 +76,34 @@ export async function getExamById(examId: number): Promise<ScheduledExam> {
   return response.data.data;
 }
 
+// <--- FIXED: Frontend Stitch Logic applied here
 export async function getApplicableExams(
   academicYearId: number,
   classLevelId: number,
   classSectionId: number
 ): Promise<ScheduledExam[]> {
+  // 1. Fetch the high-level exam details
   const response = await api.get<{ data: ScheduledExam[] }>(
     `/api/v1/exams/applicable?academicYearId=${academicYearId}&classLevelId=${classLevelId}&classSectionId=${classSectionId}`
   );
-  return response.data.data;
+  
+  const exams = response.data.data;
+
+  // 2. Fetch and stitch the subjects/components into each exam
+  const examsWithSubjects = await Promise.all(
+    exams.map(async (exam) => {
+      try {
+        const subjectRes = await api.get<{ data: any[] }>(`/api/v1/exams/${exam.id}/subjects`);
+        // Attach the subjects array directly to the exam object
+        return { ...exam, subjects: subjectRes.data.data };
+      } catch (error) {
+        // If it fails to fetch subjects for an exam, return it safely without them
+        return { ...exam, subjects: [] };
+      }
+    })
+  );
+
+  return examsWithSubjects;
 }
 
 export async function updateExamStatus(examId: number, status: "DRAFT" | "ACTIVE" | "COMPLETED"): Promise<ScheduledExam> {
@@ -85,8 +111,8 @@ export async function updateExamStatus(examId: number, status: "DRAFT" | "ACTIVE
   return response.data.data;
 }
 
-export async function createExamSchedule(request: CreateExamScheduleRequest): Promise<ScheduledExam> {
-  const response = await api.post<{ data: ScheduledExam }>("/api/v1/exams", request);
+export async function createExamSchedule(request: CreateExamScheduleRequest): Promise<CreateExamBatchResponse> {
+  const response = await api.post<{ data: CreateExamBatchResponse }>("/api/v1/exams", request);
   return response.data.data;
 }
 
@@ -149,7 +175,6 @@ export interface BulkSaveScheduleRequest {
       examDate: string;
       examStartTime: string; // renamed from examTime
       examEndTime: string;   // new — replaces durationMinutes
-      // durationMinutes removed — derived by backend
     }[];
   }[];
 }

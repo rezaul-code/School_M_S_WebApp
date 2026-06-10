@@ -1,3 +1,4 @@
+// src/lib/api/results.ts
 import { api } from "./client";
 
 export interface BulkResultResponse {
