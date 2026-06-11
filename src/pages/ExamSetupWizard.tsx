@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { 
   CheckCircle2, ChevronRight, BookOpen, Clock, 
-  Save, ArrowLeft, Loader2, FileText, RotateCcw
+  Save, ArrowLeft, Loader2, FileText
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,27 +24,24 @@ import {
   updateExamHeader
 } from "@/lib/api/exams";
 import { getClassLevelOptions } from "@/lib/api/master";
-import { getApiErrorMessage } from "@/lib/api/client";
+import { getApiErrorMessage, api } from "@/lib/api/client"; // Added api import
 import { useActiveAcademicYear } from "@/hooks/useActiveAcademicYear";
 
-// examStartTime and examEndTime are user-selected
-// durationMinutes is derived by the backend — shown read-only in the UI
 type ComponentScheduleState = {
   examDate: string;
-  examStartTime: string; // renamed from examTime
-  examEndTime: string;   // new — user selects this
+  examStartTime: string; 
+  examEndTime: string;   
   maxMarks: number;
   passMarks: number;
 };
 
-// Calculates duration in minutes from two HH:mm strings — for display only
 function calcDuration(start: string, end: string): number | null {
   if (!start || !end) return null;
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
   if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return null;
   const diff = (eh * 60 + em) - (sh * 60 + sm);
-  return diff > 0 ? diff : null; // return null if end <= start, so user sees — as a hint
+  return diff > 0 ? diff : null; 
 }
 
 export default function ExamSetupWizard() {
@@ -60,6 +57,7 @@ export default function ExamSetupWizard() {
   const [name, setName] = useState("");
   const [examTypeId, setExamTypeId] = useState("");
   const [classLevelId, setClassLevelId] = useState("");
+  const [classSectionIds, setClassSectionIds] = useState<number[]>([]); // ADDED state for multi-select
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -70,6 +68,18 @@ export default function ExamSetupWizard() {
   // --- Queries ---
   const { data: examTypes = [] } = useQuery({ queryKey: ["examTypes"], queryFn: getAllExamTypes });
   const { data: classes = [] } = useQuery({ queryKey: ["classLevels"], queryFn: getClassLevelOptions });
+  
+  // ADDED: Dynamically fetch sections when classLevelId changes
+  const { data: sections = [], isLoading: isLoadingSections } = useQuery({
+    queryKey: ["classSections", classLevelId],
+    queryFn: async () => {
+      const res = await api.get<{ data: { id: number; name: string; displayName: string }[] }>(`/api/master/options/class-sections`, {
+        params: { classLevelId } 
+      });
+      return res.data.data;
+    },
+    enabled: !!classLevelId,
+  });
   
   const { data: existingExam } = useQuery({
     queryKey: ["examHeader", examId],
@@ -98,11 +108,14 @@ export default function ExamSetupWizard() {
       setClassLevelId(existingExam.classLevelId.toString());
       setStartDate(existingExam.startDate);
       setEndDate(existingExam.endDate);
+      // If it's an existing exam, we lock the section selection so we just show the name
+      if (existingExam.classSectionId) {
+        setClassSectionIds([existingExam.classSectionId]);
+      }
     }
   }, [existingExam, currentStep]);
 
   useEffect(() => {
-    // Only hydrate when both matrix and saved data are available
     if (savedSchedule && matrix) {
       setIsResumeMode(true);
       const newSelected = new Set<number>();
@@ -134,6 +147,7 @@ export default function ExamSetupWizard() {
       if (!name) throw new Error("Exam Description Name is required.");
       if (!examTypeId) throw new Error("Exam Type Blueprint is required.");
       if (!classLevelId) throw new Error("Target Class Level is required.");
+      if (classSectionIds.length === 0) throw new Error("At least one Target Section is required.");
       if (!startDate || !endDate) throw new Error("Start and End dates are required.");
 
       return createExamSchedule({
@@ -141,15 +155,16 @@ export default function ExamSetupWizard() {
         academicYearId: activeYear?.id || 1, 
         examTypeId: Number(examTypeId),
         classLevelId: Number(classLevelId),
-        classSectionId: null, 
+        classSectionIds: classSectionIds, // Sending the array
         startDate,
         endDate
       });
     },
-    onSuccess: (newExam) => { 
+    onSuccess: (newBatch) => { 
       queryClient.invalidateQueries({ queryKey: ["scheduledExams"] });
-      toast.success("Exam framework created.");
-      navigate(`/exam-blueprints/setup/${newExam.id}`);
+      toast.success("Exam batch framework created.");
+      // Grab the first ID in the batch to configure the subjects matrix
+      navigate(`/exam-blueprints/setup/${newBatch.examIds[0]}`);
       setCurrentStep(2);
     },
     onError: (err) => {
@@ -219,9 +234,7 @@ export default function ExamSetupWizard() {
           passMarks: 0,
           components: activeComponents.map(c => {
             const data = scheduleData[c.subjectComponentId];
-            // Ensure HH:mm:ss format for backend LocalTime parsing
-            const toTimeString = (t: string) =>
-              t ? (t.length === 5 ? t + ":00" : t) : "";
+            const toTimeString = (t: string) => t ? (t.length === 5 ? t + ":00" : t) : "";
             return {
               subjectComponentId: c.subjectComponentId,
               maxMarks:      data.maxMarks,
@@ -229,7 +242,6 @@ export default function ExamSetupWizard() {
               examDate:      data.examDate,
               examStartTime: toTimeString(data.examStartTime),
               examEndTime:   toTimeString(data.examEndTime),
-              // durationMinutes NOT sent — backend calculates it
             };
           })
         };
@@ -259,8 +271,6 @@ export default function ExamSetupWizard() {
 
   return (
     <div className="md-page">
-      
-
       <div className="md-wizard">
         <div className="flex items-center justify-between mb-12 px-6">
           <StepIcon step={1} current={currentStep} label="Details & Framework" />
@@ -293,15 +303,52 @@ export default function ExamSetupWizard() {
                   </Select>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="class-level" className="text-sm font-medium">Target Class Level</Label>
-                <Select value={classLevelId} onValueChange={setClassLevelId} disabled={isResumeMode}>
-                  <SelectTrigger id="class-level" className="h-10 text-base">
-                    <SelectValue placeholder="Select class..." />
-                  </SelectTrigger>
-                  <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
+
+              {/* Class and Sections Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                <div className="space-y-2">
+                  <Label htmlFor="class-level" className="text-sm font-medium">Target Class Level</Label>
+                  <Select value={classLevelId} onValueChange={(val) => {
+                    setClassLevelId(val);
+                    setClassSectionIds([]); // Reset sections when class changes
+                  }} disabled={isResumeMode}>
+                    <SelectTrigger id="class-level" className="h-10 text-base">
+                      <SelectValue placeholder="Select class..." />
+                    </SelectTrigger>
+                    <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Dynamically populated multi-select checkbox group */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Target Sections</Label>
+                  <div className="flex flex-wrap gap-2 p-2 border border-border rounded-md bg-background min-h-[40px] items-center">
+                    {!classLevelId ? (
+                      <span className="text-sm text-muted-foreground ml-2">Select a class first...</span>
+                    ) : isLoadingSections ? (
+                      <Loader2 className="animate-spin h-4 w-4 ml-2 text-muted-foreground" />
+                    ) : sections.length === 0 ? (
+                      <span className="text-sm text-muted-foreground ml-2">No sections found.</span>
+                    ) : (
+                      sections.map((sec) => (
+                        <div key={sec.id} className="flex items-center space-x-1.5 bg-muted/50 border border-border px-2.5 py-1.5 rounded">
+                          <Checkbox 
+                            id={`sec-${sec.id}`}
+                            disabled={isResumeMode}
+                            checked={classSectionIds.includes(sec.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) setClassSectionIds(prev => [...prev, sec.id]);
+                              else setClassSectionIds(prev => prev.filter(id => id !== sec.id));
+                            }}
+                          />
+                          <label htmlFor={`sec-${sec.id}`} className="text-sm cursor-pointer">{sec.displayName}</label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 <div className="space-y-2">
                   <Label htmlFor="start-date" className="text-sm font-medium">Global Start Date</Label>
@@ -323,8 +370,9 @@ export default function ExamSetupWizard() {
           </div>
         )}
 
-        {/* ── Step 2 ── */}
+        {/* ... (Keep Steps 2 and 3 exactly as they are) ... */}
         {currentStep === 2 && (
+          // ... (Step 2 content remains identical) ...
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-primary font-medium">
@@ -367,8 +415,8 @@ export default function ExamSetupWizard() {
           </div>
         )}
 
-        {/* ── Step 3 ── */}
         {currentStep === 3 && (
+          // ... (Step 3 content remains identical) ...
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-primary font-medium">
@@ -384,7 +432,6 @@ export default function ExamSetupWizard() {
                     <TableHead>Exam Date</TableHead>
                     <TableHead>Start Time</TableHead>
                     <TableHead>End Time</TableHead>
-                    {/* Duration — read-only, derived from start/end */}
                     <TableHead className="w-28 text-center">Duration (min)</TableHead>
                     <TableHead className="w-28 text-center">Max Marks</TableHead>
                     <TableHead className="w-28 text-center">Pass Marks</TableHead>
@@ -396,9 +443,7 @@ export default function ExamSetupWizard() {
                       .filter(c => selectedComponents.has(c.subjectComponentId))
                       .map(comp => {
                         const data = scheduleData[comp.subjectComponentId];
-                        const duration = data
-                          ? calcDuration(data.examStartTime, data.examEndTime)
-                          : null;
+                        const duration = data ? calcDuration(data.examStartTime, data.examEndTime) : null;
 
                         return (
                           <TableRow key={comp.subjectComponentId} className="hover:bg-transparent">
@@ -407,73 +452,34 @@ export default function ExamSetupWizard() {
                               <div className="text-xs text-muted-foreground mt-0.5">{comp.componentName}</div>
                             </TableCell>
 
-                            {/* Exam Date */}
                             <TableCell>
-                              <Input
-                                type="date"
-                                className="h-9 text-sm w-[140px]"
-                                value={data?.examDate || ""}
-                                onChange={e => handleGridChange(comp.subjectComponentId, 'examDate', e.target.value)}
-                              />
+                              <Input type="date" className="h-9 text-sm w-[140px]" value={data?.examDate || ""} onChange={e => handleGridChange(comp.subjectComponentId, 'examDate', e.target.value)} />
                             </TableCell>
 
-                            {/* Start Time — user editable */}
                             <TableCell>
-                              <Input
-                                type="time"
-                                className="h-9 text-sm w-[120px]"
-                                value={data?.examStartTime || ""}
-                                onChange={e => handleGridChange(comp.subjectComponentId, 'examStartTime', e.target.value)}
-                              />
+                              <Input type="time" className="h-9 text-sm w-[120px]" value={data?.examStartTime || ""} onChange={e => handleGridChange(comp.subjectComponentId, 'examStartTime', e.target.value)} />
                             </TableCell>
 
-                            {/* End Time — user editable */}
                             <TableCell>
-                              <Input
-                                type="time"
-                                className="h-9 text-sm w-[120px]"
-                                value={data?.examEndTime || ""}
-                                onChange={e => handleGridChange(comp.subjectComponentId, 'examEndTime', e.target.value)}
-                              />
+                              <Input type="time" className="h-9 text-sm w-[120px]" value={data?.examEndTime || ""} onChange={e => handleGridChange(comp.subjectComponentId, 'examEndTime', e.target.value)} />
                             </TableCell>
 
-                            {/* Duration — read-only, calculated from start/end */}
-                            {/* Duration — read-only, calculated from start/end */}
                             <TableCell className="text-center">
                               {data?.examStartTime && data?.examEndTime && !duration ? (
-                                // End time is before or equal to start time
-                                <div className="h-9 flex items-center justify-center text-xs rounded-md px-2 bg-red-500/10 text-red-500 border border-red-500/20">
-                                  End &lt; Start
-                                </div>
+                                <div className="h-9 flex items-center justify-center text-xs rounded-md px-2 bg-red-500/10 text-red-500 border border-red-500/20">End &lt; Start</div>
                               ) : (
-                                <div className={`h-9 flex items-center justify-center text-sm rounded-md px-3 border ${
-                                  duration !== null
-                                    ? "bg-muted text-foreground border-border"
-                                    : "bg-muted/40 text-muted-foreground border-dashed border-border"
-                                }`}>
+                                <div className={`h-9 flex items-center justify-center text-sm rounded-md px-3 border ${duration !== null ? "bg-muted text-foreground border-border" : "bg-muted/40 text-muted-foreground border-dashed border-border"}`}>
                                   {duration !== null ? `${duration} min` : "—"}
                                 </div>
                               )}
                             </TableCell>
 
-                            {/* Max Marks */}
                             <TableCell>
-                              <Input
-                                type="number"
-                                className="h-9 text-sm text-center"
-                                value={data?.maxMarks || ""}
-                                onChange={e => handleGridChange(comp.subjectComponentId, 'maxMarks', Number(e.target.value))}
-                              />
+                              <Input type="number" className="h-9 text-sm text-center" value={data?.maxMarks || ""} onChange={e => handleGridChange(comp.subjectComponentId, 'maxMarks', Number(e.target.value))} />
                             </TableCell>
 
-                            {/* Pass Marks */}
                             <TableCell>
-                              <Input
-                                type="number"
-                                className="h-9 text-sm text-center"
-                                value={data?.passMarks || ""}
-                                onChange={e => handleGridChange(comp.subjectComponentId, 'passMarks', Number(e.target.value))}
-                              />
+                              <Input type="number" className="h-9 text-sm text-center" value={data?.passMarks || ""} onChange={e => handleGridChange(comp.subjectComponentId, 'passMarks', Number(e.target.value))} />
                             </TableCell>
                           </TableRow>
                         );
@@ -483,12 +489,9 @@ export default function ExamSetupWizard() {
               </Table>
             </div>
             <div className="flex justify-between pt-8 border-t border-border mt-8">
-              <Button variant="outline" onClick={() => setCurrentStep(2)} className="h-10 px-6">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back
-              </Button>
+              <Button variant="outline" onClick={() => setCurrentStep(2)} className="h-10 px-6"><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
               <Button onClick={() => handleBulkSave()} disabled={isSavingSchedule} className="h-10 px-8">
-                {isSavingSchedule ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
-                Publish
+                {isSavingSchedule ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />} Publish
               </Button>
             </div>
           </div>

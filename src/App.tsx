@@ -4,7 +4,7 @@ import PayFee from "./pages/PayFee";
 import ExamSetupWizard from "./pages/ExamSetupWizard";
 import ExamBlueprints from "@/pages/ExamBlueprints";
 import GradingSchemes from "./pages/GradingSchemes";
-import ResultRuleSetup from "./pages/ResultRuleSetup";
+import ResultRulesManager from "./pages/ResultRulesManager";
 import ConsolidatedAnnual from "./pages/ConsolidatedAnnual";
 import ExamDetails from "./pages/ExamDetails";
 import ExamMarksEntry from "./pages/ExamMarksEntry";
@@ -107,6 +107,14 @@ export default function App() {
               <Route path="/teachers/assignments"         element={<TeacherAssignmentsPage />} />
               <Route path="/teachers/subject-assignments" element={<SubjectAssignmentsPage />} />
 
+               {/* MASTER DATA */}
+              <Route path="/academic-years"         element={<AcademicYears />} />
+              <Route path="/class-levels"           element={<ClassLevels />} />
+              <Route path="/sections"               element={<Sections />} />
+              <Route path="/class-sections"         element={<ClassSections />} />
+              <Route path="/subjects"               element={<Subjects />} />
+              <Route path="/class-subject-mappings" element={<ClassSubjectMappings />} />
+
              {/* EXAM MANAGEMENT */}
               <Route path="/exam-types" element={<ExamTypes />} />
               <Route path="/exam-blueprints" element={<ExamBlueprints />} />
@@ -117,24 +125,16 @@ export default function App() {
               <Route path="/exam-blueprints/setup" element={<ExamSetupWizard />} />
               <Route path="/exam-blueprints/setup/:examId" element={<ExamSetupWizard />} />
               <Route path="/grade-rule-engine/schemes" element={<GradingSchemes />} />
-              <Route path="/grade-rule-engine/rules" element={<ResultRuleSetup />} />
+              <Route path="/grade-rule-engine/rules" element={<ResultRulesManager />} />
               <Route path="/consolidated-setup" element={<ConsolidatedAnnual />} />
               
               {/* INDEPENDENT RESULTS */}
               <Route path="/independent-results"        element={<IndependentResults />} />
               <Route path="/independent-results/:examId" element={<IndependentResultsDetail />} />
 
-              {/* MASTER DATA */}
-              <Route path="/academic-years"         element={<AcademicYears />} />
-              <Route path="/class-levels"           element={<ClassLevels />} />
-              <Route path="/sections"               element={<Sections />} />
-              <Route path="/class-sections"         element={<ClassSections />} />
-              <Route path="/subjects"               element={<Subjects />} />
-              <Route path="/class-subject-mappings" element={<ClassSubjectMappings />} />
-
               {/* FEES */}
               <Route path="/fee-structures" element={<FeeStructures />} />
-              <Route path="/fee-structures/brochure" element={<FeeBrochurePage />} /> {/* Add this line! */}
+              <Route path="/fee-structures/brochure" element={<FeeBrochurePage />} />
 
               {/* REPORTING */}
               <Route path="/reports/fees" element={<FeeReport />} />
